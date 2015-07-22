@@ -26,7 +26,7 @@ def build_RunID(fRunID):
     else:
         return(fRunID)
 
-def load(earliest_run, latest_run, source_name="Crab", loglevel=logging.INFO, timedelta_in_minutes="30"):
+def load(earliest_run, latest_run, source_name="Crab", loglevel=logging.INFO, timedelta_in_minutes="30", files_per_night=1):
     '''
 
     :param earliest_run: earliest run to fetch in "YYYMMDD" format as a string
@@ -158,18 +158,24 @@ def load(earliest_run, latest_run, source_name="Crab", loglevel=logging.INFO, ti
     
 
     mapping = mapping.dropna( how='any')
-    print(mapping)
+    #print(mapping)
 
 
 
     final_map = pd.DataFrame(columns=["filename", "drs_path", "data_path"])
     night = 0
+    k = 0
     for i in range(0,len(mapping)):
         temp = mapping.fNight[i]
         if(temp != night):
             night = temp
             df = pd.DataFrame([[mapping.index[i], mapping.drs_path[i], mapping.data_path[i]]], columns=["filename", "drs_path", "data_path"])
             #final_map.append(df)
+            final_map = pd.concat([final_map,df])
+            k = 1
+        elif(k < files_per_night):
+            k = k+1
+            df = pd.DataFrame([[mapping.index[i], mapping.drs_path[i], mapping.data_path[i]]], columns=["filename", "drs_path", "data_path"])
             final_map = pd.concat([final_map,df])
     final_map = final_map.set_index(final_map.filename)
     final_map = final_map.drop('filename',  axis=1)
@@ -189,4 +195,4 @@ def load(earliest_run, latest_run, source_name="Crab", loglevel=logging.INFO, ti
 
 
 if __name__ == '__main__':
-    load(earliest_run="20150201", latest_run="20150228", source_name="Crab", timedelta_in_minutes=30)
+    load(earliest_run="20141001", latest_run="20141231", source_name="Crab", timedelta_in_minutes=30, files_per_night=1)
