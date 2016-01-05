@@ -12,8 +12,6 @@ from os import path
 
 logger = logging.getLogger(__name__)
 
-factdb = create_engine("mysql+pymysql://factread:r3adfac!@129.194.168.95/factdata")
-
 def build_path(fNight, path_to_data):
         year = fNight[0:4]
         month = fNight[4:6]
@@ -36,7 +34,8 @@ def build_RunID(fRunID):
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--parts', default=1,  help='Number of parts to split the .json file into. This is useful for submitting this to a cluster later on', type=click.INT)
-def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts):
+@click.password_option(help='password to read from the always awesome RunDB')
+def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, password):
     ''' This script connects to the rundb and fetches all runs belonging to the specified source.
         Provide time range by specifying ealriest and lates night to fetch. As in 20131001,  20141001.
         This script will produce a json file containing paths to the data files and their drs files. The
@@ -44,7 +43,9 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts):
 
     logging.basicConfig(level=logging.INFO)
 
-    mapping = load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t)
+    factdb = create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
+
+    mapping = load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb)
     # embed()
     if mapping.size == 0:
         logger.error('Requested data files could not be found')
@@ -63,7 +64,7 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts):
         logger.info("Writing list to json file  {}".format(filename))
         mapping.to_json(filename, orient='records', date_format='epoch' )
 
-def load(earliest_night, latest_night, path_to_data, source_name="Crab", timedelta_in_minutes="30"):
+def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30"):
     '''
     Given the earliest and latest night to fetch as a factnight string (as in 20141024) this method returns a DataFrame
     containing the paths to data files and their correpsonding .drs files. The maximum time difference between the
