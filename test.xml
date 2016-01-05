@@ -2,8 +2,8 @@
     <stream id="random" class="stream.generator.RandomStream" limit="120"/>
 
     <process id="1" input="random">
-        <!-- <PrintData /> -->
-        <Delay time="250ms" />
+        <PrintData />
+        <Delay time="500ms" />
         <fact.io.JSONWriter keys="att1" url="${output}" writeListOfItems="True"/>
     </process>
 </container>

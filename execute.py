@@ -79,6 +79,10 @@ def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, n
     frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
     if len(frames) != len(job_outputs):
         logger.warn("Only {} out of {} jobs returned a proper DataFrame.".format(len(frames), len(job_list)))
+
+    if len(frames) == 0:
+        return
+
     df = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df)))
 
