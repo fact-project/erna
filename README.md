@@ -19,7 +19,7 @@ The script creates a json-file (*earliest_run_latest_run_source_name.json*), whi
 
 The execute.py script calls the *erna* module and creates jobs for submission to a grid. This needs to be run from a server which can submit jobs to the queueing
 system. You need to provide the path to the fact-tools.jar file and the xml you want to use.
-An example xml can be found in the repository. It shows how to read fact data files and how to output the result. the resulting json files are automatically collected and merged into one big outputfile.
+An example xml can be found in the repository. It shows how to read fact data files and how to output the result. The resulting json files are automatically collected and merged into one big outputfile. The data format of this outputfile depends on the name you choose. (e.g. big_output_file.h5, big_output_file.json, big_output_file.csv,...)
 
 You cann call execute like this:
 
