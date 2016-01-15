@@ -6,7 +6,7 @@ These scripts require a few dependencies. More documentation to follow.
 
   - Java 1.8
   - Python 3.4+
-  
+
 
 ## erna.py
 The erna.py script allows you to find datafiles and the optimal (closest) drs-files for a chosen period of time.
@@ -17,4 +17,10 @@ The script creates a json-file (*earliest_run_latest_run_source_name.json*), whi
 
 ## execute.py
 
-The execute.py script calls the *erna* module and creates jobs for submission to a grid. This needs to be run from a server which can submit jobs to the queueing system.
+The execute.py script calls the *erna* module and creates jobs for submission to a grid. This needs to be run from a server which can submit jobs to the queueing
+system. You need to provide the path to the fact-tools.jar file and the xml you want to use.
+An example xml can be found in the repository. It shows how to read fact data files and how to output the result. the resulting json files are automatically collected and merged into one big outputfile.
+
+You cann call execute like this:
+
+         python erna/execute.py 20140101 20140130 /fhgfs/groups/app/fact/raw/ fact-tools-0.9.9 example.xml big_output_file.h5 --engine=PBS --vmem=10000 --num_jobs=60 --queue=one_day --source=Crab
