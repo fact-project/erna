@@ -1,7 +1,12 @@
 # Easy RuN Access (ERNA)
 A collection of tools to handle FACT data and to execute jobs on a SGE/TORQUE cluster.
-
 These scripts require a few dependencies. More documentation to follow.
+
+##Requirements
+
+  - Java 1.8
+  - Python 3.4+
+  
 
 ## erna.py
 The erna.py script allows you to find datafiles and the optimal (closest) drs-files for a chosen period of time.

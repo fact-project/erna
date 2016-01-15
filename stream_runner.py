@@ -11,11 +11,11 @@ def run(jar, xml, df, num):
     logger = logging.getLogger(__name__)
     if 'DEFAULT_TEMP_DIR' not in os.environ:
         logger.error("No scratch directory given via environment variable DEFAULT_TEMP_DIR. Aborting")
-        return "no defualt temp dir"
+        return "No default temp dir"
 
     output_directory = os.environ['DEFAULT_TEMP_DIR']
     if not os.path.isdir(output_directory):
-        logger.warn("output directory {} does not exist. Trying to create it.".format(output_directory))
+        logger.warn("Output directory {} does not exist. Trying to create it.".format(output_directory))
         try:
             os.mkdir(output_directory, mode=0o755)
         except OSError as exc: # Python >2.5
@@ -23,7 +23,7 @@ def run(jar, xml, df, num):
         #check if that worked or not
         if not os.access(output_directory, os.W_OK | os.X_OK) :
             logger.error("Cannot write to directory given DEFAULT_TEMP_DIR {} ".format(output_directory))
-            return "cannot write to dir"
+            return "Cannot write to dir"
 
 
 
