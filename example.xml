@@ -1,9 +1,33 @@
 <container>
-    <stream id="random" class="stream.generator.RandomStream" limit="120"/>
 
-    <process id="1" input="random">
-        <PrintData />
-        <Delay time="500ms" />
-        <fact.io.JSONWriter keys="att1" url="${output}" writeListOfItems="True"/>
+    <properties url="classpath:/default/settings.properties" />
+
+    <property name="db" value="file:/fhgfs/groups/app/fact/drive_2014.sqlite" />
+
+    <property name="integralGainFile" value="classpath:/default/gain_sorted_20131127.csv" />
+    <property name="pixelDelayFile" value="classpath:/default/delays_lightpulser_20150217.csv" />
+
+
+    <service id="auxService" class="fact.auxservice.SqliteService" url="${db}" />
+
+    <!-- Has to be a  FactFileListMultiStream in order to work on tasks from gridmap and the executor script.-->
+    <stream id="fact" class="fact.io.FactFileListMultiStream"   url="${input}">
+        <stream class="fact.io.zfits.ZFitsStream" id="_" />
+    </stream>
+
+    <process id="1" input="fact">
+
+        <fact.datacorrection.DrsCalibration key="Data" outputKey="DataCalibrated"/>
+
+        <include url="classpath:/default/data/extraction.xml" />
+        <include url="classpath:/default/data/cleaning.xml" />
+        <include url="classpath:/default/data/parameterCalc.xml" />
+
+        <!-- By defining an auxservice and a path to a sqlite database containin drive infos, you have access to all dirve related stuff here as well -->
+        <include url="classpath:/default/data/sourceParameter.xml" />
+
+        <!-- its important that you output a valid json file for this to work in conjuction with gridmap -->
+        <fact.io.JSONWriter keys="EventNum" url="${output}" writeListOfItems="True"/>
+
     </process>
 </container>
