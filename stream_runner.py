@@ -61,6 +61,10 @@ def run(jar, xml, df, num):
     except subprocess.CalledProcessError as e:
         logger.error("Fact tools returned an error:")
         logger.error(e)
+        if os.exist(output_path):
+            logger.error("Trying to collect output files")
+        else:
+            return "fact-tools error"
 
     #try to read nans else return empty frame
     with open(output_path,'r') as text:
