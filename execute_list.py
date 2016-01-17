@@ -69,7 +69,7 @@ def main(file_list, jar, xml, out, queue, engine, num_jobs, vmem, log_level, por
 
 
     job_list = make_jobs(jarpath, xmlpath, output_directory, df,  engine, queue, vmem, num_jobs)
-    job_outputs = gridmap.rocess_jobs(job_list, max_processes=num_jobs, local=local)
+    job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out)
 
 if __name__ == "__main__":

@@ -68,7 +68,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, n
     df = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb)
 
     job_list = make_jobs(jarpath, xmlpath, output_directory, df,  engine, queue, vmem, num_jobs)
-    job_outputs = gridmap.rocess_jobs(job_list, max_processes=num_jobs, local=local)
+    job_outputs = gridmap.grocess_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out)
 
 if __name__ == "__main__":
