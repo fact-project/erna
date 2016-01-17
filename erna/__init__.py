@@ -1,68 +1,42 @@
-__author__ = 'kai, lena'
-
-import numpy as np
-import pandas as pd
-from sqlalchemy import create_engine
 import logging
+import pandas as pd
+import os
+import numpy as np
 import datetime
-import click
 from datetime import timedelta
-from IPython import embed
-from os import path
 
 logger = logging.getLogger(__name__)
 
-def build_path(fNight, path_to_data):
-        year = fNight[0:4]
-        month = fNight[4:6]
-        day = fNight[6:8]
-        return path.join(path_to_data, year, month, day)
+def collect_output(job_outputs, output_path):
+    '''
+    Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
+    to a file as specified by the output_path.
+    '''
+    logger.info("Concatenating results from each job and writing result to {}".format(output_path))
+    frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
+    if len(frames) != len(job_outputs):
+        logger.warn("Only {} jobs returned a proper DataFrame.".format(len(frames)))
 
-def build_RunID(fRunID):
-    if(len(fRunID) == 1):
-        return('00' + fRunID)
-
-    if(len(fRunID) == 2):
-        return('0' + fRunID)
-
-    return(fRunID)
-
-@click.command()
-@click.argument('earliest_night')
-@click.argument('latest_night' )
-@click.argument('data_dir', type=click.Path(exists=True, dir_okay=True, file_okay=False, readable=True) )
-@click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
-@click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
-@click.option('--parts', default=1,  help='Number of parts to split the .json file into. This is useful for submitting this to a cluster later on', type=click.INT)
-@click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, password):
-    ''' This script connects to the rundb and fetches all runs belonging to the specified source.
-        Provide time range by specifying ealriest and lates night to fetch. As in 20131001,  20141001.
-        This script will produce a json file containing paths to the data files and their drs files. The
-        path prefix is specified by the DATA_DIR argument '''
-
-    logging.basicConfig(level=logging.INFO)
-
-    factdb = create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
-
-    mapping = load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb)
-    # embed()
-    if mapping.size == 0:
-        logger.error('Requested data files could not be found')
+    if len(frames) == 0:
         return
 
+    df = pd.concat(frames, ignore_index=True)
+    logger.info("There are a total of {} events in the result".format(len(df)))
 
-    if parts > 1:
-        split_indices = np.array_split(np.arange(len(mapping)), parts)
-        for num, indices in enumerate(split_indices):
-            df = mapping[indices.min(): indices.max()]
-            filename = "{}_{}_{}_part_{}.json".format(earliest_night, latest_night, source.replace(' ', '_'), num)
-            logger.info("Writing {} entries to json file  {}".format(len(df), filename))
-            df.to_json(filename, orient='records', date_format='epoch' )
+    name, extension = os.path.splitext(output_path)
+    if extension == 'json':
+        logger.info("Writing JSON to {}".format(output_path))
+        df.to_json(output_path, orient='records', date_format='epoch' )
+    elif extension == 'h5' or extension == 'hdf' or extension == 'hdf5':
+        logger.info("Writing HDF5 to {}".format(output_path))
+        df.to_hdf(output_path, 'table', mode='w')
+    elif extension == 'csv':
+        logger.info("Writing CSV to {}".format(output_path))
+        df.to_csv(output_path)
     else:
-        filename = earliest_night + "_" + latest_night + "_" + source + ".json"
-        logger.info("Writing list to json file  {}".format(filename))
-        mapping.to_json(filename, orient='records', date_format='epoch' )
+        logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
+        df.to_json(output_path, orient='records', date_format='epoch' )
+
 
 def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30"):
     '''
@@ -70,6 +44,22 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     containing the paths to data files and their correpsonding .drs files. The maximum time difference between the
     data and drs files is specified by the timedelta_in_minutes parameter.
     '''
+
+    def build_path(fNight, path_to_data):
+            year = fNight[0:4]
+            month = fNight[4:6]
+            day = fNight[6:8]
+            return os.path.join(path_to_data, year, month, day)
+
+    def build_RunID(fRunID):
+        if(len(fRunID) == 1):
+            return('00' + fRunID)
+
+        if(len(fRunID) == 2):
+            return('0' + fRunID)
+
+        return(fRunID)
+
     logger.debug("Table names in DB: ")
     logger.debug(factdb.table_names())
 
@@ -182,8 +172,3 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
 
     return mapping
-
-
-
-if __name__ == '__main__':
-    main()
