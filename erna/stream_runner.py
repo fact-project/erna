@@ -10,6 +10,7 @@ def run(jar, xml, df, num):
     This is what will be executed on the cluster
     '''
     logger = logging.getLogger(__name__)
+    logger.info("stream runner has been started.")
     if 'DEFAULT_TEMP_DIR' not in os.environ:
         logger.error("No scratch directory given via environment variable DEFAULT_TEMP_DIR. Aborting")
         return "No default temp dir"
@@ -62,7 +63,7 @@ def run(jar, xml, df, num):
     except subprocess.CalledProcessError as e:
         logger.error("Fact tools returned an error:")
         logger.error(e)
-        if os.exist(output_path):
+        if os.path.exists(output_path):
             logger.error("Trying to collect output files")
         else:
             return "fact-tools error"
@@ -79,3 +80,6 @@ def run(jar, xml, df, num):
             logger.error("Fact-tools output could not be read.")
             print(e)
             return "error reading json"
+        except Exception as e:
+            print(e)
+            return "error gathering output"
