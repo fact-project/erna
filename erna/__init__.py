@@ -13,9 +13,6 @@ def collect_output(job_outputs, output_path):
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
     to a file as specified by the output_path.
     '''
-    logger.info("Job outputs: ")
-    for o in job_outputs:
-        logger.info(str(o))
     logger.info("Concatenating results from each job and writing result to {}".format(output_path))
     frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
 
