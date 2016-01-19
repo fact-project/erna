@@ -13,9 +13,6 @@ def collect_output(job_outputs, output_path):
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
     to a file as specified by the output_path.
     '''
-    logger.info("Job outputs: ")
-    for o in job_outputs:
-        logger.info(str(o))
     logger.info("Concatenating results from each job and writing result to {}".format(output_path))
     frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
 
@@ -29,18 +26,19 @@ def collect_output(job_outputs, output_path):
     logger.info("There are a total of {} events in the result".format(len(df)))
 
     name, extension = os.path.splitext(output_path)
-    if extension == 'json':
+    if extension not in ['json', 'h5', 'hdf5', 'hdf' , 'csv']:
+        logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
+        df.to_json(output_path, orient='records', date_format='epoch' )
+    elif extension == 'json':
         logger.info("Writing JSON to {}".format(output_path))
         df.to_json(output_path, orient='records', date_format='epoch' )
-    elif extension == 'h5' or extension == 'hdf' or extension == 'hdf5':
+    elif extension in ['h5', 'hdf','hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
         df.to_hdf(output_path, 'table', mode='w')
     elif extension == 'csv':
         logger.info("Writing CSV to {}".format(output_path))
         df.to_csv(output_path)
-    else:
-        logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df.to_json(output_path, orient='records', date_format='epoch' )
+
 
 
 def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30"):
