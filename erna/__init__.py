@@ -26,16 +26,16 @@ def collect_output(job_outputs, output_path):
     logger.info("There are a total of {} events in the result".format(len(df)))
 
     name, extension = os.path.splitext(output_path)
-    if extension not in ['json', 'h5', 'hdf5', 'hdf' , 'csv']:
+    if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
         df.to_json(output_path, orient='records', date_format='epoch' )
-    elif extension == 'json':
+    elif extension == '.json':
         logger.info("Writing JSON to {}".format(output_path))
         df.to_json(output_path, orient='records', date_format='epoch' )
-    elif extension in ['h5', 'hdf','hdf5']:
+    elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
         df.to_hdf(output_path, 'table', mode='w')
-    elif extension == 'csv':
+    elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
         df.to_csv(output_path)
 
