@@ -1,11 +1,12 @@
 from astropy.io import fits
-# from IPython import embed
+from IPython import embed
 import pandas as pd
 from sqlalchemy import create_engine
 import glob
 import os
 import click
 from tqdm import tqdm
+
 
 @click.command()
 @click.argument('aux_folder', type=click.Path(file_okay=False, dir_okay=True, exists=True))
@@ -27,22 +28,25 @@ def main(aux_folder, sqlite_file, chunksize, behaviour):
     # print("Found {} pointing position files in path {}".format(len(pointing_files), aux_folder))
     # df_pointing = create_dataframe(pointing_files)
 
-    drive_files = glob.glob(aux_folder + "/**/*DRIVE_CONTROL_{TRACKING,SOURCE}_POSITION.fits", recursive=True)
+    drive_files = glob.glob(aux_folder + "/**/*DRIVE_CONTROL_[TS]*_POSITION.fits", recursive=True)
+    if not drive_files:
+        print("No files found. Wrong path?")
     print("Found {} tracking position files in path {}".format(len(drive_files), aux_folder))
     df_source = pd.DataFrame()
     df_tracking = pd.DataFrame()
 
     keys_source=['Time', 'Name', 'Ra_src', 'Dec_src', 'Angle', 'Offset', 'Dec_cmd', 'Ra_cmd']
     keys_tracking=['Time', 'Ra', 'Dec', 'Az', 'Zd', 'Ha', 'dZd', 'dAz', 'dev']
-
     for f in tqdm(drive_files):
         if "SOURCE" in f:
-            append_to_dataframe(df_source, f, keys_source)
+            df_source = append_to_dataframe(df_source, f, keys_source)
         if "TRACKING" in f:
-            append_to_dataframe(df_tracking, f, keys_tracking)
+            df_tracking = append_to_dataframe(df_tracking, f, keys_tracking)
 
-    create_time_index(df_source)
-    create_time_index(df_tracking)
+
+    df_source = create_time_index(df_source)
+    df_tracking = create_time_index(df_tracking)
+
 
     print("Writing {} entries to db. This might take a while".format(len(df_source)+len(df_tracking)))
     # print("Adding pointing data.")
@@ -52,6 +56,7 @@ def main(aux_folder, sqlite_file, chunksize, behaviour):
     print("Adding source data")
     df_source.to_sql('DRIVE_CONTROL_SOURCE_POSITION', engine, index=True,  if_exists=behaviour , chunksize=chunksize)
 
+    print("Creating index")
     # result = engine.execute('CREATE UNIQUE INDEX time_pointing ON DRIVE_CONTROL_POINTING_POSITION(time_in_seconds)')
     engine.execute('CREATE INDEX time_tracking ON DRIVE_CONTROL_TRACKING_POSITION(time_in_seconds)')
     engine.execute('CREATE INDEX time_source ON DRIVE_CONTROL_SOURCE_POSITION(time_in_seconds)')
@@ -63,12 +68,12 @@ def create_time_index(df):
     df['Time'] *=  86400
     df  = df.set_index(pd.to_datetime(df['Time'], unit='s'))
     df.rename(columns={'Time':'time_in_seconds'}, inplace=True)
+    return df
 
 def append_to_dataframe(df_aux, drive_file, keys):
     try:
         hdulist = fits.open(drive_file)
         table = hdulist[1].data
-
         df = pd.DataFrame()
         for key in keys:
             try:
@@ -77,6 +82,7 @@ def append_to_dataframe(df_aux, drive_file, keys):
                 print('Swapped byteorder for key: ', key)
                 df[key] = table[key].byteswap().newbyteorder()
         df_aux = df_aux.append(df)
+        return df_aux
 
     except IndexError:
         print("File {} seems corrupted. Hdulist : {}".format(drive_file, hdulist))
@@ -87,8 +93,8 @@ def append_to_dataframe(df_aux, drive_file, keys):
     except Exception:
         print("Errors occured while reading the fits file. ")
         print("Skipping to next file.")
-
-    return
+    finally:
+        return df_aux
 
 
 if __name__ == "__main__":
