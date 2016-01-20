@@ -81,17 +81,14 @@ def append_to_dataframe(df_aux, drive_file, keys):
     except IndexError:
         print("File {} seems corrupted. Hdulist : {}".format(drive_file, hdulist))
         print("Skipping to next file.")
-        continue
     except OSError:
         print("File {} seems corrupted. Could not open file. Header corrupt?.  ".format(drive_file))
         print("Skipping to next file.")
-        continue
     except Exception:
         print("Errors occured while reading the fits file. ")
         print("Skipping to next file.")
-        continue
 
-    return df_aux
+    return
 
 
 if __name__ == "__main__":
