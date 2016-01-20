@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 
 @click.command()
-@click.argument('aux_folder', type=click.Path(file_okay=False, dir_okay=True, exists=True))
+@click.argument('aux_folder', nargs=-1, type=click.Path(file_okay=False, dir_okay=True, exists=True))
 @click.argument('sqlite_file', type=click.Path(file_okay=True, dir_okay=False,exists=False))
 @click.option('--chunksize', default=10000,  help='Size of the chunks that will be written to the database.')
 @click.option('--replace', 'behaviour', flag_value='replace', default=True)
@@ -27,11 +27,12 @@ def main(aux_folder, sqlite_file, chunksize, behaviour):
     # pointing_files = glob.glob(aux_folder + "/**/*DRIVE_CONTROL_POINTING_POSITION.fits", recursive=True)
     # print("Found {} pointing position files in path {}".format(len(pointing_files), aux_folder))
     # df_pointing = create_dataframe(pointing_files)
-
-    drive_files = glob.glob(aux_folder + "/**/*DRIVE_CONTROL_[TS]*_POSITION.fits", recursive=True)
+    drive_files = []
+    for aux in aux_folder:
+        drive_files += glob.glob(aux + "/**/*DRIVE_CONTROL_[TS]*_POSITION.fits", recursive=True)
     if not drive_files:
         print("No files found. Wrong path?")
-    print("Found {} tracking position files in path {}".format(len(drive_files), aux_folder))
+    print("Found {} position files in path {}".format(len(drive_files), aux_folder))
     df_source = pd.DataFrame()
     df_tracking = pd.DataFrame()
 
