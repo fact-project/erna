@@ -36,8 +36,8 @@ def main(aux_folder, sqlite_file, chunksize, behaviour):
     df_source = pd.DataFrame()
     df_tracking = pd.DataFrame()
 
-    keys_source=['Time', 'Name', 'Ra_src', 'Dec_src', 'Angle', 'Offset', 'Dec_cmd', 'Ra_cmd']
-    keys_tracking=['Time', 'Ra', 'Dec', 'Az', 'Zd', 'Ha', 'dZd', 'dAz', 'dev']
+    keys_source=['Time', 'Name', 'Ra_src', 'Dec_src', 'Angle', 'Offset', 'Dec_cmd', 'Ra_cmd', 'QoS']
+    keys_tracking=['Time', 'Ra', 'Dec', 'Az', 'Zd', 'Ha', 'dZd', 'dAz', 'dev', 'QoS']
     for f in tqdm(drive_files):
         if "SOURCE" in f:
             df_source = append_to_dataframe(df_source, f, keys_source)
