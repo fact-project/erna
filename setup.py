@@ -11,6 +11,7 @@ setup(
     packages=[
         'erna',
     ],
+    # dependency_links = ['git+https://github.com/mackaiver/gridmap.git#egg=gridmap'],
     install_requires=[
         'pandas',           # in anaconda
         'numpy',            # in anaconda
@@ -19,12 +20,13 @@ setup(
         'sqlalchemy',       # in anaconda
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
+        'pytables',
+        'hdf5',
         'click',
         'drmaa',
         'pyzmq',
         'numexpr',
+        # 'gridmap>=0.13.1',
     ],
-    # scripts=['scripts/shift_helper', 'scripts/qla_bot'],
-    # package_data={'fact_shift_helper.tools': ['config.gpg']},
-    zip_safe=False
+   zip_safe=False
 )
