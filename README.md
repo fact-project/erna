@@ -28,5 +28,7 @@ You cann call execute like this:
 ## estimator
 
 Needs sklearn2pmml as a dependency. Install using:
-    pip install --user --upgrade git+https://github.com/jpmml/sklearn2pmml.git
-and your set.
+
+      pip install  --upgrade git+https://github.com/jpmml/sklearn2pmml.git
+
+Also needed are scipy, joblib, scikit-learn and sklearn-pandas. You might need to uninstall or unlink openblas in your system.
