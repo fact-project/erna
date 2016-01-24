@@ -65,12 +65,14 @@ def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, n
     output_directory = path.dirname(outpath)
     #create dir if it doesnt exist
     os.makedirs(output_directory, exist_ok=True)
-    logger.info("Writing output and temporary data  to {}".format(output_directory))
+    logger.info("Writing output data  to {}".format(out))
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
     df = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb)
 
+    click.confirm('Do you want to continue processing and start jobs?', abort=True)
+
     job_list = make_jobs(jarpath, xmlpath, output_directory, df,  engine, queue, vmem, num_jobs)
-    job_outputs = gridmap.grocess_jobs(job_list, max_processes=num_jobs, local=local)
+    job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out)
 
 if __name__ == "__main__":
