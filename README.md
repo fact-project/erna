@@ -24,3 +24,9 @@ An example xml can be found in the repository. It shows how to read fact data fi
 You cann call execute like this:
 
          python erna/execute.py 20140101 20140130 /fhgfs/groups/app/fact/raw/ fact-tools-0.9.9 example.xml big_output_file.h5 --engine=PBS --vmem=10000 --num_jobs=60 --queue=one_day --source=Crab
+
+## estimator
+
+Needs sklearn2pmml as a dependency. Install using:
+    pip install --user --upgrade git+https://github.com/jpmml/sklearn2pmml.git
+and your set.
