@@ -1,11 +1,14 @@
 import pandas as pd
 import click
 from sklearn import ensemble
+from sklearn import cross_validation
+from sklearn2pmml import sklearn2pmml
 
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 # from IPython import embed
 import numpy as np
+from sklearn_pandas import DataFrameMapper
 
 training_variables = ['ConcCore', 'Concentration_onePixel', 'Concentration_twoPixel','Leakage',
         'Leakage2',  'Size', 'Slope_long', 'Slope_spread', 'Slope_spread_weighted',
@@ -33,12 +36,17 @@ training_variables = ['ConcCore', 'Concentration_onePixel', 'Concentration_twoPi
 
 @click.command()
 @click.argument('path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
+@click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
 @click.option('--n_trees','-n', default=100,  help='Number of trees to train.')
 @click.option('--n_jobs','-j', default=1,  help='Number of trees to train.')
 @click.option('--n_sample','-s', default=-1,  help='Number of data rows to sample. -1 for all rows.')
+@click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
 @click.option('--bins','-b', default=100,  help='number of bins in ocrrelation plot.')
 @click.option('--log','-l', is_flag=True,  help='Flags whether a log function should be applied to the true energie and size before training stuff.')
-def main(path, n_trees, n_jobs,n_sample, bins, log):
+def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins, log):
+    '''
+    Train a RF regressor and write the model to OUT in pmml format.
+    '''
     print("Loading data")
 
     df = pd.read_hdf(path, key='table')
@@ -47,6 +55,7 @@ def main(path, n_trees, n_jobs,n_sample, bins, log):
         df = df.sample(n_sample)
 
     df_target = df['MCorsikaEvtHeader.fTotalEnergy']
+    df_target.name = 'estimated_energy'
     df_train = df[training_variables]
     df_train = df_train.dropna(axis=0, how='any')
     df_target = df_target[df_train.index]
@@ -56,16 +65,20 @@ def main(path, n_trees, n_jobs,n_sample, bins, log):
         df_train['Size'] = df_train['Size'].apply(np.log10)
 
     rf = ensemble.RandomForestRegressor(n_estimators=n_trees,max_features="sqrt", oob_score=True, n_jobs=n_jobs)
-    print("Training classifier")
-    rf.fit(df_train.values, df_target)
-    print("Scoring classifier")
-    s = rf.score(df_train, df_target)
 
-    print("Score R^2 (a value of 1.0 would be the best): {}".format(s))
+    print("Training classifier in a {} fold CV...".format(n_cv))
+    scores = cross_validation.cross_val_score(rf, df_train, df_target, cv=n_cv)
+
+    print("Cross validated R^2 scores: {}".format(scores))
+    print("Mean R^2 score : %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
+
+    print("Building new model on complete data set...")
+    rf = ensemble.RandomForestRegressor(n_estimators=n_trees,max_features="sqrt", oob_score=True, n_jobs=n_jobs)
+    rf.fit(df_train, df_target)
+    print("Score on complete data set: {}".format(rf.score(df_train, df_target)))
+
     importances = pd.DataFrame(rf.feature_importances_, index=df_train.columns, columns=['importance'])
     importances = importances.sort_values(by='importance', ascending=True)
-
-    # print(importances)
     print('Plotting importances to importances.pdf')
     ax = importances.plot(
         kind='barh',
@@ -79,7 +92,12 @@ def main(path, n_trees, n_jobs,n_sample, bins, log):
     print('Plotting correlation to correlation.pdf')
     fig = plt.figure()
     prediction = rf.predict(df_train)
-    _, _, _, im = plt.hist2d(np.log10(df_target), np.log10(prediction), bins=bins, normed=True, cmin=1, cmap='inferno')
+
+    if log:
+        _, _, _, im = plt.hist2d(df_target, prediction, bins=bins, normed=True, cmin=1, cmap='inferno')
+    else:
+        _, _, _, im = plt.hist2d(np.log10(df_target), np.log10(prediction), bins=bins, normed=True, cmin=1, cmap='inferno')
+
     fig.colorbar(im)
     plt.xlabel('logarithm of true energy')
     plt.ylabel('logarithm of estimated energy')
@@ -92,6 +110,13 @@ def main(path, n_trees, n_jobs,n_sample, bins, log):
     result['True Energy'] = df_target.values
 
     result.to_json('prediction.json')
+
+    print("writing model to {}".format(out))
+    mapper = DataFrameMapper([
+                            (list(df_train.columns), None),
+                            ('estimated_energy', None)
+                    ])
+    sklearn2pmml(rf, mapper,  out)
 
 if __name__ == '__main__':
     main()
