@@ -6,6 +6,9 @@ from os import path
 import erna
 import gridmap
 from gridmap import Job
+from tqdm import tqdm
+import glob
+from IPython import embed
 
 
 logger = logging.getLogger(__name__)
@@ -32,7 +35,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs):
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True))
 @click.argument('drs_file', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
-@click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=True, readable=True))
+@click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True))
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
@@ -42,8 +45,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs):
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.')
 def main( jar, xml, out,drs_file, mc_path, queue, engine, num_jobs, vmem, log_level, port, local):
     '''
-    Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy which files should be used.
-    Pass a glob pattern to select more than one file.
+    Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -56,10 +58,19 @@ def main( jar, xml, out,drs_file, mc_path, queue, engine, num_jobs, vmem, log_le
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
-    #get data files
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
-    num_files = len(mc_path)
+    #get data files
+    print("Finding files {}".format(mc_path))
+    files=[]
+    # embed()
+    for folder in tqdm(mc_path):
+        # print("Entering folder {}".format(folder))
+        pattern = path.join(folder, '**/*_Events.fits.gz')
+        f = glob.glob(pattern, recursive=True)
+        files = files + f
+
+    num_files = len(files)
     logger.info("Found {} files.".format(num_files))
     if num_files == 1:
         logger.error("Need more than one file to work with.")
@@ -68,8 +79,9 @@ def main( jar, xml, out,drs_file, mc_path, queue, engine, num_jobs, vmem, log_le
         logger.error("You specified more jobs than files. This doesn't make sense.")
         return
 
+    click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-    mc_paths_array = np.array(mc_path)
+    mc_paths_array = np.array(files)
     drs_paths_array = np.repeat(np.array(drs_file), len(mc_paths_array))
 
     job_list = make_jobs(jarpath, xmlpath, mc_paths_array, drs_paths_array,  engine, queue, vmem, num_jobs)
