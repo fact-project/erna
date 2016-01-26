@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='erna',
@@ -20,8 +20,8 @@ setup(
         'sqlalchemy',       # in anaconda
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
-        'pytables',
-        'hdf5',
+        'tables',
+        # 'hdf5',
         'click',
         'drmaa',
         'pyzmq',
