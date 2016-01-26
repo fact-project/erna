@@ -9,6 +9,7 @@
 
 
     <service id="auxService" class="fact.auxservice.SqliteService" url="${db}" />
+    <service id="calibService" class="fact.calibrationservice.ConstantCalibService" />
 
     <!-- Has to be a  FactFileListMultiStream in order to work on tasks from gridmap and the executor script.-->
     <stream id="fact" class="fact.io.FactFileListMultiStream"   url="${input}">
