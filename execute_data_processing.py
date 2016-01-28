@@ -9,6 +9,7 @@ from os import path
 import os
 import gridmap
 from gridmap import Job
+import datacheck_conditions as dcc
 
 
 logger = logging.getLogger(__name__)
@@ -43,10 +44,12 @@ def make_jobs(jar, xml, output_directory, df_mapping,  engine, queue, vmem, num_
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
+@click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='std')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, num_jobs, vmem, log_level, port, source, max_delta_t, local, password):
+
+def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, num_jobs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
     level=logging.INFO
     if log_level is 'DEBUG':
         level = logging.DEBUG
@@ -67,7 +70,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, n
     os.makedirs(output_directory, exist_ok=True)
     logger.info("Writing output data  to {}".format(out))
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
-    df = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb)
+    data_conditions=dcc.conditions[conditions]
+    df = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
 
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 

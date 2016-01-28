@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 from datetime import timedelta
 from . import stream_runner
+import datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,9 @@ def collect_output(job_outputs, output_path):
 
 
 
-def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30"):
+def load(earliest_night, latest_night, path_to_data,
+factdb,source_name="Crab", timedelta_in_minutes="30",
+data_conditions=dcc.conditions["std"]):
     '''
     Given the earliest and latest night to fetch as a factnight string (as in 20141024) this method returns a DataFrame
     containing the paths to data files and their correpsonding .drs files. The maximum time difference between the
@@ -76,17 +79,10 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     firstNight = earliest_night
     lastNight = latest_night
 
-
-    columns  = ["fNight", "fROI", "fRunTypeKey", "fRunStart", "fRunStop", "fSourceKEY",
-                "fCurrentsDevMean", "fMoonZenithDistance", "fThresholdMedian", "fEffectiveOn", "fCurrentsMedMean",
-                "fZenithDistanceMean", "fDrsStep", "fRunID", "fOnTime", "fHasDrsFile", "fTriggerRateMedian",
-                "fThresholdMinSet"]
-
-
     logger.info("Reading Data from DataBase from " + str(firstNight) + " to " + str(lastNight) +
                 " for source: " + source_name)
 
-    rundb = pd.read_sql("SELECT " + ",".join(columns) + " from RunInfo WHERE (fNight > " + firstNight + " AND fNight <" + lastNight + ") ", factdb)
+    rundb = pd.read_sql("SELECT * from RunInfo WHERE (fNight > " + firstNight + " AND fNight <" + lastNight + ") ", factdb)
 
 
     #lets try to get all data runs from a specific source between two dates
@@ -97,21 +93,13 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
         logger.error('Allowed names are: {}'.format(sourceDB.fSourceName) )
         return pd.DataFrame()
 
-    #define conditions for data quality
-    conditions = [
-        "fRunTypeKey == 1", # Data Events
-        "fMoonZenithDistance > 100",
-        #"fCurrentsMedMean < 7", # low light conditions hopefully
-         "fROI == 300",
-         "fZenithDistanceMean < 30",
+    #add source key to conditions for data quality
+    data_conditions += [
          "fSourceKEY == " + str(int(source.fSourceKEY)),
-         "fTriggerRateMedian > 40",
-         "fTriggerRateMedian < 85",
-         "fOnTime > 0.95",
-         "fThresholdMinSet < 350"
     ]
-    querystring = " & ".join(conditions)
+    querystring = " & ".join(data_conditions)
 
+    print(querystring)
     #get all data runs according to the conditions
     data = rundb.query(querystring)
 
