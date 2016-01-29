@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 from tqdm import tqdm
 from sklearn.naive_bayes import GaussianNB
 from sklearn import metrics
+from functools import partial
 import os
 
 import matplotlib.pyplot as plt
@@ -40,6 +41,40 @@ training_variables = ['ConcCore', 'Concentration_onePixel', 'Concentration_twoPi
        'phChargeShower_skewness', 'phChargeShower_variance',
        'photonchargeMean']
 
+def calculate_metric_for_confidence_cuts(predictions, metric, confidence_bins):
+    n_folds = len(predictions)
+    # plot stuff with confidence cuts
+    metric_values = np.zeros((n_folds, confidence_bins))
+    for fold, (test, prediction, probas) in enumerate(predictions):
+        for c_bin, cut in enumerate(np.linspace(0, 1, confidence_bins)):
+            cutted_prediction = prediction.copy()
+            cutted_prediction[probas < cut] = 0
+            cutted_prediction[probas >= cut] = 1
+            m_value = metric(test, cutted_prediction)
+            # embed()
+            metric_values[fold][c_bin] = m_value
+    return metric_values
+
+def plot_metric_vs_confidence(metric_values, label='Some metric', axis= None):
+    fig = None
+    if not axis:
+        fig, axis= plt.subplots(1)
+    # embed()
+    acc_mean = np.mean(metric_values, axis=0)
+    acc_err = np.std(metric_values, axis=0)
+
+    b = np.linspace(0, 1, len(acc_mean))
+    axis.plot(b, acc_mean, 'r+', label=label)
+    axis.fill_between(
+        b, acc_mean + acc_err * 0.5, acc_mean - acc_err*0.5,
+        facecolor='gray', alpha=0.4,
+    )
+    axis.legend(loc='best', fancybox=True, framealpha=0.5)
+    axis.set_xlabel('prediction threshold')
+
+    return fig, axis
+
+
 
 def classifier_crossval_performance(X, y, classifier=GaussianNB(), n_folds=10, bins=50):
 
@@ -49,14 +84,8 @@ def classifier_crossval_performance(X, y, classifier=GaussianNB(), n_folds=10, b
     # create inset axis for zooming
     axins = zoomed_inset_axes(ax, 3.5, loc=1)
 
+    #save predictions for each cv iteration
     labels_predictions = []
-
-    # save all aucs and confusion matrices for each cv fold
-    roc_aucs = []
-    confusion_matrices = []
-    precisions = []
-    recalls = []
-    f_scores = []
 
     # iterate over test and training sets
     cv = cross_validation.StratifiedKFold(y, n_folds=n_folds)
@@ -72,7 +101,6 @@ def classifier_crossval_performance(X, y, classifier=GaussianNB(), n_folds=10, b
         y_prediction = classifier.predict(xtest)
         labels_predictions.append((ytest, y_prediction, y_probas))
 
-    # calculate metrics
     # save all aucs and confusion matrices for each cv fold
     roc_aucs = np.zeros(n_folds)
     confusion_matrices = np.zeros([n_folds, 2, 2])
@@ -80,6 +108,7 @@ def classifier_crossval_performance(X, y, classifier=GaussianNB(), n_folds=10, b
     recalls = np.zeros(n_folds)
     f_scores = np.zeros(n_folds)
 
+    # calculate metrics
     for i, (test, prediction, proba) in enumerate(labels_predictions):
         matrix = metrics.confusion_matrix(test, prediction)
         p, r, f, _ = metrics.precision_recall_fscore_support(
@@ -260,15 +289,54 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
     df_training = df_full[training_variables]
     df_label = df_full['label']
 
-
+    #create classifier
     rf = ensemble.RandomForestClassifier(n_estimators=n_trees, max_features="sqrt", n_jobs=n_jobs)
 
-    roc_aucs, fig = classifier_crossval_performance(df_training.values, df_label.values, classifier=rf, n_folds=n_cv, bins=n_bins)
+    #save predictions for each cv iteration
+    labels_predictions = []
+    # iterate over test and training sets
+    X =  df_training.values
+    y = df_label.values
+    print('Starting {} fold cross validation '.format(n_cv) )
+    cv = cross_validation.StratifiedKFold(y, n_folds=n_cv)
+    for train, test in tqdm(cv):
+        # select data
+        xtrain, xtest = X[train], X[test]
+        ytrain, ytest = y[train], y[test]
+        # fit and predict
+        rf.fit(xtrain, ytrain)
+        y_probas = rf.predict_proba(xtest)[:, 1]
+        y_prediction = rf.predict(xtest)
+        labels_predictions.append((ytest, y_prediction, y_probas))
 
-    p, ext = os.path.splitext(out)
-    plot_path = '{}_crossval_performance{}'.format(p, '.pdf')
-    print('Saving plot to {}'.format(plot_path))
-    fig.savefig(plot_path)
+
+    b = 1/10
+    f_beta= partial(metrics.fbeta_score, beta=b)
+    betas = calculate_metric_for_confidence_cuts(labels_predictions, f_beta, n_bins)
+    fig, ax = plot_metric_vs_confidence(betas, label='f score with beta = {}'.format(b))
+    fig.savefig('fbeta.pdf')
+
+
+    aucs = calculate_metric_for_confidence_cuts(labels_predictions, metrics.roc_auc_score, n_bins)
+    fig, ax = plot_metric_vs_confidence(aucs, label='roc auc')
+    fig.savefig('roc_auc.pdf')
+
+    recall = calculate_metric_for_confidence_cuts(labels_predictions, metrics.recall_score, n_bins)
+    fig, ax = plot_metric_vs_confidence(recall, label='recall')
+    precision = calculate_metric_for_confidence_cuts(labels_predictions, metrics.precision_score, n_bins)
+    _, ax = plot_metric_vs_confidence(precision, label='precision', axis=ax)
+    fig.savefig('recall_precision.pdf')
+
+    y_test = labels_predictions[0][0]
+    y_pred = labels_predictions[0][1]
+    report = metrics.classification_report(y_test, y_pred)
+    print(report)
+    # roc_aucs, fig = classifier_crossval_performance(df_training.values, df_label.values, classifier=rf, n_folds=n_cv, bins=n_bins)
+
+    # p, ext = os.path.splitext(out)
+    # plot_path = '{}_crossval_performance{}'.format(p, '.pdf')
+    # print('Saving plot to {}'.format(plot_path))
+    # fig.savefig(plot_path)
 
 
 
