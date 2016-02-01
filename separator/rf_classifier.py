@@ -55,7 +55,7 @@ def calculate_metric_for_confidence_cuts(predictions, metric, confidence_bins):
             metric_values[fold][c_bin] = m_value
     return metric_values
 
-def plot_metric_vs_confidence(metric_values, label='Some metric', axis= None):
+def plot_metric_vs_confidence(metric_values, label='Some metric', axis = None, color='#cc4368'):
     fig = None
     if not axis:
         fig, axis= plt.subplots(1)
@@ -64,7 +64,7 @@ def plot_metric_vs_confidence(metric_values, label='Some metric', axis= None):
     acc_err = np.std(metric_values, axis=0)
 
     b = np.linspace(0, 1, len(acc_mean))
-    axis.plot(b, acc_mean, 'r+', label=label)
+    axis.plot(b, acc_mean, 'r+', label=label, color=color)
     axis.fill_between(
         b, acc_mean + acc_err * 0.5, acc_mean - acc_err*0.5,
         facecolor='gray', alpha=0.4,
@@ -75,109 +75,18 @@ def plot_metric_vs_confidence(metric_values, label='Some metric', axis= None):
     return fig, axis
 
 
-
-def classifier_crossval_performance(X, y, classifier=GaussianNB(), n_folds=10, bins=50):
-
-    # create axis and figure
-    fig, (ax, ax2, ax3) = plt.subplots(3, 1)
-    fig.set_size_inches(12, 18)
-    # create inset axis for zooming
-    axins = zoomed_inset_axes(ax, 3.5, loc=1)
-
-    #save predictions for each cv iteration
-    labels_predictions = []
-
-    # iterate over test and training sets
-    cv = cross_validation.StratifiedKFold(y, n_folds=n_folds)
-
-    for train, test in tqdm(cv):
-        # select data
-        xtrain, xtest = X[train], X[test]
-        ytrain, ytest = y[train], y[test]
-
-        # fit and predict
-        classifier.fit(xtrain, ytrain)
-        y_probas = classifier.predict_proba(xtest)[:, 1]
-        y_prediction = classifier.predict(xtest)
-        labels_predictions.append((ytest, y_prediction, y_probas))
-
-    # save all aucs and confusion matrices for each cv fold
-    roc_aucs = np.zeros(n_folds)
-    confusion_matrices = np.zeros([n_folds, 2, 2])
-    precisions = np.zeros(n_folds)
-    recalls = np.zeros(n_folds)
-    f_scores = np.zeros(n_folds)
-
-    # calculate metrics
-    for i, (test, prediction, proba) in enumerate(labels_predictions):
-        matrix = metrics.confusion_matrix(test, prediction)
-        p, r, f, _ = metrics.precision_recall_fscore_support(
-            test, prediction,
-        )
-        auc = metrics.roc_auc_score(test, proba)
-
-        confusion_matrices[i] = matrix
-        roc_aucs[i] = auc
-        precisions[i] = p[1]
-        recalls[i] = r[1]
-        f_scores[i] = f[1]
-
-    # plot roc aucs
+def plot_roc_curves(labels_predictions, ax=None, title=None):
+        # plot roc aucs
+    # fig = None
+    if not ax:
+        fig, ax = plt.subplots(1)
+    axins = zoomed_inset_axes(ax, 2.5, loc=1)
     for test, prediction, proba in labels_predictions:
         fpr, tpr, thresholds = metrics.roc_curve(
             test, proba
         )
         ax.plot(fpr, tpr, linestyle='-', color='k', alpha=0.3)
         axins.plot(fpr, tpr, linestyle='-', color='k', alpha=0.3)
-
-    # plot stuff with confidence cuts
-    matrices = np.zeros((n_folds, bins, 2, 2))
-    for fold, (test, prediction, probas) in enumerate(labels_predictions):
-        for i, cut in enumerate(np.linspace(0, 1, bins)):
-            cutted_prediction = prediction.copy()
-            cutted_prediction[probas < cut] = 0
-            cutted_prediction[probas >= cut] = 1
-            confusion = metrics.confusion_matrix(test, cutted_prediction)
-            matrices[fold][i] = confusion
-
-    b = np.linspace(0, 1, bins)
-
-    tps = matrices[:, :, 0, 0]
-    fns = matrices[:, :, 0, 1]
-    fps = matrices[:, :, 1, 0]
-    tns = matrices[:, :, 1, 1]
-
-    q_mean = np.mean(tps / np.sqrt(tns), axis=0)
-    q_err = np.std(tps / np.sqrt(tns), axis=0)
-    e_mean = np.mean(tps / np.sqrt(tns + tps), axis=0)
-    e_err = np.std(tps / np.sqrt(tns + tps), axis=0)
-
-    ax2.plot(b, q_mean, 'b+', label=r'$\frac{tps}{\sqrt{tns}}$')
-    ax2.fill_between(
-        b, q_mean + q_err*0.5, q_mean - q_err*0.5, facecolor='gray', alpha=0.4
-    )
-    ax2.plot(
-        b, e_mean,
-        color='#58BADB', linestyle='', marker='+',
-        label=r'$\frac{tps}{\sqrt{tns + tps}}$',
-    )
-    ax2.fill_between(
-        b, e_mean + e_err*0.5, e_mean - e_err*0.5, facecolor='gray', alpha=0.4
-    )
-    ax2.legend(loc='best', fancybox=True, framealpha=0.5)
-    ax2.set_xlabel('prediction threshold')
-
-    accs = (tps + tns)/(tps + fps + fns + tns)
-    acc_mean = np.mean(accs, axis=0)
-    acc_err = np.std(accs, axis=0)
-
-    ax3.plot(b, acc_mean, 'r+', label=r'Accuracy')
-    ax3.fill_between(
-        b, acc_mean + acc_err * 0.5, acc_mean - acc_err*0.5,
-        facecolor='gray', alpha=0.4,
-    )
-    ax3.legend(loc='best', fancybox=True, framealpha=0.5)
-    ax3.set_xlabel('prediction threshold')
 
     ax.set_xlabel('False Positiv Rate')
     ax.set_ylabel('True Positiv Rate')
@@ -188,13 +97,54 @@ def classifier_crossval_performance(X, y, classifier=GaussianNB(), n_folds=10, b
     axins.set_xticks([0.0, 0.05, 0.1, 0.15])
     axins.set_yticks([0.8, 0.85, 0.9, 0.95, 1.0])
     mark_inset(ax, axins, loc1=2, loc2=3, fc='none', ec='0.8')
-    name = str(type(classifier).__name__)
-    ax.set_title('RoC curves for the {} classifier'.format(name), y=1.03)
+    if not title:
+        ax.set_title('RoC curves for the classifier', y=1.03)
+    if title:
+        ax.set_title(title, y=1.03)
+    return fig, ax
 
-    print_performance(
-        roc_aucs, confusion_matrices, precisions, recalls, f_scores
+def plot_q_values(labels_predictions,confidence_bins, ax=None):
+    '''plot q values.'''
+    if not ax:
+        fig, ax = plt.subplots(1)
+
+    matrices = np.zeros((len(labels_predictions), confidence_bins, 2, 2))
+    for fold, (test, prediction, probas) in enumerate(labels_predictions):
+        for i, cut in enumerate(np.linspace(0, 1, confidence_bins)):
+            cutted_prediction = prediction.copy()
+            cutted_prediction[probas < cut] = 0
+            cutted_prediction[probas >= cut] = 1
+            confusion = metrics.confusion_matrix(test, cutted_prediction)
+            matrices[fold][i] = confusion
+
+    b = np.linspace(0, 1, confidence_bins)
+
+    tps = matrices[:, :, 0, 0]
+    # fns = matrices[:, :, 0, 1]
+    # fps = matrices[:, :, 1, 0]
+    tns = matrices[:, :, 1, 1]
+
+    q_mean = np.mean(tps / np.sqrt(tns), axis=0)
+    q_err = np.std(tps / np.sqrt(tns), axis=0)
+    e_mean = np.mean(tps / np.sqrt(tns + tps), axis=0)
+    e_err = np.std(tps / np.sqrt(tns + tps), axis=0)
+
+    ax.plot(b, q_mean, 'b+', label=r'$\frac{tps}{\sqrt{tns}}$')
+    ax.fill_between(
+        b, q_mean + q_err*0.5, q_mean - q_err*0.5, facecolor='gray', alpha=0.4
     )
-    return roc_aucs, fig
+    ax.plot(
+        b, e_mean,
+        color='#58BADB', linestyle='', marker='+',
+        label=r'$\frac{tps}{\sqrt{tns + tps}}$',
+    )
+    ax.fill_between(
+        b, e_mean + e_err*0.5, e_mean - e_err*0.5, facecolor='gray', alpha=0.4
+    )
+    ax.legend(loc='best', fancybox=True, framealpha=0.5)
+    ax.set_xlabel('prediction threshold')
+    return fig, ax
+
 
 def print_performance(
         roc_aucs,
@@ -268,7 +218,7 @@ def plot_importances(rf, features, path):
 @click.option('--n_bins','-b', default=50,  help='Number of bins to plot for performance plots')
 def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
     '''
-    Train a RF regressor and write the model to OUT in pmml format.
+    Train a RF classifier and write the model to OUT in pmml format.
     '''
     print("Loading data")
 
@@ -324,13 +274,21 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
     recall = calculate_metric_for_confidence_cuts(labels_predictions, metrics.recall_score, n_bins)
     fig, ax = plot_metric_vs_confidence(recall, label='recall')
     precision = calculate_metric_for_confidence_cuts(labels_predictions, metrics.precision_score, n_bins)
-    _, ax = plot_metric_vs_confidence(precision, label='precision', axis=ax)
+    _, ax = plot_metric_vs_confidence(precision, label='precision', axis=ax, color='#3c84d7')
     fig.savefig('recall_precision.pdf')
 
-    y_test = labels_predictions[0][0]
-    y_pred = labels_predictions[0][1]
-    report = metrics.classification_report(y_test, y_pred)
-    print(report)
+    fig, ax = plot_q_values(labels_predictions, n_bins)
+    fig.savefig('q_values.pdf')
+
+    fig, ax = plot_roc_curves(labels_predictions)
+    fig.savefig('roc_curves.pdf')
+
+
+
+    # y_test = labels_predictions[0][0]
+    # y_pred = labels_predictions[0][1]
+    # report = metrics.classification_report(y_test, y_pred)
+    # print(report)
     # roc_aucs, fig = classifier_crossval_performance(df_training.values, df_label.values, classifier=rf, n_folds=n_cv, bins=n_bins)
 
     # p, ext = os.path.splitext(out)
