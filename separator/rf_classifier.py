@@ -6,10 +6,11 @@ from sklearn2pmml import sklearn2pmml
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 from tqdm import tqdm
-from sklearn.naive_bayes import GaussianNB
+
 from sklearn import metrics
 from functools import partial
-import os
+# import os
+import xml.etree.ElementTree as ET
 
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
@@ -216,16 +217,24 @@ def plot_importances(rf, features, path):
 @click.option('--n_sample','-s', default=-1,  help='Number of data rows to sample. -1 for all rows.')
 @click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
 @click.option('--n_bins','-b', default=50,  help='Number of bins to plot for performance plots')
-def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
+@click.option('--max_depth','-d', default=None, type=click.INT, help='Maximum depth of the trees in the forest.')
+@click.option('--query','-q', default=None,  help='Query to apply to the data e.g : \"(Leakage < 0.0) & (Size < 10000)\"')
+def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, max_depth, query):
     '''
     Train a RF classifier and write the model to OUT in pmml format.
     '''
     print("Loading data")
 
     df_gamma = pd.read_hdf(gamma_path, key='table')
+    df_proton = pd.read_hdf(proton_path, key='table')
+
+    if query:
+        print('Quering with string: {}'.format(query))
+        df_gamma = df_gamma.query(query)
+        df_proton = df_proton.query(query)
+
     df_gamma['label_text'] = 'gamma'
     df_gamma['label'] = 1
-    df_proton = pd.read_hdf(proton_path, key='table')
     df_proton['label_text'] = 'proton'
     df_proton['label'] = 0
 
@@ -233,14 +242,15 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
         df_gamma = df_gamma.sample(n_sample)
         df_proton = df_proton.sample(n_sample)
 
-    # embed()
+
     print('Training classifier with {} protons and {} gammas'.format(len(df_proton), len(df_gamma)))
+
     df_full = pd.concat([df_proton, df_gamma], ignore_index=True).dropna(axis=0, how='any')
     df_training = df_full[training_variables]
     df_label = df_full['label']
 
     #create classifier
-    rf = ensemble.RandomForestClassifier(n_estimators=n_trees, max_features="sqrt", n_jobs=n_jobs)
+    rf = ensemble.RandomForestClassifier(n_estimators=n_trees, max_features="sqrt", n_jobs=n_jobs, max_depth=max_depth)
 
     #save predictions for each cv iteration
     labels_predictions = []
@@ -259,7 +269,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
         y_prediction = rf.predict(xtest)
         labels_predictions.append((ytest, y_prediction, y_probas))
 
-
+    # embed()
     print('Creating plots...')
     b = 1/10
     f_beta= partial(metrics.fbeta_score, beta=b)
@@ -271,6 +281,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
     aucs = calculate_metric_for_confidence_cuts(labels_predictions, metrics.roc_auc_score, n_bins)
     fig, ax = plot_metric_vs_confidence(aucs, label='roc auc')
     fig.savefig('roc_auc.pdf')
+    print("Highest AUC ROC: {}".format(np.array(aucs).max()))
 
     recall = calculate_metric_for_confidence_cuts(labels_predictions, metrics.recall_score, n_bins)
     fig, ax = plot_metric_vs_confidence(recall, label='recall')
@@ -284,20 +295,18 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
     fig, ax = plot_roc_curves(labels_predictions)
     fig.savefig('roc_curves.pdf')
 
-
-
-    # y_test = labels_predictions[0][0]
-    # y_pred = labels_predictions[0][1]
-    # report = metrics.classification_report(y_test, y_pred)
-    # print(report)
-    # roc_aucs, fig = classifier_crossval_performance(df_training.values, df_label.values, classifier=rf, n_folds=n_cv, bins=n_bins)
-
-    # p, ext = os.path.splitext(out)
-    # plot_path = '{}_crossval_performance{}'.format(p, '.pdf')
-    # print('Saving plot to {}'.format(plot_path))
-    # fig.savefig(plot_path)
-
-
+    plt.figure()
+    importances = pd.DataFrame(rf.feature_importances_, index=df_training.columns, columns=['importance'])
+    importances = importances.sort_values(by='importance', ascending=True)
+    print('Plotting importances to importances.pdf')
+    ax = importances.plot(
+        kind='barh',
+        color='#3c84d7'
+    )
+    ax.set_xlabel(u'feature importance')
+    ax.get_yaxis().grid(None)
+    plt.tight_layout()
+    plt.savefig('importances.pdf')
 
     print("Writing model to {} ...".format(out))
     mapper = DataFrameMapper([
@@ -305,6 +314,22 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
                             ('label', None)
                     ])
     sklearn2pmml(rf, mapper,  out)
+
+    print('Adding data information to pmml...')
+    ET.register_namespace('',"http://www.dmg.org/PMML-4_2")
+    xml_tree = ET.parse('rf.pmml')
+    root = xml_tree.getroot()
+    header = root.findall('{http://www.dmg.org/PMML-4_2}Header')[0]
+    newNode = ET.Element('Description')
+    newNode.text = 'Data was queried with {} and contained {} gammas and {} protons'.format(query, len(df_gamma), len(df_proton))
+    header.append(newNode)
+    xml_tree.write(out,
+           xml_declaration=True,encoding='utf-8',
+           method='xml')
+
+
+
+
 
 if __name__ == '__main__':
     main()
