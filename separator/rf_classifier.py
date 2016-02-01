@@ -234,7 +234,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
         df_proton = df_proton.sample(n_sample)
 
     # embed()
-
+    print('Training classifier with {} protons and {} gammas'.format(len(df_proton), len(df_gamma)))
     df_full = pd.concat([df_proton, df_gamma], ignore_index=True).dropna(axis=0, how='any')
     df_training = df_full[training_variables]
     df_label = df_full['label']
@@ -247,7 +247,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
     # iterate over test and training sets
     X =  df_training.values
     y = df_label.values
-    print('Starting {} fold cross validation '.format(n_cv) )
+    print('Starting {} fold cross validation... '.format(n_cv) )
     cv = cross_validation.StratifiedKFold(y, n_folds=n_cv)
     for train, test in tqdm(cv):
         # select data
@@ -260,6 +260,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
         labels_predictions.append((ytest, y_prediction, y_probas))
 
 
+    print('Creating plots...')
     b = 1/10
     f_beta= partial(metrics.fbeta_score, beta=b)
     betas = calculate_metric_for_confidence_cuts(labels_predictions, f_beta, n_bins)
@@ -298,7 +299,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins):
 
 
 
-    print("writing model to {}".format(out))
+    print("Writing model to {} ...".format(out))
     mapper = DataFrameMapper([
                             (list(df_training.columns), None),
                             ('label', None)
