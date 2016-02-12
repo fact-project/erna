@@ -15,6 +15,18 @@ conditions['std'] = [
 
 # ------------------------------------------------------------------------------
 
+conditions['onlyOnTime'] = [
+    'fRunTypeKey == 1',  # Data Events
+    'fROI == 300',
+    #'fZenithDistanceMean < 30',
+    #'fTriggerRateMedian > 40',
+    #'fTriggerRateMedian < 85',
+    'fOnTime > 0.95',
+    #'fThresholdMinSet < 350'
+]
+
+# ------------------------------------------------------------------------------
+
 # zdparamStr = 'pow(0.753833 * cos(Radians(fZenithDistanceMean)), 7.647435) * exp(-5.753686*pow(Radians(fZenithDistanceMean),2.089609))'
 # thparamStr = 'pow((if(isnull(fThresholdMinSet),fThresholdMedian,fThresholdMinSet)-329.4203),2) * (-0.0000002044803)'
 # paramStr = '(fNumEvtsAfterBgCuts/5-fNumSigEvts)/fOnTimeAfterCuts - {0} - {1}'.format(zdparamStr, thparamStr)
