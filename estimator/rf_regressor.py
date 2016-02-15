@@ -4,6 +4,9 @@ from sklearn import ensemble
 from sklearn import cross_validation
 from sklearn2pmml import sklearn2pmml
 
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 # from IPython import embed

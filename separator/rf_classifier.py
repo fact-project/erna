@@ -10,37 +10,76 @@ from tqdm import tqdm
 from sklearn import metrics
 from functools import partial
 # import os
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
+
+import matplotlib
+matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
-from IPython import embed
+# from IPython import embed
 import numpy as np
 from sklearn_pandas import DataFrameMapper
+from sklearn.externals import joblib
 
-training_variables = ['ConcCore', 'Concentration_onePixel', 'Concentration_twoPixel','Leakage',
-        'Leakage2',  'Size', 'Slope_long', 'Slope_spread', 'Slope_spread_weighted',
-       'Slope_trans','Timespread','Theta',
-       'Timespread_weighted', 'Width',
-       'arrTimePosShower_kurtosis', 'arrTimePosShower_max',
-       'arrTimePosShower_mean', 'arrTimePosShower_min',
-       'arrTimePosShower_skewness', 'arrTimePosShower_variance',
-       'arrTimeShower_kurtosis', 'arrTimeShower_max', 'arrTimeShower_mean',
-       'arrTimeShower_min', 'arrTimeShower_skewness',
-       'arrTimeShower_variance', 'arrivalTimeMean', 'concCOG', 'm3l',
-       'm3t', 'maxPosShower_kurtosis', 'maxPosShower_max',
-       'maxPosShower_mean', 'maxPosShower_min', 'maxPosShower_skewness',
-       'maxPosShower_variance', 'maxSlopesPosShower_kurtosis',
-       'maxSlopesPosShower_max', 'maxSlopesPosShower_mean',
-       'maxSlopesPosShower_min', 'maxSlopesPosShower_skewness',
-       'maxSlopesPosShower_variance', 'maxSlopesShower_kurtosis',
-       'maxSlopesShower_max', 'maxSlopesShower_mean',
-       'maxSlopesShower_min', 'maxSlopesShower_skewness',
-       'maxSlopesShower_variance', 'numIslands', 'numPixelInShower',
-       'phChargeShower_kurtosis', 'phChargeShower_max',
-       'phChargeShower_mean', 'phChargeShower_min',
-       'phChargeShower_skewness', 'phChargeShower_variance',
-       'photonchargeMean']
+
+training_variables = ['ConcCore',
+ 'Concentration_onePixel',
+ 'Concentration_twoPixel',
+ 'Leakage',
+ 'Leakage2',
+ 'Size',
+ 'Slope_long',
+ 'Slope_spread',
+ 'Slope_spread_weighted',
+ 'Slope_trans',
+ 'Theta',
+ 'Timespread',
+ 'Timespread_weighted',
+ 'Width',
+ 'arrTimePosShower_kurtosis',
+ 'arrTimePosShower_max',
+ 'arrTimePosShower_mean',
+ 'arrTimePosShower_min',
+ 'arrTimePosShower_skewness',
+ 'arrTimePosShower_variance',
+ 'arrTimeShower_kurtosis',
+ 'arrTimeShower_max',
+ 'arrTimeShower_mean',
+ 'arrTimeShower_min',
+ 'arrTimeShower_skewness',
+ 'arrTimeShower_variance',
+ 'arrivalTimeMean',
+ 'concCOG',
+ 'm3l',
+ 'm3t',
+ 'maxPosShower_kurtosis',
+ 'maxPosShower_max',
+ 'maxPosShower_mean',
+ 'maxPosShower_min',
+ 'maxPosShower_skewness',
+ 'maxPosShower_variance',
+ 'maxSlopesPosShower_kurtosis',
+ 'maxSlopesPosShower_max',
+ 'maxSlopesPosShower_mean',
+ 'maxSlopesPosShower_min',
+ 'maxSlopesPosShower_skewness',
+ 'maxSlopesPosShower_variance',
+ 'maxSlopesShower_kurtosis',
+ 'maxSlopesShower_max',
+ 'maxSlopesShower_mean',
+ 'maxSlopesShower_min',
+ 'maxSlopesShower_skewness',
+ 'maxSlopesShower_variance',
+ 'numIslands',
+ 'numPixelInShower',
+ 'phChargeShower_kurtosis',
+ 'phChargeShower_max',
+ 'phChargeShower_mean',
+ 'phChargeShower_min',
+ 'phChargeShower_skewness',
+ 'phChargeShower_variance',
+ 'photonchargeMean']
 
 def calculate_metric_for_confidence_cuts(predictions, metric, confidence_bins):
     n_folds = len(predictions)
@@ -55,6 +94,26 @@ def calculate_metric_for_confidence_cuts(predictions, metric, confidence_bins):
             # embed()
             metric_values[fold][c_bin] = m_value
     return metric_values
+
+def plot_prediction_threshold_historgram(predictions,confidence_bins, ax=None):
+    if not ax:
+        fig, ax = plt.subplots(1)
+
+    p = []
+    m = []
+    for true_label, prediction, probas in predictions:
+        pr = np.array(probas, dtype=np.float64)
+        p.append(pr)
+        mask = np.array(true_label, dtype=np.bool)
+        m.append(mask)
+
+    probabilities = np.hstack(p)
+    mask = np.hstack(m)
+    p_proton = probabilities[~mask]
+    p_gamma = probabilities[mask]
+    ax.hist(p_gamma, bins=np.linspace(0,1,confidence_bins), color='#cc4368', alpha=0.6)
+    ax.hist(p_proton, bins=np.linspace(0,1,confidence_bins), color='#3c84d7', alpha=0.6)
+    return fig, ax
 
 def plot_metric_vs_confidence(metric_values, label='Some metric', axis = None, color='#cc4368'):
     fig = None
@@ -208,6 +267,12 @@ def plot_importances(rf, features, path):
     return plt.gcf()
 
 
+
+
+
+
+
+
 @click.command()
 @click.argument('gamma_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
 @click.argument('proton_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
@@ -267,10 +332,14 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
         rf.fit(xtrain, ytrain)
         y_probas = rf.predict_proba(xtest)[:, 1]
         y_prediction = rf.predict(xtest)
-        labels_predictions.append((ytest, y_prediction, y_probas))
+        labels_predictions.append([ytest, y_prediction, y_probas])
 
-    # embed()
+
     print('Creating plots...')
+    fig, ax = plot_prediction_threshold_historgram(labels_predictions, n_bins)
+    fig.savefig('confidences.pdf')
+
+
     b = 1/10
     f_beta= partial(metrics.fbeta_score, beta=b)
     betas = calculate_metric_for_confidence_cuts(labels_predictions, f_beta, n_bins)
@@ -298,7 +367,7 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
     plt.figure()
     importances = pd.DataFrame(rf.feature_importances_, index=df_training.columns, columns=['importance'])
     importances = importances.sort_values(by='importance', ascending=True)
-    print('Plotting importances to importances.pdf')
+
     ax = importances.plot(
         kind='barh',
         color='#3c84d7'
@@ -308,25 +377,31 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
     plt.tight_layout()
     plt.savefig('importances.pdf')
 
+
+    print("Training model on complete dataset")
+    rf.fit(X,y)
     print("Writing model to {} ...".format(out))
+    joblib.dump(rf, out, compress = 4)
     mapper = DataFrameMapper([
                             (list(df_training.columns), None),
                             ('label', None)
                     ])
-    sklearn2pmml(rf, mapper,  out)
 
-    print('Adding data information to pmml...')
-    ET.register_namespace('',"http://www.dmg.org/PMML-4_2")
-    xml_tree = ET.parse('rf.pmml')
-    root = xml_tree.getroot()
-    header = root.findall('{http://www.dmg.org/PMML-4_2}Header')[0]
-    newNode = ET.Element('Description')
-    newNode.text = 'Data was queried with {} and contained {} gammas and {} protons'.format(query, len(df_gamma), len(df_proton))
-    header.append(newNode)
-    xml_tree.write(out,
-           xml_declaration=True,encoding='utf-8',
-           method='xml')
+    joblib.dump(mapper, "rf_map.pkl", compress = 4)
+    # sklearn2pmml(rf, mapper,  out)
 
+    # print('Adding data information to pmml...')
+    # ET.register_namespace('',"http://www.dmg.org/PMML-4_2")
+    # xml_tree = ET.parse('rf.pmml')
+    # root = xml_tree.getroot()
+    # header = root.findall('{http://www.dmg.org/PMML-4_2}Header')[0]
+    # newNode = ET.Element('Description')
+    # newNode.text = 'Data was queried with {} and contained {} gammas and {} protons'.format(query, len(df_gamma), len(df_proton))
+    # header.append(newNode)
+    # xml_tree.write(out,
+    #        xml_declaration=True,encoding='utf-8',
+    #        method='xml')
+    #
 
 
 
