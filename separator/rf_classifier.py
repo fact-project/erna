@@ -21,6 +21,8 @@ plt.style.use('ggplot')
 import numpy as np
 from sklearn_pandas import DataFrameMapper
 from sklearn.externals import joblib
+from os import path
+import json
 
 
 training_variables = ['ConcCore',
@@ -33,6 +35,7 @@ training_variables = ['ConcCore',
  'Slope_spread',
  'Slope_spread_weighted',
  'Slope_trans',
+ 'Distance',
  'Theta',
  'Timespread',
  'Timespread_weighted',
@@ -49,7 +52,7 @@ training_variables = ['ConcCore',
  'arrTimeShower_min',
  'arrTimeShower_skewness',
  'arrTimeShower_variance',
- 'arrivalTimeMean',
+ # 'arrivalTimeMean',
  'concCOG',
  'm3l',
  'm3t',
@@ -79,7 +82,8 @@ training_variables = ['ConcCore',
  'phChargeShower_min',
  'phChargeShower_skewness',
  'phChargeShower_variance',
- 'photonchargeMean']
+ 'photonchargeMean'
+ ]
 
 def calculate_metric_for_confidence_cuts(predictions, metric, confidence_bins):
     n_folds = len(predictions)
@@ -271,6 +275,14 @@ def plot_importances(rf, features, path):
 
 
 
+def read_data(file_path, hdf_key='table'):
+    name, extension =  path.splitext(file_path)
+    if extension in ['.hdf', '.hdf5', '.h5']:
+        return pd.read_hdf(file_path, key=hdf_key)
+    if extension == '.json':
+        with open(file_path, 'r') as j:
+            d = json.load(j)
+            return pd.DataFrame(d)
 
 
 @click.command()
@@ -290,8 +302,10 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
     '''
     print("Loading data")
 
-    df_gamma = pd.read_hdf(gamma_path, key='table')
-    df_proton = pd.read_hdf(proton_path, key='table')
+    df_gamma = read_data(gamma_path)
+    df_proton = read_data(proton_path)
+    # df_gamma = pd.read_hdf(gamma_path, key='table')
+    # df_proton = pd.read_hdf(proton_path, key='table')
 
     if query:
         print('Quering with string: {}'.format(query))
