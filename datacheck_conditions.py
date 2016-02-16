@@ -18,7 +18,7 @@ conditions['std'] = [
 conditions['onlyOnTime'] = [
     'fRunTypeKey == 1',  # Data Events
     'fROI == 300',
-    #'fZenithDistanceMean < 30',
+    'fZenithDistanceMean < 30',
     #'fTriggerRateMedian > 40',
     #'fTriggerRateMedian < 85',
     'fOnTime > 0.95',
