@@ -55,9 +55,9 @@ def run(jar, xml, df, num):
                 '-Doutput=file:{}'.format(output_path),
         ]
 
-	subprocess.check_call(['which', 'java'])
-	subprocess.check_call(['free', '-m'])
-	subprocess.check_call(['java', '-Xmx512m', '-version'])
+        subprocess.check_call(['which', 'java'])
+        subprocess.check_call(['free', '-m'])
+        subprocess.check_call(['java', '-Xmx512m', '-version'])
 
         logger.info("Calling fact-tools with call: {}".format(call))
         try:
