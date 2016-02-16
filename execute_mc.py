@@ -67,7 +67,7 @@ def main( jar, xml, out,drs_file, mc_path, queue, walltime, engine, num_jobs, vm
     # embed()
     for folder in tqdm(mc_path):
         # print("Entering folder {}".format(folder))
-        pattern = path.join(folder, '**/*_Events.fits.gz')
+        pattern = path.join(folder, '**/*_Events.fit*')
         f = glob.glob(pattern, recursive=True)
         files = files + f
 
