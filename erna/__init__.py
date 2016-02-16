@@ -9,6 +9,11 @@ import datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
+def ensure_dir(d):
+    if not os.path.exists(d):
+        print("Directory {} not existing, creating it".format(d))
+        os.makedirs(d)
+
 def collect_output(job_outputs, output_path):
     '''
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
@@ -22,6 +27,8 @@ def collect_output(job_outputs, output_path):
 
     if len(frames) == 0:
         return
+
+    ensure_dir(os.path.dirname(output_path))
 
     df = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df)))
