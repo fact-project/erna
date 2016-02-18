@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 import logging
 import click
 import erna
+import datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
@@ -16,8 +17,9 @@ logger = logging.getLogger(__name__)
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--parts', default=1, help='Number of parts to split the .json file into. This is useful for submitting this to a cluster later on', type=click.INT)
+@click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='std')
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, password):
+def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, password, conditions):
     '''  This script connects to the rundb and fetches all runs belonging to the specified source.
         Provide time range by specifying ealriest and lates night to fetch. As in 20131001,  20141001.
         This script will produce a json file containing paths to the data files and their drs files. The
@@ -29,7 +31,8 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, pa
 
     factdb = create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
 
-    mapping = erna.load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb)
+    data_conditions=dcc.conditions[conditions]
+    mapping = erna.load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
     if mapping.size == 0:
         logger.error('No entries matching the conditions could be found in the RunDB')
         return
