@@ -4,6 +4,11 @@ from sklearn import ensemble
 from sklearn import cross_validation
 # from sklearn import linear_model
 from sklearn2pmml import sklearn2pmml
+from sklearn import metrics
+from tqdm import tqdm
+# from  matplotlib.ticker import LogLocator
+# from  matplotlib.ticker import LogFormatter
+from IPython import embed
 
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
@@ -23,7 +28,7 @@ plt.style.use('ggplot')
 import numpy as np
 from sklearn_pandas import DataFrameMapper
 from scipy import stats
-
+colors = ['#3ca3ec', '#F16745', '#FFC65D', '#7BC8A4', '#4CC3D9', '#93648D','#6a6493', '#73e3d2']
 training_variables = ['ConcCore',
  'Concentration_onePixel',
  'Concentration_twoPixel',
@@ -83,6 +88,38 @@ training_variables = ['ConcCore',
  'photonchargeMean'
  ]
 
+
+
+def bias_resolution(true_energy, estimated_energy, bin_edges):
+    df = pd.DataFrame({'relative_difference':(estimated_energy - true_energy)/(true_energy), 'true_energy':true_energy, 'estimated_energy': estimated_energy})
+
+    sample_groups  = df.groupby(np.digitize(np.log10(df.true_energy), bin_edges, right=True))
+    # np.unique()
+    bin_width = bin_edges[1] - bin_edges[0]
+    bin_center = bin_edges[1:] - 0.5 * bin_width
+
+    bias = np.full(len(bin_center), np.nan)
+    resolution = np.full(len(bin_center), np.nan)
+    # embed()
+    for (name, samples), center in zip(sample_groups, bin_center):
+        # print('fitting group {}'.format(name))
+        # print(samples)
+        scale, loc = fit_for_resolution(samples.relative_difference, center)
+        bias[name-1] = scale
+        resolution[name-1] = loc
+
+    return bias, resolution
+
+
+
+
+def fit_for_resolution(samples, expected_center):
+    #center the samples
+    # centered_samples = samples.copy() - expected_center
+    loc, scale  = stats.norm.fit(samples)
+    return loc, scale
+
+
 def plot_importances(rf, features, path):
     importances = pd.DataFrame(rf.feature_importances_, index=features, columns=['importance'])
     importances = importances.sort_values(by='importance', ascending=True)
@@ -120,7 +157,7 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     df_train = df_train.dropna(axis=0, how='any')
 
     df_target = df['MCorsikaEvtHeader.fTotalEnergy']
-    df_target.name = 'estimated_energy'
+    df_target.name = 'true_energy'
     df_target = df_target[df_train.index]
 
     X_train, X_test, y_train, y_test = cross_validation.train_test_split(df_train, df_target, test_size=0.2)
@@ -130,40 +167,90 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     print("Training classifier in a {} fold CV...".format(n_cv))
     scores = cross_validation.cross_val_score(rf, X_train, y_train, cv=n_cv)
 
+    print('Starting {} fold cross validation... '.format(n_cv) )
+    # embed()
+    cv = cross_validation.KFold(len(y_train), n_folds=n_cv, shuffle=True)
+    # labels = []
+    # predictions =[]
+    resolution_bins = 20
+    min_energy = np.log10(df_target.min())
+    max_energy = np.log10(df_target.max())
+    resolution_bin_edges = np.linspace(min_energy, max_energy, resolution_bins)
+    resolution_bin_width = resolution_bin_edges[1] - resolution_bin_edges[0]
+
+    scores = []
+    bias = []
+    resolution = []
+    for train, test in tqdm(cv):
+        # embed()
+        # select data
+        cv_x_train, cv_x_test = X_train.values[train], X_train.values[test]
+        cv_y_train, cv_y_test = y_train.values[train], y_train.values[test]
+        # fit and predict
+        rf.fit(cv_x_train, cv_y_train)
+        cv_y_prediciton = rf.predict(cv_x_test)
+
+        #calcualte r2 score
+        scores.append(metrics.r2_score(cv_y_test, cv_y_prediciton))
+
+        #calucate bias and resolution
+        # log_true_energy = np.log10(cv_y_test)
+        # log_estimated_energy = np.log10(cv_y_prediciton)
+        b, r = bias_resolution(cv_y_test, cv_y_prediciton, resolution_bin_edges)
+        bias.append(b)
+        resolution.append(r)
+
+
+    scores = np.array(scores)
     print("Cross validated R^2 scores: {}".format(scores))
     print("Mean R^2 score : %0.2f (+/- %0.2f)" % (scores.mean(), scores.std()))
+
+    print('plotting bias and resolution')
+    plt.figure()
+    bias = np.array([list(b) for b in bias])
+    bias = pd.DataFrame(bias)
+
+    resolution = np.array([list(b) for b in resolution])
+    resolution = pd.DataFrame(resolution)
+
+    height = 0.01
+    heights = np.full_like(resolution.mean(), height)
+
+    plt.bar(resolution_bin_edges[:-1], heights, width=resolution_bin_width, yerr=bias.std().values, linewidth=0,  label="bias", bottom=bias.mean().values, color=colors[1], ecolor=colors[1])
+
+    plt.bar(resolution_bin_edges[:-1], heights, width=resolution_bin_width, yerr=resolution.std().values,   linewidth=0, label="resolution", bottom=resolution.mean().values, color=colors[0], ecolor=colors[0])
+
+    plt.xlabel('Simulated energy $\log_{10}(E_{\\text{MC}} / \si{\GeV})$')
+    plt.legend(fancybox=True, framealpha=0.5)
+    plt.savefig('bias_resolution.pdf')
+
 
     print("Building new model on complete data set...")
     # rf = ensemble.ExtraTreesRegressor(n_estimators=n_trees,max_features="sqrt", oob_score=True, n_jobs=n_jobs, max_depth=max_depth)
     rf.fit(X_train, y_train)
     print("Score on complete data set: {}".format(rf.score(X_test, y_test)))
-    #
-    # importances = pd.DataFrame(rf.feature_importances_, index=df_train.columns, columns=['importance'])
-    # importances = importances.sort_values(by='importance', ascending=True)
-    # print('Plotting importances to importances.pdf')
-    # ax = importances.plot(
-    #     kind='barh',
-    #     color='#2775d0'
-    # )
-    # ax.set_xlabel(u'feature importance')
-    # ax.get_yaxis().grid(None)
-    # plt.tight_layout()
-    # plt.savefig('importances.pdf')
+
 
     print('Plotting correlation to correlation.pdf')
-    fig = plt.figure()
     prediction = rf.predict(X_test)
     log_true_energy = np.log10(y_test)
     log_estimated_energy = np.log10(prediction)
-    _, _, _, im = plt.hist2d(log_true_energy, log_estimated_energy, range=[[log_true_energy.min(), log_true_energy.max()], [log_true_energy.min(), log_true_energy.max()]], bins=bins, normed=False, cmin=0, cmap='inferno')
+    bin_edges = np.linspace(min_energy, max_energy, bins)
 
+    fig, ax = plt.subplots()
+    _, _, _, im = ax.hist2d(log_true_energy, log_estimated_energy, range=[[log_true_energy.min(), log_true_energy.max()], [log_true_energy.min(), log_true_energy.max()]], bins=bins, normed=False, cmin=0, cmap='inferno')
     fig.colorbar(im)
-    plt.xlabel(r'Logarithm of Simulated Energy $E_{\text{MC}}$ in $\si{\GeV}$')
-    plt.ylabel(r'Logarithm of Estimated Energy $E_{\text{EST}}$ in $\si{\GeV})$')
+
+    ax.set_xlim(log_true_energy.min(), log_true_energy.max())
+    ax.set_ylim(log_true_energy.min(), log_true_energy.max())
+    ax.set_xlabel(r'Simulated Energy $E_{\text{MC}}$ in $\si{\GeV}$')
+    ax.set_ylabel(r'Estimated Energy $E_{\text{EST}}$ in $\si{\GeV})$')
 
     plt.tight_layout()
     plt.savefig('correlation.pdf')
-    # # embed()
+
+
+    # embed()
     print("plot histogram of true energy")
     fig = plt.figure()
     plt.hist(np.log10(df_target.values), bins=bins, normed=True)
@@ -194,13 +281,13 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     result = kde.pdf(positions)
 
     z = np.reshape(result.T, X.shape)
-    plt.pcolormesh(X, Y , z, cmap='plasma')
+    plt.pcolormesh(X, Y , z, cmap='inferno')
     plt.xlabel(r'monte carlo energy $E_{\text{MC}}$ in $\si{\GeV}$'  )
     plt.ylabel(r'estimated energy $E_{\text{EST}}$ in $\si{\GeV}$')
     plt.yscale('log')
     plt.xscale('log')
-    plt.xticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
-    plt.yticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
+    # plt.xticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
+    # plt.yticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
     plt.xlim(y_train.min(), y_train.max())
     plt.ylim(y_train.min(), y_train.max())
     plt.savefig('energy_kde.png', dpi=150)
