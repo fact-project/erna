@@ -164,8 +164,8 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
 
     rf = ensemble.ExtraTreesRegressor(n_estimators=n_trees,max_features="sqrt", n_jobs=n_jobs, max_depth=max_depth)
     # rf = linear_model.Ridge()
-    print("Training classifier in a {} fold CV...".format(n_cv))
-    scores = cross_validation.cross_val_score(rf, X_train, y_train, cv=n_cv)
+    # print("Training classifier in a {} fold CV...".format(n_cv))
+    # scores = cross_validation.cross_val_score(rf, X_train, y_train, cv=n_cv)
 
     print('Starting {} fold cross validation... '.format(n_cv) )
     # embed()
