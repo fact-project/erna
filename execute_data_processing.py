@@ -9,9 +9,17 @@ from os import path
 import os
 import gridmap
 from gridmap import Job
+import signal
+import sys
 
 
 logger = logging.getLogger(__name__)
+def sigterm_handler(_signo, _stack_frame):
+    # Raises SystemExit(0):
+    print("hello")
+
+
+
 
 
 def make_jobs(jar, xml, output_directory, df_mapping,  engine, queue, vmem, num_jobs):
@@ -47,6 +55,8 @@ def make_jobs(jar, xml, output_directory, df_mapping,  engine, queue, vmem, num_
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.password_option(help='password to read from the always awesome RunDB')
 def main(earliest_night, latest_night, data_dir, jar, xml, out, queue, engine, num_jobs, vmem, log_level, port, source, max_delta_t, local, password):
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     level=logging.INFO
     if log_level is 'DEBUG':
         level = logging.DEBUG
