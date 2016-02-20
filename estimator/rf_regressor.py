@@ -9,16 +9,21 @@ from tqdm import tqdm
 # from  matplotlib.ticker import LogLocator
 # from  matplotlib.ticker import LogFormatter
 from IPython import embed
-
+scale = 1.3
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['text.latex.unicode'] = True
+matplotlib.rcParams['font.size']  = 11*scale
+matplotlib.rcParams['legend.fontsize']  = 10*scale
+matplotlib.rcParams['xtick.labelsize']  = 9*scale
+matplotlib.rcParams['ytick.labelsize']  = 9*scale
+matplotlib.rcParams['axes.labelsize']  = 'large'
 matplotlib.rcParams['text.latex.preamble'] = [
-   r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
-   r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
-   r'\usepackage{helvet}',    # set the normal font here
-   r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
-   r'\sansmath']  # <- tricky! -- gotta actually tell tex to use!
+    r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
+    r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
+    r'\usepackage{Fira Sans}',    # set the normal font here
+    r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
+    r'\sansmath']  # <- tricky! -- gotta actually tell tex to use!
 
 matplotlib.use('Agg')
 
@@ -221,7 +226,8 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     plt.bar(resolution_bin_edges[:-1], heights, width=resolution_bin_width, yerr=resolution.std().values,   linewidth=0, label="resolution", bottom=resolution.mean().values, color=colors[0], ecolor=colors[0])
 
     plt.xlabel('Simulated energy $\log_{10}(E_{\\text{MC}} / \si{\GeV})$')
-    plt.legend(fancybox=True, framealpha=0.5)
+    plt.legend(bbox_to_anchor=(0.0, 1.03, 1, .2), loc='lower center', ncol=2, borderaxespad=0., fancybox=True, framealpha=0.0)
+
     plt.savefig('bias_resolution.pdf')
 
 
@@ -235,16 +241,16 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     prediction = rf.predict(X_test)
     log_true_energy = np.log10(y_test)
     log_estimated_energy = np.log10(prediction)
-    bin_edges = np.linspace(min_energy, max_energy, bins)
+    # bin_edges = np.linspace(min_energy, max_energy, bins)
 
     fig, ax = plt.subplots()
-    _, _, _, im = ax.hist2d(log_true_energy, log_estimated_energy, range=[[log_true_energy.min(), log_true_energy.max()], [log_true_energy.min(), log_true_energy.max()]], bins=bins, normed=False, cmin=0, cmap='inferno')
+    _, _, _, im = ax.hist2d(log_true_energy, log_estimated_energy, range=[[log_true_energy.min(), log_true_energy.max()], [log_true_energy.min(), log_true_energy.max()]], bins=bins, norm=matplotlib.colors.LogNorm(), cmin=0, cmap='inferno')
     fig.colorbar(im)
 
     ax.set_xlim(log_true_energy.min(), log_true_energy.max())
     ax.set_ylim(log_true_energy.min(), log_true_energy.max())
-    ax.set_xlabel(r'Simulated Energy $E_{\text{MC}}$ in $\si{\GeV}$')
-    ax.set_ylabel(r'Estimated Energy $E_{\text{EST}}$ in $\si{\GeV})$')
+    ax.set_xlabel(r'Simulated Energy $\log_{10}(E_{\\text{MC}} / \si{\GeV})$')
+    ax.set_ylabel(r'Estimated Energy $\log_{10}(E_{\\text{EST}} / \si{\GeV})$')
 
     plt.tight_layout()
     plt.savefig('correlation.pdf')
@@ -256,7 +262,7 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     plt.hist(np.log10(df_target.values), bins=bins, normed=True)
 
     plt.yscale('log')
-    plt.xlabel(r'monte carlo energy $E_{\text{MC}}$ in $\log(\si{\GeV})$'  )
+    plt.xlabel(r'monte carlo energy $E_{\\text{MC}}$ in $\si{\GeV}$'  )
     plt.ylabel('normed frequency')
     plt.tight_layout()
     plt.savefig('true_energy_histogram.pdf')
@@ -272,7 +278,6 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
 
     print("Performing KDE")
     plt.figure()
-
     kde = stats.gaussian_kde(np.vstack([y_test, prediction]), bw_method=0.05)
     l = np.logspace(np.log10(y_train.min()), np.log10(y_train.max()), 170)
     X, Y  = np.meshgrid(l, l)
@@ -282,8 +287,8 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
 
     z = np.reshape(result.T, X.shape)
     plt.pcolormesh(X, Y , z, cmap='inferno')
-    plt.xlabel(r'monte carlo energy $E_{\text{MC}}$ in $\si{\GeV}$'  )
-    plt.ylabel(r'estimated energy $E_{\text{EST}}$ in $\si{\GeV}$')
+    plt.xlabel(r'monte carlo energy $E_{\\text{MC}}$ in $\si{\GeV}$'  )
+    plt.ylabel(r'estimated energy $E_{\\text{EST}}$ in $\si{\GeV}$')
     plt.yscale('log')
     plt.xscale('log')
     # plt.xticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )

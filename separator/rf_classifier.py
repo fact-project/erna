@@ -11,8 +11,23 @@ from sklearn import metrics
 from functools import partial
 # import os
 # import xml.etree.ElementTree as ET
-
+scale = 1.3
 import matplotlib
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['text.latex.unicode'] = True
+matplotlib.rcParams['font.size']  = 11*scale
+matplotlib.rcParams['legend.fontsize']  = 10*scale
+matplotlib.rcParams['xtick.labelsize']  = 9*scale
+matplotlib.rcParams['ytick.labelsize']  = 9*scale
+matplotlib.rcParams['axes.labelsize']  = 'large'
+
+matplotlib.rcParams['text.latex.preamble'] = [
+    r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
+    r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
+    r'\usepackage{Fira Sans}',    # set the normal font here
+    r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
+    r'\sansmath']  # <- tricky! -- gotta actually tell tex to use!
+
 matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
@@ -114,11 +129,14 @@ def plot_prediction_threshold_historgram(predictions,confidence_bins, ax=None):
     mask = np.hstack(m)
     p_proton = probabilities[~mask]
     p_gamma = probabilities[mask]
-    ax.hist(p_gamma, bins=np.linspace(0,1,confidence_bins), color='#cc4368', alpha=0.6)
-    ax.hist(p_proton, bins=np.linspace(0,1,confidence_bins), color='#3c84d7', alpha=0.6)
+    ax.hist(p_gamma, bins=np.linspace(0,1,confidence_bins),normed=True, color='#cc4368', alpha=0.6, label='Gamma')
+    ax.hist(p_proton, bins=np.linspace(0,1,confidence_bins), normed=True,color='#3c84d7', alpha=0.6, label='Proton')
+    ax.set_xlabel('prediction threshold')
+    ax.legend(bbox_to_anchor=(0.0, 1.03, 1, .2), loc='lower center', ncol=2, borderaxespad=0., fancybox=True, framealpha=0.0)
+    # ax.set_xlabel('normalized frequency')
     return fig, ax
 
-def plot_metric_vs_confidence(metric_values, label='Some metric', axis = None, color='#cc4368'):
+def plot_metric_vs_confidence(metric_values, ylabel='Metric', axis = None, color='#cc4368', legend_label=None):
     fig = None
     if not axis:
         fig, axis= plt.subplots(1)
@@ -127,27 +145,33 @@ def plot_metric_vs_confidence(metric_values, label='Some metric', axis = None, c
     acc_err = np.std(metric_values, axis=0)
 
     b = np.linspace(0, 1, len(acc_mean))
-    axis.plot(b, acc_mean, 'r+', label=label, color=color)
+    axis.plot(b, acc_mean, 'r+', color=color, label=legend_label)
     axis.fill_between(
         b, acc_mean + acc_err * 0.5, acc_mean - acc_err*0.5,
         facecolor='gray', alpha=0.4,
     )
-    axis.legend(loc='best', fancybox=True, framealpha=0.5)
+
+    axis.set_ylabel(ylabel)
+
     axis.set_xlabel('prediction threshold')
+    if legend_label:
+        axis.legend(bbox_to_anchor=(0.0, 1.03, 1, .2), loc='lower center', ncol=2, borderaxespad=0., fancybox=True, framealpha=0.0)
 
     return fig, axis
 
 
-def plot_roc_curves(labels_predictions, ax=None, title=None):
-        # plot roc aucs
+def plot_roc_curves(labels_predictions, ax=None):
+    # plot roc aucs
     # fig = None
     if not ax:
         fig, ax = plt.subplots(1)
     axins = zoomed_inset_axes(ax, 2.5, loc=1)
+    aucs = []
     for test, prediction, proba in labels_predictions:
         fpr, tpr, thresholds = metrics.roc_curve(
             test, proba
         )
+        aucs.append(metrics.roc_auc_score(test, prediction))
         ax.plot(fpr, tpr, linestyle='-', color='k', alpha=0.3)
         axins.plot(fpr, tpr, linestyle='-', color='k', alpha=0.3)
 
@@ -160,10 +184,12 @@ def plot_roc_curves(labels_predictions, ax=None, title=None):
     axins.set_xticks([0.0, 0.05, 0.1, 0.15])
     axins.set_yticks([0.8, 0.85, 0.9, 0.95, 1.0])
     mark_inset(ax, axins, loc1=2, loc2=3, fc='none', ec='0.8')
-    if not title:
-        ax.set_title('RoC curves for the classifier', y=1.03)
-    if title:
-        ax.set_title(title, y=1.03)
+
+    ax.text(0.95, 0.1, 'Area under curve: ${:.2f} \pm {:.4f}$'.format(np.array(aucs).mean(), np.array(aucs).std()),
+        verticalalignment='bottom', horizontalalignment='right',
+        transform=ax.transAxes,
+        color='#404040', fontsize=11)
+
     return fig, ax
 
 def plot_q_values(labels_predictions,confidence_bins, ax=None):
@@ -350,57 +376,57 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
 
     print('Creating plots...')
     fig, ax = plot_prediction_threshold_historgram(labels_predictions, n_bins)
+    # fig.tight_layout()
     fig.savefig('confidences.pdf')
 
 
     b = 1/10
     f_beta= partial(metrics.fbeta_score, beta=b)
     betas = calculate_metric_for_confidence_cuts(labels_predictions, f_beta, n_bins)
-    fig, ax = plot_metric_vs_confidence(betas, label='f score with beta = {}'.format(b))
+    fig, ax = plot_metric_vs_confidence(betas, ylabel='$\\text{{f}}_{{\\beta}}$ score with $\\beta$ = {}'.format(b))
+    fig.tight_layout()
     fig.savefig('fbeta.pdf')
 
 
-    aucs = calculate_metric_for_confidence_cuts(labels_predictions, metrics.roc_auc_score, n_bins)
-    fig, ax = plot_metric_vs_confidence(aucs, label='roc auc')
-    fig.savefig('roc_auc.pdf')
-    print("Highest AUC ROC: {}".format(np.array(aucs).max()))
-
     recall = calculate_metric_for_confidence_cuts(labels_predictions, metrics.recall_score, n_bins)
-    fig, ax = plot_metric_vs_confidence(recall, label='recall')
+    fig, ax = plot_metric_vs_confidence(recall, legend_label='recall $\\frac{\\text{tp}}{\\text{tp} + \\text{fn}}$')
     precision = calculate_metric_for_confidence_cuts(labels_predictions, metrics.precision_score, n_bins)
-    _, ax = plot_metric_vs_confidence(precision, label='precision', axis=ax, color='#3c84d7')
+    _, ax = plot_metric_vs_confidence(precision, legend_label='precision  $\\frac{\\text{tp}}{\\text{tp} + \\text{fp}}$', axis=ax, color='#3c84d7')
+    fig.tight_layout()
     fig.savefig('recall_precision.pdf')
 
     fig, ax = plot_q_values(labels_predictions, n_bins)
+    fig.tight_layout()
     fig.savefig('q_values.pdf')
 
     fig, ax = plot_roc_curves(labels_predictions)
+    fig.tight_layout()
     fig.savefig('roc_curves.pdf')
 
     plt.figure()
-    importances = pd.DataFrame(rf.feature_importances_, index=df_training.columns, columns=['importance'])
-    importances = importances.sort_values(by='importance', ascending=True)
-
-    ax = importances.plot(
-        kind='barh',
-        color='#3c84d7'
-    )
-    ax.set_xlabel(u'feature importance')
-    ax.get_yaxis().grid(None)
-    plt.tight_layout()
-    plt.savefig('importances.pdf')
+    # importances = pd.DataFrame(rf.feature_importances_, index=df_training.columns, columns=['importance'])
+    # importances = importances.sort_values(by='importance', ascending=True)
+    #
+    # ax = importances.plot(
+    #     kind='barh',
+    #     color='#3c84d7'
+    # )
+    # ax.set_xlabel(u'feature importance')
+    # ax.get_yaxis().grid(None)
+    # plt.tight_layout()
+    # plt.savefig('importances.pdf')
 
 
     print("Training model on complete dataset")
     rf.fit(X,y)
-    print("Writing model to {} ...".format(out))
+    print("Pickling model to {} ...".format(out))
     joblib.dump(rf, out, compress = 4)
     mapper = DataFrameMapper([
                             (list(df_training.columns), None),
                             ('label', None)
                     ])
 
-    joblib.dump(mapper, "rf_map.pkl", compress = 4)
+    joblib.dump(mapper, out, compress = 4)
     # sklearn2pmml(rf, mapper,  out)
 
     # print('Adding data information to pmml...')
