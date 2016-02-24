@@ -145,8 +145,9 @@ def plot_importances(rf, features, path):
 @click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
 @click.option('--bins','-b', default=100,  help='number of bins in ocrrelation plot.')
 @click.option('--max_depth','-d', default=None, type=click.INT, help='Maximum depth of the trees in the forest.')
+@click.option('--query','-q', default=None, help='Query to apply to the data.')
 @click.option('--save','-sm', is_flag=True,  help='Flags whether model should be save to pmml.')
-def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
+def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, save):
     '''
     Train a RF regressor and write the model to OUT in pmml format.
     '''
@@ -157,6 +158,8 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, save):
     if n_sample > 0:
         df = df.sample(n_sample)
 
+    if query:
+        df = df.query(query)
 
     df_train = df[training_variables]
     df_train = df_train.dropna(axis=0, how='any')
