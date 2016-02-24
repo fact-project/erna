@@ -145,7 +145,7 @@ def plot_importances(rf, features, path):
 @click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
 @click.option('--bins','-b', default=100,  help='number of bins in ocrrelation plot.')
 @click.option('--max_depth','-d', default=None, type=click.INT, help='Maximum depth of the trees in the forest.')
-@click.option('--query','-q', default=None, help='Query to apply to the data.')
+@click.option('--query','-q', default=None,  help='Query to apply to the data e.g : \"(Leakage < 0.0) & (Size < 10000)\"')
 @click.option('--save','-sm', is_flag=True,  help='Flags whether model should be save to pmml.')
 def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, save):
     '''
@@ -159,6 +159,7 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, sa
         df = df.sample(n_sample)
 
     if query:
+        print('Quering with string: {}'.format(query))
         df = df.query(query)
 
     df_train = df[training_variables]
