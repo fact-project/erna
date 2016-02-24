@@ -146,8 +146,9 @@ def plot_importances(rf, features, path):
 @click.option('--bins','-b', default=100,  help='number of bins in ocrrelation plot.')
 @click.option('--max_depth','-d', default=None, type=click.INT, help='Maximum depth of the trees in the forest.')
 @click.option('--query','-q', default=None,  help='Query to apply to the data e.g : \"(Leakage < 0.0) & (Size < 10000)\"')
+@click.option('--perform_kde','-kde', is_flag=True,  help='Flags whether KDE should be performed.')
 @click.option('--save','-sm', is_flag=True,  help='Flags whether model should be save to pmml.')
-def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, save):
+def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, perform_kde, save):
     '''
     Train a RF regressor and write the model to OUT in pmml format.
     '''
@@ -243,6 +244,7 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, sa
 
     print('Plotting correlation to correlation.pdf')
     prediction = rf.predict(X_test)
+
     log_true_energy = np.log10(y_test)
     log_estimated_energy = np.log10(prediction)
     # bin_edges = np.linspace(min_energy, max_energy, bins)
@@ -275,31 +277,31 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, sa
     print("Saving prediction to prediction.json")
     result = pd.DataFrame()
     result['Estimated Energy'] = prediction
-    result['True Energy'] = y_test
+    result['True Energy'] = y_test.values
 
     result.to_json('prediction.json')
 
+    if perform_kde:
+        print("Performing KDE")
+        plt.figure()
+        kde = stats.gaussian_kde(np.vstack([y_test, prediction]), bw_method=0.05)
+        l = np.logspace(np.log10(y_train.min()), np.log10(y_train.max()), 170)
+        X, Y  = np.meshgrid(l, l)
 
-    print("Performing KDE")
-    plt.figure()
-    kde = stats.gaussian_kde(np.vstack([y_test, prediction]), bw_method=0.05)
-    l = np.logspace(np.log10(y_train.min()), np.log10(y_train.max()), 170)
-    X, Y  = np.meshgrid(l, l)
+        positions = np.vstack([X.ravel(), Y.ravel()])
+        result = kde.pdf(positions)
 
-    positions = np.vstack([X.ravel(), Y.ravel()])
-    result = kde.pdf(positions)
-
-    z = np.reshape(result.T, X.shape)
-    plt.pcolormesh(X, Y , z, cmap='inferno')
-    plt.xlabel('monte carlo energy $E_{\\text{MC}}$ in $\si{\GeV}$'  )
-    plt.ylabel('estimated energy $E_{\\text{EST}}$ in $\si{\GeV}$')
-    plt.yscale('log')
-    plt.xscale('log')
-    # plt.xticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
-    # plt.yticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
-    plt.xlim(y_train.min(), y_train.max())
-    plt.ylim(y_train.min(), y_train.max())
-    plt.savefig('energy_kde.png', dpi=150)
+        z = np.reshape(result.T, X.shape)
+        plt.pcolormesh(X, Y , z, cmap='inferno')
+        plt.xlabel('monte carlo energy $E_{\\text{MC}}$ in $\si{\GeV}$'  )
+        plt.ylabel('estimated energy $E_{\\text{EST}}$ in $\si{\GeV}$')
+        plt.yscale('log')
+        plt.xscale('log')
+        # plt.xticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
+        # plt.yticks(10**np.arange(2.5, 5.0, 0.5 ), np.arange(2.5, 5.0, 0.5 ).astype(str) )
+        plt.xlim(y_train.min(), y_train.max())
+        plt.ylim(y_train.min(), y_train.max())
+        plt.savefig('energy_kde.png', dpi=150)
 
     if save:
         print("writing model to {}".format(out))
