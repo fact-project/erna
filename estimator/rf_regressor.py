@@ -276,8 +276,8 @@ def main(path, out, n_trees, n_jobs,n_sample, n_cv,  bins,  max_depth, query, pe
 
     print("Saving prediction to prediction.json")
     result = pd.DataFrame()
-    result['Estimated Energy'] = prediction
-    result['True Energy'] = y_test.values
+    result['estimated_energy'] = prediction
+    result['true_energy'] = y_test.values
 
     result.to_json('prediction.json')
 
