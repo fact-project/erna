@@ -1,14 +1,11 @@
 import pandas as pd
 import click
-from sklearn import ensemble
 from sklearn import cross_validation
-from sklearn2pmml import sklearn2pmml
-from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
-from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+#from sklearn2pmml import sklearn2pmml
 from tqdm import tqdm
 
 from sklearn import metrics
-from functools import partial
+
 # import os
 # import xml.etree.ElementTree as ET
 scale = 1.3
@@ -32,207 +29,15 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
-# from IPython import embed
+from IPython import embed
 import numpy as np
-from sklearn_pandas import DataFrameMapper
+# from sklearn_pandas import DataFrameMapper
 from sklearn.externals import joblib
 from os import path
 import json
+import config
 
 
-training_variables = ['ConcCore',
- 'Concentration_onePixel',
- 'Concentration_twoPixel',
- 'Leakage',
- 'Leakage2',
- 'Size',
- 'Slope_long',
- 'Slope_spread',
- 'Slope_spread_weighted',
- 'Slope_trans',
- 'Distance',
- 'Theta',
- 'Timespread',
- 'Timespread_weighted',
- 'Width',
- 'arrTimePosShower_kurtosis',
- 'arrTimePosShower_max',
- 'arrTimePosShower_mean',
- 'arrTimePosShower_min',
- 'arrTimePosShower_skewness',
- 'arrTimePosShower_variance',
- 'arrTimeShower_kurtosis',
- 'arrTimeShower_max',
- 'arrTimeShower_mean',
- 'arrTimeShower_min',
- 'arrTimeShower_skewness',
- 'arrTimeShower_variance',
- 'concCOG',
- 'm3l',
- 'm3t',
- 'maxPosShower_kurtosis',
- 'maxPosShower_max',
- 'maxPosShower_mean',
- 'maxPosShower_min',
- 'maxPosShower_skewness',
- 'maxPosShower_variance',
- 'maxSlopesPosShower_kurtosis',
- 'maxSlopesPosShower_max',
- 'maxSlopesPosShower_mean',
- 'maxSlopesPosShower_min',
- 'maxSlopesPosShower_skewness',
- 'maxSlopesPosShower_variance',
- 'maxSlopesShower_kurtosis',
- 'maxSlopesShower_max',
- 'maxSlopesShower_mean',
- 'maxSlopesShower_min',
- 'maxSlopesShower_skewness',
- 'maxSlopesShower_variance',
- 'numIslands',
- 'numPixelInShower',
- 'phChargeShower_kurtosis',
- 'phChargeShower_max',
- 'phChargeShower_mean',
- 'phChargeShower_min',
- 'phChargeShower_skewness',
- 'phChargeShower_variance',
- 'photonchargeMean'
- ]
-
-def calculate_metric_for_confidence_cuts(predictions, metric, confidence_bins):
-    n_folds = len(predictions)
-    # plot stuff with confidence cuts
-    metric_values = np.zeros((n_folds, confidence_bins))
-    for fold, (test, prediction, probas) in enumerate(predictions):
-        for c_bin, cut in enumerate(np.linspace(0, 1, confidence_bins)):
-            cutted_prediction = prediction.copy()
-            cutted_prediction[probas < cut] = 0
-            cutted_prediction[probas >= cut] = 1
-            m_value = metric(test, cutted_prediction)
-            # embed()
-            metric_values[fold][c_bin] = m_value
-    return metric_values
-
-def plot_prediction_threshold_historgram(predictions,confidence_bins, ax=None):
-    if not ax:
-        fig, ax = plt.subplots(1)
-
-    p = []
-    m = []
-    for true_label, prediction, probas in predictions:
-        pr = np.array(probas, dtype=np.float64)
-        p.append(pr)
-        mask = np.array(true_label, dtype=np.bool)
-        m.append(mask)
-
-    probabilities = np.hstack(p)
-    mask = np.hstack(m)
-    p_proton = probabilities[~mask]
-    p_gamma = probabilities[mask]
-    ax.hist(p_gamma, bins=np.linspace(0,1,confidence_bins),normed=True, color='#cc4368', alpha=0.6, label='Gamma')
-    ax.hist(p_proton, bins=np.linspace(0,1,confidence_bins), normed=True,color='#3c84d7', alpha=0.6, label='Proton')
-    ax.set_xlabel('prediction threshold')
-    ax.legend(bbox_to_anchor=(0.0, 1.03, 1, .2), loc='lower center', ncol=2, borderaxespad=0., fancybox=True, framealpha=0.0)
-    # ax.set_xlabel('normalized frequency')
-    return fig, ax
-
-def plot_metric_vs_confidence(metric_values, ylabel='Metric', axis = None, color='#cc4368', legend_label=None):
-    fig = None
-    if not axis:
-        fig, axis= plt.subplots(1)
-    # embed()
-    acc_mean = np.mean(metric_values, axis=0)
-    acc_err = np.std(metric_values, axis=0)
-
-    b = np.linspace(0, 1, len(acc_mean))
-    axis.plot(b, acc_mean, 'r+', color=color, label=legend_label)
-    axis.fill_between(
-        b, acc_mean + acc_err * 0.5, acc_mean - acc_err*0.5,
-        facecolor='gray', alpha=0.4,
-    )
-
-    axis.set_ylabel(ylabel)
-
-    axis.set_xlabel('prediction threshold')
-    if legend_label:
-        axis.legend(bbox_to_anchor=(0.0, 1.03, 1, .2), loc='lower center', ncol=2, borderaxespad=0., fancybox=True, framealpha=0.0)
-
-    return fig, axis
-
-
-def plot_roc_curves(labels_predictions, ax=None):
-    # plot roc aucs
-    # fig = None
-    if not ax:
-        fig, ax = plt.subplots(1)
-    axins = zoomed_inset_axes(ax, 2.5, loc=1)
-    aucs = []
-    for test, prediction, proba in labels_predictions:
-        fpr, tpr, thresholds = metrics.roc_curve(
-            test, proba
-        )
-        aucs.append(metrics.roc_auc_score(test, prediction))
-        ax.plot(fpr, tpr, linestyle='-', color='k', alpha=0.3)
-        axins.plot(fpr, tpr, linestyle='-', color='k', alpha=0.3)
-
-    ax.set_xlabel('False Positiv Rate')
-    ax.set_ylabel('True Positiv Rate')
-    ax.set_ylim(0, 1)
-    ax.set_xlim(0, 1)
-    axins.set_xlim(0, 0.15)
-    axins.set_ylim(0.8, 1.0)
-    axins.set_xticks([0.0, 0.05, 0.1, 0.15])
-    axins.set_yticks([0.8, 0.85, 0.9, 0.95, 1.0])
-    mark_inset(ax, axins, loc1=2, loc2=3, fc='none', ec='0.8')
-
-    ax.text(0.95, 0.1, 'Area under curve: ${:.2f} \pm {:.4f}$'.format(np.array(aucs).mean(), np.array(aucs).std()),
-        verticalalignment='bottom', horizontalalignment='right',
-        transform=ax.transAxes,
-        color='#404040', fontsize=11)
-
-    return fig, ax
-
-def plot_q_values(labels_predictions,confidence_bins, ax=None):
-    '''plot q values.'''
-    if not ax:
-        fig, ax = plt.subplots(1)
-
-    matrices = np.zeros((len(labels_predictions), confidence_bins, 2, 2))
-    for fold, (test, prediction, probas) in enumerate(labels_predictions):
-        for i, cut in enumerate(np.linspace(0, 1, confidence_bins)):
-            cutted_prediction = prediction.copy()
-            cutted_prediction[probas < cut] = 0
-            cutted_prediction[probas >= cut] = 1
-            confusion = metrics.confusion_matrix(test, cutted_prediction)
-            matrices[fold][i] = confusion
-
-    b = np.linspace(0, 1, confidence_bins)
-
-    tps = matrices[:, :, 0, 0]
-    # fns = matrices[:, :, 0, 1]
-    # fps = matrices[:, :, 1, 0]
-    tns = matrices[:, :, 1, 1]
-
-    q_mean = np.mean(tps / np.sqrt(tns), axis=0)
-    q_err = np.std(tps / np.sqrt(tns), axis=0)
-    e_mean = np.mean(tps / np.sqrt(tns + tps), axis=0)
-    e_err = np.std(tps / np.sqrt(tns + tps), axis=0)
-
-    ax.plot(b, q_mean, 'b+', label=r'$\frac{tps}{\sqrt{tns}}$')
-    ax.fill_between(
-        b, q_mean + q_err*0.5, q_mean - q_err*0.5, facecolor='gray', alpha=0.4
-    )
-    ax.plot(
-        b, e_mean,
-        color='#58BADB', linestyle='', marker='+',
-        label=r'$\frac{tps}{\sqrt{tns + tps}}$',
-    )
-    ax.fill_between(
-        b, e_mean + e_err*0.5, e_mean - e_err*0.5, facecolor='gray', alpha=0.4
-    )
-    ax.legend(loc='best', fancybox=True, framealpha=0.5)
-    ax.set_xlabel('prediction threshold')
-    return fig, ax
 
 
 def print_performance(
@@ -284,20 +89,6 @@ def print_performance(
     ))
 
 
-def plot_importances(rf, features, path):
-    importances = pd.DataFrame(rf.feature_importances_, index=features, columns=['importance'])
-    importances = importances.sort_values(by='importance', ascending=True)
-    ax = importances.plot(
-        kind='barh',
-        color='#2775d0'
-    )
-    ax.set_xlabel(u'feature importance')
-    ax.get_yaxis().grid(None)
-    return plt.gcf()
-
-
-
-
 
 
 def read_data(file_path, hdf_key='table'):
@@ -309,19 +100,23 @@ def read_data(file_path, hdf_key='table'):
             d = json.load(j)
             return pd.DataFrame(d)
 
+def write_data(df, file_path, hdf_key='table'):
+    name, extension =  path.splitext(file_path)
+    if extension in ['.hdf', '.hdf5', '.h5']:
+        df.to_hdf(file_path, key=hdf_key)
+    if extension == '.json':
+        df.to_json(file_path)
+
 
 @click.command()
 @click.argument('gamma_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
 @click.argument('proton_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
-@click.option('--n_trees','-n', default=100,  help='Number of trees to train.')
-@click.option('--n_jobs','-j', default=1,  help='Number of trees to train.')
+@click.argument('predictions', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
+@click.argument('model', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
+@click.argument('importances_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
 @click.option('--n_sample','-s', default=-1,  help='Number of data rows to sample. -1 for all rows.')
 @click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
-@click.option('--n_bins','-b', default=50,  help='Number of bins to plot for performance plots')
-@click.option('--max_depth','-d', default=None, type=click.INT, help='Maximum depth of the trees in the forest.')
-@click.option('--query','-q', default=None,  help='Query to apply to the data e.g : \"(Leakage < 0.0) & (Size < 10000)\"')
-def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, max_depth, query):
+def main(gamma_path, proton_path, predictions, model, importances_path,  n_sample,  n_cv):
     '''
     Train a RF classifier and write the model to OUT in pmml format.
     '''
@@ -329,9 +124,10 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
 
     df_gamma = read_data(gamma_path)
     df_proton = read_data(proton_path)
+    # embed()
     # df_gamma = pd.read_hdf(gamma_path, key='table')
     # df_proton = pd.read_hdf(proton_path, key='table')
-
+    query = config.query
     if query:
         print('Quering with string: {}'.format(query))
         df_gamma = df_gamma.query(query)
@@ -350,83 +146,65 @@ def main(gamma_path, proton_path, out, n_trees, n_jobs,n_sample, n_cv, n_bins, m
     print('Training classifier with {} protons and {} gammas'.format(len(df_proton), len(df_gamma)))
 
     df_full = pd.concat([df_proton, df_gamma], ignore_index=True).dropna(axis=0, how='any')
-    df_training = df_full[training_variables]
+    df_training = df_full[config.training_variables]
     df_label = df_full['label']
 
-    #create classifier
-    rf = ensemble.RandomForestClassifier(n_estimators=n_trees, max_features="sqrt", n_jobs=n_jobs, max_depth=max_depth)
+    classifier = config.learner
 
     #save predictions for each cv iteration
-    labels_predictions = []
+    cv_predictions = []
     # iterate over test and training sets
     X =  df_training.values
     y = df_label.values
     print('Starting {} fold cross validation... '.format(n_cv) )
     cv = cross_validation.StratifiedKFold(y, n_folds=n_cv)
-    for train, test in tqdm(cv):
+
+
+    for fold, (train, test) in tqdm(enumerate(cv)):
         # select data
         xtrain, xtest = X[train], X[test]
         ytrain, ytest = y[train], y[test]
         # fit and predict
-        rf.fit(xtrain, ytrain)
-        y_probas = rf.predict_proba(xtest)[:, 1]
-        y_prediction = rf.predict(xtest)
-        labels_predictions.append([ytest, y_prediction, y_probas])
+        classifier.fit(xtrain, ytrain)
+
+        y_probas = classifier.predict_proba(xtest)[:, 1]
+        y_prediction = classifier.predict(xtest)
+        cv_predictions.append(pd.DataFrame({'label':ytest, 'label_prediction':y_prediction, 'probabilities':y_probas, 'cv_fold':fold}))
+        #labels_predictions.append([ytest, y_prediction, y_probas])
 
 
-    print('Creating plots...')
-    fig, ax = plot_prediction_threshold_historgram(labels_predictions, n_bins)
-    # fig.tight_layout()
-    fig.savefig('confidences.pdf')
+    predictions_df = pd.concat(cv_predictions,ignore_index=True)
 
-
-    b = 1/10
-    f_beta= partial(metrics.fbeta_score, beta=b)
-    betas = calculate_metric_for_confidence_cuts(labels_predictions, f_beta, n_bins)
-    fig, ax = plot_metric_vs_confidence(betas, ylabel='$\\text{{f}}_{{\\beta}}$ score with $\\beta$ = {}'.format(b))
-    fig.tight_layout()
-    fig.savefig('fbeta.pdf')
-
-
-    recall = calculate_metric_for_confidence_cuts(labels_predictions, metrics.recall_score, n_bins)
-    fig, ax = plot_metric_vs_confidence(recall, legend_label='recall $\\frac{\\text{tp}}{\\text{tp} + \\text{fn}}$')
-    precision = calculate_metric_for_confidence_cuts(labels_predictions, metrics.precision_score, n_bins)
-    _, ax = plot_metric_vs_confidence(precision, legend_label='precision  $\\frac{\\text{tp}}{\\text{tp} + \\text{fp}}$', axis=ax, color='#3c84d7')
-    fig.tight_layout()
-    fig.savefig('recall_precision.pdf')
-
-    fig, ax = plot_q_values(labels_predictions, n_bins)
-    fig.tight_layout()
-    fig.savefig('q_values.pdf')
-
-    fig, ax = plot_roc_curves(labels_predictions)
-    fig.tight_layout()
-    fig.savefig('roc_curves.pdf')
-
-    plt.figure()
-    # importances = pd.DataFrame(rf.feature_importances_, index=df_training.columns, columns=['importance'])
-    # importances = importances.sort_values(by='importance', ascending=True)
-    #
-    # ax = importances.plot(
-    #     kind='barh',
-    #     color='#3c84d7'
-    # )
-    # ax.set_xlabel(u'feature importance')
-    # ax.get_yaxis().grid(None)
-    # plt.tight_layout()
-    # plt.savefig('importances.pdf')
-
+    print('writing predictions from cross validation')
+    predictions_df.to_hdf(predictions, key='table')
 
     print("Training model on complete dataset")
-    rf.fit(X,y)
-    print("Pickling model to {} ...".format(out))
-    joblib.dump(rf, out, compress = 4)
-    mapper = DataFrameMapper([
-                            (list(df_training.columns), None),
-                            ('label', None)
-                    ])
+    classifier.fit(X,y)
+    print("Plotting importances")
+    plt.figure()
+    importances = pd.DataFrame(classifier.feature_importances_, index=df_training.columns, columns=['importance'])
+    importances = importances.sort_values(by='importance', ascending=True)
+    ax = importances.plot(
+        kind='barh',
+        color='#3c84d7'
+    )
+    ax.set_xlabel(u'feature importance')
+    ax.get_yaxis().grid(None)
+    plt.tight_layout()
+    plt.savefig(importances_path)
 
-    joblib.dump(mapper, out, compress = 4)
+    print("Pickling model to {} ...".format(model))
+    joblib.dump(classifier, model, compress = 4)
+
+
+    # print("Pickling model to {} ...".format(out))
+    # joblib.dump(rf, out, compress = 4)
+    # mapper = DataFrameMapper([
+    #                         (list(df_training.columns), None),
+    #                         ('label', None)
+    #                 ])
+    #
+    # joblib.dump(mapper, out, compress = 4)
     # sklearn2pmml(rf, mapper,  out)
 
     # print('Adding data information to pmml...')
