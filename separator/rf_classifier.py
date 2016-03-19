@@ -4,40 +4,13 @@ from sklearn import cross_validation
 #from sklearn2pmml import sklearn2pmml
 from tqdm import tqdm
 
-from sklearn import metrics
+# from IPython import embed
 
-# import os
-# import xml.etree.ElementTree as ET
-scale = 1.3
-import matplotlib
-matplotlib.rcParams['text.usetex'] = True
-matplotlib.rcParams['text.latex.unicode'] = True
-matplotlib.rcParams['font.size']  = 11*scale
-matplotlib.rcParams['legend.fontsize']  = 10*scale
-matplotlib.rcParams['xtick.labelsize']  = 9*scale
-matplotlib.rcParams['ytick.labelsize']  = 9*scale
-matplotlib.rcParams['axes.labelsize']  = 'large'
-
-matplotlib.rcParams['text.latex.preamble'] = [
-    r'\usepackage{siunitx}',   # i need upright \micro symbols, but you need...
-    r'\sisetup{detect-all}',   # ...this to force siunitx to actually use your fonts
-    r'\usepackage{Fira Sans}',    # set the normal font here
-    r'\usepackage{sansmath}',  # load up the sansmath so that math -> helvet
-    r'\sansmath']  # <- tricky! -- gotta actually tell tex to use!
-
-matplotlib.use('Agg')
-
-import matplotlib.pyplot as plt
-plt.style.use('ggplot')
-from IPython import embed
-import numpy as np
 # from sklearn_pandas import DataFrameMapper
 from sklearn.externals import joblib
 from os import path
 import json
 import config
-
-
 
 
 def print_performance(
@@ -100,23 +73,26 @@ def read_data(file_path, hdf_key='table'):
             d = json.load(j)
             return pd.DataFrame(d)
 
+
 def write_data(df, file_path, hdf_key='table'):
     name, extension =  path.splitext(file_path)
     if extension in ['.hdf', '.hdf5', '.h5']:
         df.to_hdf(file_path, key=hdf_key)
-    if extension == '.json':
+    elif extension == '.json':
         df.to_json(file_path)
+    else:
+        print('cannot write tabular data with extension {}'.format(extension))
 
 
 @click.command()
 @click.argument('gamma_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
 @click.argument('proton_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('predictions', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
-@click.argument('model', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
+@click.argument('prediction_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
+@click.argument('model_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
 @click.argument('importances_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
 @click.option('--n_sample','-s', default=-1,  help='Number of data rows to sample. -1 for all rows.')
 @click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
-def main(gamma_path, proton_path, predictions, model, importances_path,  n_sample,  n_cv):
+def main(gamma_path, proton_path, prediction_path, model_path, importances_path,  n_sample,  n_cv):
     '''
     Train a RF classifier and write the model to OUT in pmml format.
     '''
@@ -151,7 +127,7 @@ def main(gamma_path, proton_path, predictions, model, importances_path,  n_sampl
 
     classifier = config.learner
 
-    #save predictions for each cv iteration
+    #save prediction_path for each cv iteration
     cv_predictions = []
     # iterate over test and training sets
     X =  df_training.values
@@ -160,7 +136,7 @@ def main(gamma_path, proton_path, predictions, model, importances_path,  n_sampl
     cv = cross_validation.StratifiedKFold(y, n_folds=n_cv)
 
 
-    for fold, (train, test) in tqdm(enumerate(cv)):
+    for fold, (train, test) in enumerate(tqdm(cv)):
         # select data
         xtrain, xtest = X[train], X[test]
         ytrain, ytest = y[train], y[test]
@@ -176,25 +152,18 @@ def main(gamma_path, proton_path, predictions, model, importances_path,  n_sampl
     predictions_df = pd.concat(cv_predictions,ignore_index=True)
 
     print('writing predictions from cross validation')
-    predictions_df.to_hdf(predictions, key='table')
+    predictions_df.to_hdf(prediction_path, key='table')
 
     print("Training model on complete dataset")
     classifier.fit(X,y)
-    print("Plotting importances")
-    plt.figure()
-    importances = pd.DataFrame(classifier.feature_importances_, index=df_training.columns, columns=['importance'])
-    importances = importances.sort_values(by='importance', ascending=True)
-    ax = importances.plot(
-        kind='barh',
-        color='#3c84d7'
-    )
-    ax.set_xlabel(u'feature importance')
-    ax.get_yaxis().grid(None)
-    plt.tight_layout()
-    plt.savefig(importances_path)
 
-    print("Pickling model to {} ...".format(model))
-    joblib.dump(classifier, model, compress = 4)
+    print("Saving importances")
+    importances = pd.DataFrame(classifier.feature_importances_, index=df_training.columns, columns=['importance'])
+    write_data(importances, importances_path)
+git
+
+    print("Pickling model to {} ...".format(model_path))
+    joblib.dump(classifier, model_path, compress = 4)
 
 
     # print("Pickling model to {} ...".format(out))
