@@ -40,10 +40,22 @@ def main(data_path, model_path, output_path):
     check_extension(output_path, allowed_extensions=['.csv'])
 
     model = joblib.load(model_path)
-    df_data = read_data(data_path)
-    prediction = model.predict_proba(df_data[config.training_variables])
-    out = pd.DataFrame(df_data[config.training_variables])
-    out['label_prediction'] = prediction[:,1]
+    df_data = read_data(data_path)[config.training_variables].dropna()
+    prediction = model.predict_proba(df_data)
+    df_data['signal_prediction'] = prediction[:,1]
+
+    thetas = df_data['Theta']
+    df_data['background_prediction'] = 0
+    for key in ['Theta_Off_1', 'Theta_Off_2', 'Theta_Off_3', 'Theta_Off_4', 'Theta_Off_5']:
+        df_data['Theta'] = df_data[key]
+        prediction = model.predict_proba(df_data)[:,1]
+        mask = (prediction > df_data['background_prediction'])
+        df_data['background_prediction'] = prediction[mask]
+        df_data['background_theta'] = df_data['Theta'][mask]
+
+    df_data['Theta'] = thetas
+
+    out = pd.DataFrame(df_data)
     out.to_csv(output_path, index_label='index')
 
 
