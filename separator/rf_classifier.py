@@ -3,7 +3,8 @@ import click
 from sklearn import cross_validation
 from sklearn2pmml import sklearn2pmml
 from tqdm import tqdm
-
+import numpy as np
+from sklearn import metrics
 
 from sklearn_pandas import DataFrameMapper
 from sklearn.externals import joblib
@@ -142,6 +143,7 @@ def main(gamma_path, proton_path, prediction_path, model_path, importances_path,
     cv = cross_validation.StratifiedKFold(y, n_folds=n_cv)
 
 
+    aucs =  []
     for fold, (train, test) in enumerate(tqdm(cv)):
         # select data
         xtrain, xtest = X[train], X[test]
@@ -152,8 +154,11 @@ def main(gamma_path, proton_path, prediction_path, model_path, importances_path,
         y_probas = classifier.predict_proba(xtest)[:, 1]
         y_prediction = classifier.predict(xtest)
         cv_predictions.append(pd.DataFrame({'label':ytest, 'label_prediction':y_prediction, 'probabilities':y_probas, 'cv_fold':fold}))
+        aucs.append(metrics.roc_auc_score(ytest, y_prediction))
         #labels_predictions.append([ytest, y_prediction, y_probas])
 
+
+    print('Mean AUC ROC : {}'.format(np.array(aucs).mean()))
 
     predictions_df = pd.concat(cv_predictions,ignore_index=True)
     print('writing predictions from cross validation')
