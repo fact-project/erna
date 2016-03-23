@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import click
-from IPython import embed
+# from IPython import embed
 from sklearn.externals import joblib
 from os import path
 import json
@@ -21,7 +21,7 @@ def write_data(df, file_path, hdf_key='table'):
 def read_data(file_path, hdf_key='table'):
     name, extension =  path.splitext(file_path)
     if extension in ['.hdf', '.hdf5', '.h5']:
-        return pd.read_hdf(file_path, key=hdf_key)
+        return pd.read_hdf(file_path)
     if extension == '.json':
         with open(file_path, 'r') as j:
             d = json.load(j)
@@ -45,23 +45,41 @@ def main(data_path, model_path, output_path):
     model = joblib.load(model_path)
     #sklearn needs float32 values. after downcasting some -infs appear somehow. here i drop them.
     df_data = read_data(data_path)
-    applicable_data =  df_data[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
-    df_data = df_data[applicable_data.index]
-    print('After dropping nans there are {} events left.'.format(applicable_data))
-    prediction = model.predict_proba(applicable_data)
+    df_data[config.training_variables] = df_data[config.training_variables].astype('float32')
+    df_data = df_data.replace([np.inf, -np.inf], np.nan).dropna(how='any')
+    # embed()
+    print('After dropping nans there are {} events left.'.format(len(df_data)))
+    prediction = model.predict_proba(df_data[config.training_variables])
     df_data['signal_prediction'] = prediction[:,1]
     df_data['signal_theta'] = df_data['Theta']
-    thetas = df_data['Theta']
-    df_data['background_prediction'] = 0
-    df_data['background_theta'] = np.nan
-    for key in ['Theta_Off_1', 'Theta_Off_2', 'Theta_Off_3', 'Theta_Off_4', 'Theta_Off_5']:
-        df_data['Theta'] = df_data[key]
-        applicable_data =  df_data[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
-        prediction = model.predict_proba(applicable_data)[:,1]
-        mask = ((prediction > df_data['signal_prediction']) & (prediction > df_data['background_prediction'])).values
-        df_data['background_prediction'][mask] = prediction[mask]
-        df_data['background_theta'][mask]  = df_data['Theta'][mask]
+    df_data['signal_distance'] = df_data['Distance']
 
+    thetas = df_data['Theta']
+    distances = df_data['Distance']
+
+    df_data['Theta'] = df_data['Theta_Off_3']
+    df_data['Distance'] = df_data['Distance_Off_3']
+    df_data['background_prediction'] =  model.predict_proba(df_data[config.training_variables])[:,1]
+    df_data['background_theta']  = df_data['Theta']
+    df_data['background_distance']  = df_data['Distance']
+
+    # df_data['background_prediction'] = 0
+    # df_data['background_theta'] = np.nan
+    # df_data['background_distance'] = np.nan
+
+    # off_columns = zip(['Theta_Off_1', 'Theta_Off_2', 'Theta_Off_3', 'Theta_Off_4', 'Theta_Off_5'],
+    #                     ['Distance_Off_1', 'Distance_Off_2', 'Distance_Off_3', 'Distance_Off_4', 'Distance_Off_5'])
+    # for key in off_columns:
+    #     df_data['Theta'] = df_data[key[0]]
+    #     df_data['Distance'] = df_data[key[1]]
+    #     prediction_for_background = model.predict_proba(df_data[config.training_variables])[:,0]
+    #     # embed()
+    #     mask = (prediction_for_background > df_data['background_prediction']).values
+    #     df_data['background_prediction'][mask] = prediction_for_background[mask]
+    #     df_data['background_theta'][mask]  = df_data['Theta'][mask]
+    #     df_data['background_distance'][mask]  = df_data['Distance'][mask]
+
+    df_data['Distance'] = distances
     df_data['Theta'] = thetas
     write_data(df_data, output_path)
 
