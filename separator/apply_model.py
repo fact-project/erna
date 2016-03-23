@@ -44,9 +44,10 @@ def main(data_path, model_path, output_path):
 
     model = joblib.load(model_path)
     #sklearn needs float32 values. after downcasting some -infs appear somehow. here i drop them.
-    df_data = read_data(data_path)[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
-    print('After dropping nans there are {} events left.'.format(len(df_data)))
-    prediction = model.predict_proba(df_data)
+    df_data = read_data(data_path)
+    applicable_data =  df_data[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
+    print('After dropping nans there are {} events left.'.format(applicable_data))
+    prediction = model.predict_proba(applicable_data)
     df_data['signal_prediction'] = prediction[:,1]
     df_data['signal_theta'] = df_data['Theta']
     thetas = df_data['Theta']
@@ -54,7 +55,8 @@ def main(data_path, model_path, output_path):
     df_data['background_theta'] = np.nan
     for key in ['Theta_Off_1', 'Theta_Off_2', 'Theta_Off_3', 'Theta_Off_4', 'Theta_Off_5']:
         df_data['Theta'] = df_data[key]
-        prediction = model.predict_proba(df_data[config.training_variables])[:,1]
+        applicable_data =  df_data[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
+        prediction = model.predict_proba(applicable_data)[:,1]
         mask = ((prediction > df_data['signal_prediction']) & (prediction > df_data['background_prediction'])).values
         df_data['background_prediction'][mask] = prediction[mask]
         df_data['background_theta'][mask]  = df_data['Theta'][mask]
