@@ -43,9 +43,10 @@ def main(data_path, model_path, output_path):
     check_extension(output_path)
 
     model = joblib.load(model_path)
-    df_data = read_data(data_path).replace([np.inf, -np.inf], np.nan).dropna(how='any')
+    #sklearn needs float32 values. after downcasting some -infs appear somehow. here i drop them.
+    df_data = read_data(data_path)[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
     print('After dropping nans there are {} events left.'.format(len(df_data)))
-    prediction = model.predict_proba(df_data[config.training_variables])
+    prediction = model.predict_proba(df_data)
     df_data['signal_prediction'] = prediction[:,1]
     df_data['signal_theta'] = df_data['Theta']
     thetas = df_data['Theta']
