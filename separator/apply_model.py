@@ -46,6 +46,7 @@ def main(data_path, model_path, output_path):
     #sklearn needs float32 values. after downcasting some -infs appear somehow. here i drop them.
     df_data = read_data(data_path)
     applicable_data =  df_data[config.training_variables].astype('float32').replace([np.inf, -np.inf], np.nan).dropna(how='any')
+    df_data = df_data[applicable_data.index]
     print('After dropping nans there are {} events left.'.format(applicable_data))
     prediction = model.predict_proba(applicable_data)
     df_data['signal_prediction'] = prediction[:,1]
