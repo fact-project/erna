@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import click
-# from IPython import embed
+from IPython import embed
 from sklearn.externals import joblib
 from os import path
 import json
@@ -43,7 +43,9 @@ def main(data_path, model_path, output_path):
     check_extension(output_path)
 
     model = joblib.load(model_path)
-    df_data = read_data(data_path).dropna()
+    embed()
+    df_data = read_data(data_path).replace([np.inf, -np.inf], np.nan).dropna(how='any')
+    print('After dropping nans there are {} events left.'.format(len(df_data)))
     prediction = model.predict_proba(df_data[config.training_variables])
     df_data['signal_prediction'] = prediction[:,1]
     df_data['signal_theta'] = df_data['Theta']
