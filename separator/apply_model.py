@@ -43,7 +43,6 @@ def main(data_path, model_path, output_path):
     check_extension(output_path)
 
     model = joblib.load(model_path)
-    embed()
     df_data = read_data(data_path).replace([np.inf, -np.inf], np.nan).dropna(how='any')
     print('After dropping nans there are {} events left.'.format(len(df_data)))
     prediction = model.predict_proba(df_data[config.training_variables])
