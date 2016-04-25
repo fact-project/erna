@@ -10,7 +10,14 @@ Dates are given in the usual FACT convention: YYYYMMDD.
 
   - Java 1.7+
   - Python 3.5+ (srsly. 3.5 please)
-  - a whole bunch of dependencies
+  
+Install my fork of pygridmap 
+
+    pip install git+https://github.com/mackaiver/gridmap
+    
+Then install this via
+
+    pip install git+https://github.com/fact-project/erna
 
 
 ## execute_data_processing.py

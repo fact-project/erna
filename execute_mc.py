@@ -14,14 +14,14 @@ from IPython import embed
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs):
+def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, walltime):
     jobs = []
     # create job objects
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path':data, 'drs_path':drs})
-        job = Job(erna.stream_runner.run, [jar, xml, df, num], queue=queue, engine=engine, mem_free='{}mb'.format(vmem))
+        job = Job(erna.stream_runner.run, [jar, xml, df, num], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         jobs.append(job)
 
     avg_num_files = np.mean([len(part) for part in data_partitions])
@@ -37,13 +37,14 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs):
 @click.argument('drs_file', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True))
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
+@click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
 @click.option('--vmem', help='Amount of memory to use per node in MB.', default='400', type=click.INT)
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.')
-def main( jar, xml, out,drs_file, mc_path, queue, engine, num_jobs, vmem, log_level, port, local):
+def main( jar, xml, out,drs_file, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -66,7 +67,7 @@ def main( jar, xml, out,drs_file, mc_path, queue, engine, num_jobs, vmem, log_le
     # embed()
     for folder in tqdm(mc_path):
         # print("Entering folder {}".format(folder))
-        pattern = path.join(folder, '**/*_Events.fits.gz')
+        pattern = path.join(folder, '**/*_Events.fit*')
         f = glob.glob(pattern, recursive=True)
         files = files + f
 
@@ -84,7 +85,7 @@ def main( jar, xml, out,drs_file, mc_path, queue, engine, num_jobs, vmem, log_le
     mc_paths_array = np.array(files)
     drs_paths_array = np.repeat(np.array(drs_file), len(mc_paths_array))
 
-    job_list = make_jobs(jarpath, xmlpath, mc_paths_array, drs_paths_array,  engine, queue, vmem, num_jobs)
+    job_list = make_jobs(jarpath, xmlpath, mc_paths_array, drs_paths_array,  engine, queue, vmem, num_jobs, walltime)
 
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out)
