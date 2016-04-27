@@ -13,57 +13,6 @@ import json
 import config
 
 
-def print_performance(
-        roc_aucs,
-        confusion_matrices,
-        precisions,
-        recalls,
-        f_scores,
-        ):
-
-    tp = confusion_matrices[:, 0, 0]
-    fn = confusion_matrices[:, 0, 1]
-    fp = confusion_matrices[:, 1, 0]
-    tn = confusion_matrices[:, 1, 1]
-
-    print('''Confusion Matrix:
-        {:>8.2f} +- {:>8.2f}  {:>8.2f} +- {:>8.2f}
-        {:>8.2f} +- {:>8.2f}  {:>8.2f} +- {:>8.2f}
-    '''.format(
-        tp.mean(), tp.std(),
-        fn.mean(), fn.std(),
-        fp.mean(), fp.std(),
-        tn.mean(), tn.std(),
-    ))
-
-    fpr = fp / (fp + tn)
-    relative_error = (fpr.std() / fpr.mean()) * 100
-    print('Mean False Positive Rate: ')
-    print('{:.5f} +- {:.5f} (+- {:.1f} %)'.format(
-        fpr.mean(), fpr.std(), relative_error
-    ))
-
-    print('Mean area under ROC curve: ')
-    relative_error = (roc_aucs.std() / roc_aucs.mean()) * 100
-    print('{:.5f} +- {:.5f} (+- {:.1f} %)'.format(
-        roc_aucs.mean(), roc_aucs.std(), relative_error
-    ))
-
-    print('Mean recall:')
-    relative_error = (recalls.std() / recalls.mean()) * 100
-    print('{:.5f} +- {:.5f} (+- {:.1f} %)'.format(
-        recalls.mean(), recalls.std(), relative_error
-    ))
-
-    print('Mean fscore:')
-    relative_error = (f_scores.std() / f_scores.mean()) * 100
-    print('{:.5f} +- {:.5f} (+- {:.1f} %)'.format(
-        f_scores.mean(), f_scores.std(), relative_error
-    ))
-
-
-
-
 def read_data(file_path, hdf_key='table'):
 
     name, extension =  path.splitext(file_path)
@@ -90,16 +39,17 @@ def check_extension(file_path, allowed_extensions= ['.hdf', '.hdf5', '.h5', 'jso
         print('Extension {} not allowed here.'.format(extension))
 
 @click.command()
-@click.argument('gamma_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('proton_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('prediction_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
-@click.argument('model_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
-@click.argument('importances_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) )
-@click.option('--n_sample','-s', default=-1,  help='Number of data rows to sample. -1 for all rows.')
-@click.option('--n_cv','-c', default=5,  help='Number of CV folds to perform')
+@click.argument('gamma_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True), help='Path to signal MC data' )
+@click.argument('proton_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True), help='Path to background MC data' )
+@click.argument('prediction_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) , help='Path to where the CV predictions are saved')
+@click.argument('model_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) , help='Save location of the  model will be saved. ' +
+        'Allowed extensions are .pkl and .pmml. If extension is .pmml, then both pmml and pkl file will be saved')
+@click.argument('importances_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) , help='Path to where the importances are saved')
+@click.option('--n_sample','-s', default=-1,  help='Number of data rows to randomly sample. -1 for all rows.')
+@click.option('--n_cv','-c', default=5,  help='Number of CV folds tos perform')
 def main(gamma_path, proton_path, prediction_path, model_path, importances_path,  n_sample,  n_cv):
     '''
-    Train a RF classifier and write the model to OUT in pmml or pickle format.
+    Train a classifier on signal and background monte carlo data and write the model to OUT in pmml or pickle format.
     '''
     map(check_extension, [gamma_path, proton_path, prediction_path, importances_path])
     check_extension(model_path, allowed_extensions=['.pmml', '.pkl'])

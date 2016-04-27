@@ -2,7 +2,7 @@ from sklearn import ensemble
 
 n_trees = 50
 n_jobs = 2
-max_depth=20
+max_depth=15
 #the classifier to be used.
 learner = ensemble.RandomForestClassifier(n_estimators=n_trees, max_features='sqrt', n_jobs=n_jobs, max_depth=max_depth, criterion='entropy')
 
