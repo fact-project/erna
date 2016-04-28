@@ -1,25 +1,30 @@
-from sklearn import ensemble
+# hmm realy tasty config for realy tasty classification stuff
 
-n_trees = 50
-n_jobs = 2
-max_depth=15
-#the classifier to be used.
-learner = ensemble.RandomForestClassifier(n_estimators=n_trees, max_features='sqrt', n_jobs=n_jobs, max_depth=max_depth, criterion='entropy')
+# path to mc files
+signal_path : ../examples/signal.hdf
+
+background_path : ../examples/background.hdf
+
+#the classifier to use
+classifier : |
+  from sklearn import ensemble
+  rf = ensemble.RandomForestClassifier(n_estimators=30, max_features='sqrt', n_jobs=1, max_depth=15, criterion='entropy')
 
 
-#randomly sample the data if you dont want to use
+#randomly sample the data if you dont want to use the whole set, -1 for all stuff
+sample : -1
 
 #query to apply to the data before separation
-query = 'Leakage < 0.2'
+query : 'Leakage < 0.2'
 
 # define th number of cross validations to perform
-num_cross_validations = 5
+num_cross_validations : 5
 
 # training_variables = ['Size', 'Length', 'Width', 'numIslands', 'Leakage',
 #         'm3l', 'm3t', 'Disp', 'Timespread', 'arrivalTimeMean',
 #        'ConcCore']
 #specify the variables to train on
-training_variables = ['ConcCore',
+training_variables : ['ConcCore',
  'Concentration_onePixel',
  'Concentration_twoPixel',
  'Leakage',

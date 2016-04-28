@@ -10,7 +10,7 @@ from sklearn_pandas import DataFrameMapper
 from sklearn.externals import joblib
 from os import path
 import json
-import config
+import yaml
 
 
 def read_data(file_path, hdf_key='table'):
@@ -39,41 +39,46 @@ def check_extension(file_path, allowed_extensions= ['.hdf', '.hdf5', '.h5', 'jso
         print('Extension {} not allowed here.'.format(extension))
 
 @click.command()
-@click.argument('gamma_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True), help='Path to signal MC data' )
-@click.argument('proton_path', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True), help='Path to background MC data' )
+@click.argument('configuration_path', type=click.Path(exists=True, dir_okay=False, file_okay=True) , help='Path to the config yaml file')
 @click.argument('prediction_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) , help='Path to where the CV predictions are saved')
 @click.argument('model_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) , help='Save location of the  model will be saved. ' +
         'Allowed extensions are .pkl and .pmml. If extension is .pmml, then both pmml and pkl file will be saved')
 @click.argument('importances_path', type=click.Path(exists=False, dir_okay=False, file_okay=True) , help='Path to where the importances are saved')
-@click.option('--n_sample','-s', default=-1,  help='Number of data rows to randomly sample. -1 for all rows.')
-@click.option('--n_cv','-c', default=5,  help='Number of CV folds tos perform')
-def main(gamma_path, proton_path, prediction_path, model_path, importances_path,  n_sample,  n_cv):
+def main(configuration_path, prediction_path, model_path, importances_path):
     '''
-    Train a classifier on signal and background monte carlo data and write the model to OUT in pmml or pickle format.
+    Train a classifier on signal and background monte carlo data and write the model to MODEL_PATH in pmml or pickle format.
     '''
-    map(check_extension, [gamma_path, proton_path, prediction_path, importances_path])
+
+    check_extension(prediction_path)
+    check_extension(importances_path)
     check_extension(model_path, allowed_extensions=['.pmml', '.pkl'])
 
+    #load configuartion stuff
+    with open(configuration_path) as f:
+        config = yaml.load(f)
+
+    sample = config['sample']
+    query = config['query']
+    num_cross_validations = config['n_cv']
+
     print("Loading data")
-    df_gamma = read_data(gamma_path)
-    df_proton = read_data(proton_path)
-    # embed()
-    # df_gamma = pd.read_hdf(gamma_path, key='table')
-    # df_proton = pd.read_hdf(proton_path, key='table')
-    query = config.query
+    df_gamma = read_data(config['signal_path'])
+    df_proton = read_data(config['background_path'])
+
     if query:
         print('Quering with string: {}'.format(query))
         df_gamma = df_gamma.query(query)
         df_proton = df_proton.query(query)
 
-    df_gamma['label_text'] = 'gamma'
+    df_gamma['label_text'] = 'signal'
     df_gamma['label'] = 1
-    df_proton['label_text'] = 'proton'
+    df_proton['label_text'] = 'background'
     df_proton['label'] = 0
 
-    if n_sample > 0:
-        df_gamma = df_gamma.sample(n_sample)
-        df_proton = df_proton.sample(n_sample)
+
+    if sample > 0:
+        df_gamma = df_gamma.sample(sample)
+        df_proton = df_proton.sample(sample)
 
 
     print('Training classifier with {} protons and {} gammas'.format(len(df_proton), len(df_gamma)))
@@ -89,8 +94,8 @@ def main(gamma_path, proton_path, prediction_path, model_path, importances_path,
     # iterate over test and training sets
     X =  df_training.values
     y = df_label.values
-    print('Starting {} fold cross validation... '.format(n_cv) )
-    cv = cross_validation.StratifiedKFold(y, n_folds=n_cv)
+    print('Starting {} fold cross validation... '.format(num_cross_validations) )
+    cv = cross_validation.StratifiedKFold(y, n_folds=num_cross_validations)
 
 
     aucs =  []
