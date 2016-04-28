@@ -2,9 +2,9 @@ from setuptools import setup
 
 setup(
     name='erna',
-    version='0.0.1',
-    description='Easy RuN Access. Tools that help batch processing of fact data',
-    url='https://github.com/mackaiver/erna',
+    version='0.0.2',
+    description='Easy RuN Access. Tools that help to do batch processing of FACT data',
+    url='https://github.com/fact-project/erna',
     author='Kai Brügge',
     author_email='kai.bruegge@tu-dortmund.de',
     license='BEER',
@@ -28,5 +28,13 @@ setup(
         'numexpr',
         # 'gridmap>=0.13.1',
     ],
-   zip_safe=False
+   zip_safe=False,
+   entry_points={
+    'console_scripts': [
+        'process_fact_data = scripts.process_fact_data',
+        'process_fact_mc = scripts.process_fact_mc',
+        'fetch_fact_runs = scripts.fetch_fact_runs',
+        'process_fact_run_list = scripts.process_fact_run_list',
+    ],
+  }
 )
