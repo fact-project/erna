@@ -20,21 +20,22 @@ setup(
         'sqlalchemy',       # in anaconda
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
-        'tables',
+        'tables',           # needs to be installed by pip for some reason
         # 'hdf5',
         'click',
         'drmaa',
         'pyzmq',
         'numexpr',
-        # 'gridmap>=0.13.1',
+        'pytest', # also in  conda
+        # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
     ],
    zip_safe=False,
    entry_points={
     'console_scripts': [
-        'process_fact_data = scripts.process_fact_data',
-        'process_fact_mc = scripts.process_fact_mc',
-        'fetch_fact_runs = scripts.fetch_fact_runs',
-        'process_fact_run_list = scripts.process_fact_run_list',
+        'process_fact_data = erna.scripts.process_fact_data:main',
+        'process_fact_mc = erna.scripts.process_fact_mc:main',
+        'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
+        'process_fact_run_list = erna.scripts.process_fact_run_list:main',
     ],
   }
 )
