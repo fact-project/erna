@@ -5,7 +5,7 @@ import numpy as np
 import datetime
 from datetime import timedelta
 from . import stream_runner
-import datacheck_conditions as dcc
+from . import datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +49,13 @@ def collect_output(job_outputs, output_path):
 
 
 
-def load(earliest_night, latest_night, path_to_data,
-factdb,source_name="Crab", timedelta_in_minutes="30",
-data_conditions=dcc.conditions["std"]):
+def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30", data_conditions=dcc.conditions["std"]):
     '''
     Given the earliest and latest night to fetch as a factnight string (as in 20141024) this method returns a DataFrame
     containing the paths to data files and their correpsonding .drs files. The maximum time difference between the
     data and drs files is specified by the timedelta_in_minutes parameter.
+
+    Returns None if no files can be found.
     '''
 
     def build_path(fNight, path_to_data):
@@ -100,13 +100,13 @@ data_conditions=dcc.conditions["std"]):
         logger.error('Allowed names are: {}'.format(sourceDB.fSourceName) )
         return pd.DataFrame()
 
-    #add source key to conditions for data quality
+    #source key to conditions for data quality
     data_conditions += [
          "fSourceKEY == " + str(int(source.fSourceKEY)),
     ]
     querystring = " & ".join(data_conditions)
 
-    print(querystring)
+    logger.info('Querying data with conditions: {}'.format(querystring))
     #get all data runs according to the conditions
     data = rundb.query(querystring)
 
@@ -123,6 +123,10 @@ data_conditions=dcc.conditions["std"]):
 
     querystring = " & ".join(conditions)
     drs_data = rundb.query(querystring)
+
+    if len(data) == 0 or len(drs_data) == 0:
+        logger.error('No data or drs files found that adhere to the specified query.')
+        return None
 
     logger.info("Got " + str(len(data)) + " data entries and " + str(len(drs_data)) + " drs entries")
 

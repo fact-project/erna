@@ -5,7 +5,8 @@ from sqlalchemy import create_engine
 import logging
 import click
 import erna
-import datacheck_conditions as dcc
+import erna.datacheck_conditions as dcc
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, pa
 
     data_conditions=dcc.conditions[conditions]
     mapping = erna.load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
-    if mapping.size == 0:
+    if not mapping:
         logger.error('No entries matching the conditions could be found in the RunDB')
         return
 

@@ -13,7 +13,7 @@ from gridmap import Job
 # import signal
 # import sys
 
-import datacheck_conditions as dcc
+import erna.datacheck_conditions as dcc
 
 
 
