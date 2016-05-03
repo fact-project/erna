@@ -4,7 +4,7 @@ import logging
 import click
 import erna
 import numpy as np
-import  sqlalchemy
+import sqlalchemy
 from os import path
 import os
 import gridmap
