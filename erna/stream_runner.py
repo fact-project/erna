@@ -6,7 +6,7 @@ import logging
 import tempfile
 
 
-def run(jar, xml, df, num):
+def run(jar, xml, df, num, db_path=None):
     '''
     This is what will be executed on the cluster
     '''
@@ -53,6 +53,7 @@ def run(jar, xml, df, num):
                 xml,
                 '-Dinput=file:{}'.format(input_path),
                 '-Doutput=file:{}'.format(output_path),
+                '-Ddb=file:{}'.format(db_path),
         ]
 
         subprocess.check_call(['which', 'java'])
