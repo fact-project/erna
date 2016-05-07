@@ -12,6 +12,9 @@ setup(
         'erna',
     ],
     # dependency_links = ['git+https://github.com/mackaiver/gridmap.git#egg=gridmap'],
+    package_data={
+        'erna': ['resources/*'],
+    },
     install_requires=[
         'pandas',           # in anaconda
         'numpy',            # in anaconda

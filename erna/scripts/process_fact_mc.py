@@ -8,7 +8,6 @@ import gridmap
 from gridmap import Job
 from tqdm import tqdm
 import glob
-from IPython import embed
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,6 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, w
 @click.argument('jar', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True))
-@click.argument('drs_file', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True))
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
@@ -44,7 +42,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, w
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.')
-def main( jar, xml, out,drs_file, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -61,6 +59,8 @@ def main( jar, xml, out,drs_file, mc_path, queue, walltime, engine, num_jobs, vm
 
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
+    drspath = erna.mc_drs_file()
+    logger.info('Using drs file at {}'.format(drspath))
     #get data files
     print("Finding files {}".format(mc_path))
     files=[]
@@ -83,7 +83,7 @@ def main( jar, xml, out,drs_file, mc_path, queue, walltime, engine, num_jobs, vm
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     mc_paths_array = np.array(files)
-    drs_paths_array = np.repeat(np.array(drs_file), len(mc_paths_array))
+    drs_paths_array = np.repeat(np.array(drspath), len(mc_paths_array))
 
     job_list = make_jobs(jarpath, xmlpath, mc_paths_array, drs_paths_array,  engine, queue, vmem, num_jobs, walltime)
 
