@@ -4,14 +4,14 @@ import os
 import numpy as np
 import datetime
 from datetime import timedelta
-from . import stream_runner
+# from . import stream_runner
 from . import datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
 def mc_drs_file():
     import pkg_resources
-    drs_path = pkg_resources.resource_filename(__name__,'mc_drs_constants.drs.fits.gz')
+    drs_path = pkg_resources.resource_filename(__name__,'resources/mc_drs_constants.drs.fits.gz')
     return drs_path
 
 def ensure_dir(d):
