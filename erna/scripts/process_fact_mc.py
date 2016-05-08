@@ -9,7 +9,6 @@ from gridmap import Job
 from tqdm import tqdm
 import glob
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +37,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, w
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
-@click.option('--vmem', help='Amount of memory to use per node in MB.', default='400', type=click.INT)
+@click.option('--vmem', help='Amount of memory to use per node in MB.', default='1000', type=click.INT)
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.')
@@ -57,6 +56,7 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
+    erna.ensure_output(out)
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
     drspath = erna.mc_drs_file()

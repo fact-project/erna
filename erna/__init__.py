@@ -4,20 +4,30 @@ import os
 import numpy as np
 import datetime
 from datetime import timedelta
-# from . import stream_runner
 from . import datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
+
 def mc_drs_file():
+    '''
+    return path to the drs file used for monte carlo files
+    '''
     import pkg_resources
     drs_path = pkg_resources.resource_filename(__name__,'resources/mc_drs_constants.drs.fits.gz')
     return drs_path
 
-def ensure_dir(d):
-    if not os.path.exists(d):
-        print("Directory {} not existing, creating it".format(d))
-        os.makedirs(d)
+def ensure_output(output_path):
+    '''
+    Make sure the output file does not exist yet.
+    Create directorie to new output file if necessary
+    '''
+    if os.path.exists(output_path):
+        raise FileExistsError('The output file already exists.')
+    directory = os.path.dirname(output_path)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+
 
 def collect_output(job_outputs, output_path):
     '''
@@ -32,8 +42,6 @@ def collect_output(job_outputs, output_path):
 
     if len(frames) == 0:
         return
-
-    ensure_dir(os.path.dirname(output_path))
 
     df = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df)))

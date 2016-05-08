@@ -1,26 +1,17 @@
-#!/usr/bin/env python
-
 import logging
 import click
-import erna
+
 import numpy as np
 import sqlalchemy
-from os import path
 import os
+
 import gridmap
 from gridmap import Job
 
-# import signal
-# import sys
-
+import erna
 import erna.datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
-
-
-def sigterm_handler(_signo, _stack_frame):
-    # Raises SystemExit(0):
-    print('Caught exit signal. Stopping stuff.')
 
 
 def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_jobs, walltime):
@@ -48,7 +39,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
-@click.option('--vmem', help='Amount of memory to use per node in MB.', default='400', type=click.INT)
+@click.option('--vmem', help='Amount of memory to use per node in MB.', default='10000', type=click.INT)
 @click.option('--log_level', type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
@@ -69,12 +60,12 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
-    #get data files
-    jarpath = path.abspath(jar)
-    xmlpath = path.abspath(xml)
-    outpath = path.abspath(out)
-    db_path = path.abspath(db)
-    output_directory = path.dirname(outpath)
+    jarpath = os.path.abspath(jar)
+    xmlpath =os. path.abspath(xml)
+    outpath = os.path.abspath(out)
+    erna.ensure_output(out)
+    db_path = os.path.abspath(db)
+    output_directory = os.path.dirname(outpath)
     #create dir if it doesnt exist
     os.makedirs(output_directory, exist_ok=True)
     logger.info("Writing output data  to {}".format(out))
