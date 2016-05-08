@@ -3,7 +3,10 @@ import click
 import numpy as np
 import pandas as pd
 from os import path
+
 import erna
+from erna import stream_runner
+
 import gridmap
 from gridmap import Job
 from tqdm import tqdm
@@ -19,7 +22,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, w
     drs_partitions = np.array_split(drs_paths, num_jobs)
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path':data, 'drs_path':drs})
-        job = Job(erna.stream_runner.run, [jar, xml, df, num], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
+        job = Job(stream_runner.run, [jar, xml, df, num], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         jobs.append(job)
 
     avg_num_files = np.mean([len(part) for part in data_partitions])
