@@ -61,10 +61,9 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     xmlpath = path.abspath(xml)
     drspath = erna.mc_drs_file()
     logger.info('Using drs file at {}'.format(drspath))
+
     #get data files
-    print("Finding files {}".format(mc_path))
     files=[]
-    # embed()
     for folder in tqdm(mc_path):
         # print("Entering folder {}".format(folder))
         pattern = path.join(folder, '**/*_Events.fit*')
