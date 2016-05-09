@@ -36,14 +36,14 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, w
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True))
 @click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True))
-@click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
-@click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
-@click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
-@click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
-@click.option('--vmem', help='Amount of memory to use per node in MB.', default='1000', type=click.INT)
+@click.option('--queue', help='Name of the queue you want to send jobs to.', default='short', show_default=True)
+@click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00', show_default=True)
+@click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE', show_default=True)
+@click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT, show_default=True)
+@click.option('--vmem', help='Amount of memory to use per node in MB.', default='1000', type=click.INT, show_default=True)
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
-@click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.')
+@click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.',show_default=True)
 def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
