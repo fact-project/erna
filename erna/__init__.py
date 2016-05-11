@@ -9,6 +9,22 @@ from . import datacheck_conditions as dcc
 logger = logging.getLogger(__name__)
 
 
+def _build_path(fNight, path_to_data):
+        year = fNight[0:4]
+        month = fNight[4:6]
+        day = fNight[6:8]
+        return os.path.join(path_to_data, year, month, day)
+
+def _build_RunID(fRunID):
+    if(len(fRunID) == 1):
+        return('00' + fRunID)
+
+    if(len(fRunID) == 2):
+        return('0' + fRunID)
+
+    return(fRunID)
+
+
 def mc_drs_file():
     '''
     return path to the drs file used for monte carlo files
@@ -29,10 +45,11 @@ def ensure_output(output_path):
         os.makedirs(directory, exist_ok=True)
 
 
-def collect_output(job_outputs, output_path):
+def collect_output(df_started_runs, job_outputs, output_path):
     '''
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
     to a file as specified by the output_path.
+    The datatframe df_started_runs is joined with the job outputs to get the real ontime.
     '''
     logger.info("Concatenating results from each job and writing result to {}".format(output_path))
     frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
@@ -43,22 +60,26 @@ def collect_output(job_outputs, output_path):
     if len(frames) == 0:
         return
 
-    df = pd.concat(frames, ignore_index=True)
-    logger.info("There are a total of {} events in the result".format(len(df)))
+    df_returned_data = pd.concat(frames, ignore_index=True)
+    logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
+
+    df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
+    total_on_time_in_seconds = df_merged.on_time.sum()
+    logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df.to_json(output_path, orient='records', date_format='epoch' )
+        df_returned_data.to_json(output_path, orient='records', date_format='epoch' )
     elif extension == '.json':
         logger.info("Writing JSON to {}".format(output_path))
-        df.to_json(output_path, orient='records', date_format='epoch' )
+        df_returned_data.to_json(output_path, orient='records', date_format='epoch' )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        df.to_hdf(output_path, 'table', mode='w')
+        df_returned_data.to_hdf(output_path, 'table', mode='w')
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
-        df.to_csv(output_path)
+        df_returned_data.to_csv(output_path)
 
 
 
@@ -71,20 +92,7 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     Returns None if no files can be found.
     '''
 
-    def build_path(fNight, path_to_data):
-            year = fNight[0:4]
-            month = fNight[4:6]
-            day = fNight[6:8]
-            return os.path.join(path_to_data, year, month, day)
 
-    def build_RunID(fRunID):
-        if(len(fRunID) == 1):
-            return('00' + fRunID)
-
-        if(len(fRunID) == 2):
-            return('0' + fRunID)
-
-        return(fRunID)
 
     logger.debug("Table names in DB: ")
     logger.debug(factdb.table_names())
@@ -150,12 +158,12 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
 
 
     #write filenames
-    data["filename"] = data.fNight.astype(str) + "_" + data.fRunID.astype(str).apply(build_RunID)
-    drs_data["filename"] = drs_data.fNight.astype(str) + "_" + drs_data.fRunID.astype(str).apply(build_RunID)
+    data["filename"] = data.fNight.astype(str) + "_" + data.fRunID.astype(str).apply(_build_RunID)
+    drs_data["filename"] = drs_data.fNight.astype(str) + "_" + drs_data.fRunID.astype(str).apply(_build_RunID)
 
     #write path TODO: file ending? is everythiong in fz?
-    data["path"] = data.fNight.astype(str).apply(build_path, args=[path_to_data]) + "/" + data.filename.astype(str) + ".fits.fz"
-    drs_data["path"] = drs_data.fNight.astype(str).apply(build_path, args=[path_to_data]) + "/" + drs_data.filename.astype(str) + ".drs.fits.gz"
+    data["path"] = data.fNight.astype(str).apply(_build_path, args=[path_to_data]) + "/" + data.filename.astype(str) + ".fits.fz"
+    drs_data["path"] = drs_data.fNight.astype(str).apply(_build_path, args=[path_to_data]) + "/" + drs_data.filename.astype(str) + ".drs.fits.gz"
 
 
     #sorting data by their timestamp.
@@ -179,11 +187,15 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     closest_drs_entries = closest_drs_entries[closest_drs_entries.deltaT < timedelta(minutes = timedelta_in_minutes)]
 
 
-    mapping = pd.concat([closest_drs_entries.filename, closest_drs_entries.path, data.path, closest_drs_entries.deltaT, data.fOnTime, data.fEffectiveOn], axis=1, keys=["filename", "drs_path", "data_path", "delta_t", "on_time", "effective_on"])
+    mapping = pd.concat([closest_drs_entries.filename, closest_drs_entries.path, data.path, closest_drs_entries.deltaT, data.fOnTime, data.fEffectiveOn, data.fNight, data.fRunID],
+                                        axis=1, keys=["filename", "drs_path", "data_path", "delta_t", "on_time", "effective_on", "fNight", "fRunID"])
+
     mapping = mapping.dropna( how='any')
 
+    mapping = mapping.rename(columns={'fNight':'NIGHT', 'fRunID':'RUNID'})
+
     logger.info("Fetched {} data runs and approx {} drs entries from database where time delta is less than {} minutes".format(len(mapping), mapping['drs_path'].nunique(), timedelta_in_minutes))
-    effective_on_time = (mapping['on_time'] * mapping['effective_on']).sum()
-    logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
+    # effective_on_time = (mapping['on_time'] * mapping['effective_on']).sum()
+    # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
 
     return mapping
