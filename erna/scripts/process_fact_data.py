@@ -78,7 +78,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
 
     job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_jobs, walltime)
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
-    erna.collect_output(df_runs,job_outputs, out)
+    erna.collect_output(job_outputs, out, df_runs)
 
 if __name__ == "__main__":
     main()

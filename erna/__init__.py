@@ -45,7 +45,7 @@ def ensure_output(output_path):
         os.makedirs(directory, exist_ok=True)
 
 
-def collect_output(df_started_runs, job_outputs, output_path):
+def collect_output(job_outputs, output_path, df_started_runs=None):
     '''
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
     to a file as specified by the output_path.
@@ -63,9 +63,10 @@ def collect_output(df_started_runs, job_outputs, output_path):
     df_returned_data = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
 
-    df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
-    total_on_time_in_seconds = df_merged.on_time.sum()
-    logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
+    if not df_started_runs == None:
+        df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
+        total_on_time_in_seconds = df_merged.on_time.sum()
+        logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
