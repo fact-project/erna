@@ -99,8 +99,9 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue, vme
 
         df["output_path"] = output_path
         df["bunch_index"] = num
-        # df["indices"] = indices
         df["command"] = command
+        df["fact_tools"] = str(os.path.basename(jar))
+        df["xml"] = str(os.path.basename(xml))
         jobs.append(df)
 
     return pd.concat(jobs, ignore_index=True)
