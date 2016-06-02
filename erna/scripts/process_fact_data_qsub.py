@@ -169,7 +169,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
         level = logging.INFO
 
     logging.captureWarnings(True)
-    logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
+    logging.basicConfig(format=('%(asctime)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
     jarpath = os.path.abspath(jar)
     xmlpath =os. path.abspath(xml)
