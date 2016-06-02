@@ -13,11 +13,42 @@ import gridmap
 from gridmap import Job
 
 import erna
-from erna import stream_runner
 import erna.datacheck_conditions as dcc
 
 from IPython import embed
 logger = logging.getLogger(__name__)
+
+
+def get_qstat_as_df():
+    user = os.environ.get("USER")
+    ret = subprocess.Popen(["qstat", "-u", str(user)], stdout=subprocess.PIPE)
+    df = pd.read_csv(ret.stdout, delimiter="\s+")
+    df = df.drop(df.index[0]).copy()
+    return df
+
+def get_finished_jobs(job_ids):
+    data = get_qstat_as_df()
+    finished_jobs = []
+    for job_id in job_ids:
+        job = data[data["job-ID"] == str(job_id)]
+        if job.empty:
+            finished_jobs.append(job_id)
+    return np.array(finished_jobs)
+
+def get_running_jobs(queue = None):
+    data = get_qstat_as_df()
+    if queue:
+        data = data[data["queue"].str.contains(str(queue))]
+    return data[data["state"] == "r"]
+
+def get_pending_jobs(queue = None):
+    data = get_qstat_as_df()
+    if queue:
+        data = data[data["queue"].str.contains(str(queue))]
+    return data[data["state"] == "qw"]
+
+
+
 
 def generate_qsub_command( name, queue, jar, xml, inputfile, outputfile,
                             dbpath, mail_address,mail_setting, stdout, stderr, engine, script):
@@ -163,11 +194,43 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
 
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-    processing_identifier = "{}_{}".format(source, time.strftime('%Y%m%d%H%M'))
 
+
+    processing_identifier = "{}_{}".format(source, time.strftime('%Y%m%d%H%M'))
     df_runs = submit_qsub_jobs(processing_identifier, jarpath, xmlpath, db_path, df_runs,  engine, queue, vmem, num_runs, walltime, db, mail)
 
-    df_runs.to_hdf(out, "runlist", mode="w")
+    jobids = df_runs["JOBID"].unique()
+    nsubmited = len(jobids)
+    nfinished = 0
+    last_finished = []
+    job_outputs = []
+
+    while(nfinished < nsubmited):
+        finished_jobs = get_finished_jobs(jobids)
+        running_jobs = get_running_jobs(queue)
+        pending_jobs = get_pending_jobs(queue)
+
+        nfinished = len(finished_jobs)
+        logger.info("Processing Status: running: {}, pending: {}, queued: {}, finished: {}/{}"
+                    .format(len(running_jobs), len(pending_jobs), nsubmited-nfinished, nfinished, nsubmited))
+
+        last_finished = np.setdiff1d(finished_jobs, last_finished)
+
+        for jobid in last_finished:
+            json_path = os.path.abspath(df.query("JOBID == 3318453").output_path.unique().item())
+            logger.info("appending: {}".format(json_path))
+
+            try:
+                job_outputs.append(read_json(json_path))
+                os.remove(json_path)
+            except FileNotFoundError as e:
+                logger.error("No Fact-tools output for: {}".format(json_path))
+
+        time.sleep( 10*60 )
+        logger.info("next qstat in 10 mins")
+
+    erna.collect_output(job_outputs, out)
+    df_runs.to_hdf(out, "jobinfo", mode="a")
 
 if __name__ == "__main__":
     main()
