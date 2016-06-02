@@ -78,7 +78,7 @@ def run(jar, xml, df, num, db_path=None):
                 y=json.loads(text.read())
                 df_out=pd.DataFrame(y)
                 df_out["fact_tools"] = os.path.basename(jar)
-                df_out["xml"] = os.path.basename(xml))
+                df_out["xml"] = os.path.basename(xml)
 
                 logger.info("Returning data frame with {} entries".format(len(df_out)))
                 return df_out
