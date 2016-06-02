@@ -15,13 +15,13 @@ import erna.datacheck_conditions as dcc
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_jobs, walltime):
+def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_runs_per_bunch, walltime):
     jobs = []
     # create job objects
-    split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
-    for num, indices in enumerate(split_indices):
-        df = df_mapping[indices.min(): indices.max()]
-
+    df_mapping["bunch_index"]= np.arange(len(df_mapping)) // num_runs_per_bunch
+    for num, df in df_mapping.groupby("bunch_index"):
+        df=df.copy()
+        df["bunch_index"] = num
         job = Job(stream_runner.run, [jar, xml, df, num, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         jobs.append(job)
 
@@ -39,7 +39,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
-@click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
+@click.option('--num_runs', help='Number of num runs per bunch to start on the cluster.', default='4', type=click.INT)
 @click.option('--vmem', help='Amount of memory to use per node in MB.', default='10000', type=click.INT)
 @click.option('--log_level', type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
@@ -48,7 +48,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, walltime, engine, num_jobs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -74,10 +74,11 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     data_conditions=dcc.conditions[conditions]
     df_runs = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
 
+    logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-    job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_jobs, walltime)
-    job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
+    job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime)
+    job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
     erna.collect_output(job_outputs, out, df_runs)
 
 if __name__ == "__main__":
