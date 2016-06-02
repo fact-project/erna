@@ -45,7 +45,7 @@ def ensure_output(output_path):
         os.makedirs(directory, exist_ok=True)
 
 
-def collect_output(job_outputs, output_path, df_started_runs=None):
+def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     '''
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
     to a file as specified by the output_path.
@@ -71,16 +71,16 @@ def collect_output(job_outputs, output_path, df_started_runs=None):
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch' )
+        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension == '.json':
         logger.info("Writing JSON to {}".format(output_path))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch' )
+        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        df_returned_data.to_hdf(output_path, 'table', mode='w')
+        df_returned_data.to_hdf(output_path, 'table', mode='w', **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
-        df_returned_data.to_csv(output_path)
+        df_returned_data.to_csv(output_path, **kwargs)
 
 
 
