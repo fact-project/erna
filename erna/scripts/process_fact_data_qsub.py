@@ -131,18 +131,11 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue, vme
         df["output_path"] = output_path
         df["bunch_index"] = num
         df["command"] = command
-        df["fact_tools"] = str(os.path.basename(jar))
-        df["xml"] = str(os.path.basename(xml))
+        df["fact_tools"] = os.path.basename(jar)
+        df["xml"] = os.path.basename(xml)
         jobs.append(df)
 
     return pd.concat(jobs, ignore_index=True)
-
-
-# def getJobInfo(jobId):
-#     out = subprocess.check_output("qstat -xml -j {}".format(jobID))
-#     xmldoc = minidom.parseString(out)
-
-
 
 @click.command()
 @click.argument('earliest_night')
