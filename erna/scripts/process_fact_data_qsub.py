@@ -164,21 +164,22 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
 
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-
-
     processing_identifier = "{}_{}".format(source, time.strftime('%Y%m%d%H%M'))
     df_runs = submit_qsub_jobs(processing_identifier, jarpath, xmlpath, db_path, df_runs,  engine, queue, vmem, num_runs, walltime, db, mail)
 
     jobids = df_runs["JOBID"].unique()
+
     nsubmited = len(jobids)
     nfinished = 0
     last_finished = []
-    job_outputs = []
+    job_output_paths = []
+
+    df_runs.to_hdf(out, "jobinfo", mode="w")
 
     while(nfinished < nsubmited):
         finished_jobs = get_finished_jobs(jobids)
-        running_jobs = get_running_jobs(queue)
-        pending_jobs = get_pending_jobs(queue)
+        running_jobs = get_running_jobs(jobids, queue)
+        pending_jobs = get_pending_jobs(jobids, queue)
 
         nfinished = len(finished_jobs)
         logger.info("Processing Status: running: {}, pending: {}, queued: {}, finished: {}/{}"
@@ -186,21 +187,23 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
 
         last_finished = np.setdiff1d(finished_jobs, last_finished)
 
-        for jobid in last_finished:
-            json_path = os.path.abspath(df.query("JOBID == 3318453").output_path.unique().item())
-            logger.info("appending: {}".format(json_path))
+        if len(last_finished) > 0:
+            for jobid in last_finished:
+                json_path = os.path.abspath(df_runs.query("JOBID == {}".format(jobid)).output_path.unique().item())
+                name, extension = os.path.splitext(json_path)
+                hdf_path = os.path.abspath(name+".hdf")
+                logger.info("appending: {}".format(hdf_path))
 
-            try:
-                job_outputs.append(read_json(json_path))
-                os.remove(json_path)
-            except FileNotFoundError as e:
-                logger.error("No Fact-tools output for: {}".format(json_path))
+                try:
+                    job_output_paths.append(hdf_path)
+                    os.remove(json_path)
+                except FileNotFoundError:
+                    logger.error("No Fact-tools output for: {}".format(json_path))
 
-        time.sleep( 10*60 )
-        logger.info("next qstat in 10 mins")
+        time.sleep(1*60)
+        logger.info("next qstat in 1 min")
 
-    erna.collect_output(job_outputs, out)
-    df_runs.to_hdf(out, "jobinfo", mode="a")
+    # erna.collect_output(job_output_paths, out)
 
 if __name__ == "__main__":
     main()
