@@ -14,45 +14,13 @@ from gridmap import Job
 
 import erna
 import erna.datacheck_conditions as dcc
+from erna.qsub import *
 
 from IPython import embed
 logger = logging.getLogger(__name__)
 
-
-def get_qstat_as_df():
-    user = os.environ.get("USER")
-    ret = subprocess.Popen(["qstat", "-u", str(user)], stdout=subprocess.PIPE)
-    df = pd.read_csv(ret.stdout, delimiter="\s+")
-    df = df.drop(df.index[0]).copy()
-    return df
-
-def get_finished_jobs(job_ids):
-    data = get_qstat_as_df()
-    finished_jobs = []
-    for job_id in job_ids:
-        job = data[data["job-ID"] == str(job_id)]
-        if job.empty:
-            finished_jobs.append(job_id)
-    return np.array(finished_jobs)
-
-def get_running_jobs(queue = None):
-    data = get_qstat_as_df()
-    if queue:
-        data = data[data["queue"].str.contains(str(queue))]
-    return data[data["state"] == "r"]
-
-def get_pending_jobs(queue = None):
-    data = get_qstat_as_df()
-    if queue:
-        data = data[data["queue"].str.contains(str(queue))]
-    return data[data["state"] == "qw"]
-
-
-
-
-def generate_qsub_command( name, queue, jar, xml, inputfile, outputfile,
-                            dbpath, mail_address,mail_setting, stdout, stderr, engine, script):
-
+def generate_qsub_command(name, queue, jar, xml, inputfile, outputfile, dbpath,
+                          mail_address,mail_setting, stdout, stderr, engine, script):
     command_template = []
     command_template.append("qsub")
     command_template.append("-N {name}")
