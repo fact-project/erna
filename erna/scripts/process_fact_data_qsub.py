@@ -193,12 +193,12 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
                 name, extension = os.path.splitext(json_path)
                 hdf_path = os.path.abspath(name+".hdf")
                 logger.info("appending: {}".format(hdf_path))
-
-                try:
-                    job_output_paths.append(hdf_path)
-                    os.remove(json_path)
-                except FileNotFoundError:
-                    logger.error("No Fact-tools output for: {}".format(json_path))
+                job_output_paths.append(hdf_path)
+                # try:
+                #     os.remove(json_path)
+                # except FileNotFoundError as e:
+                #     logger.error("No Fact-tools output: {}".format(e))
+        last_finished = finished_jobs
 
         time.sleep(1*60)
         logger.info("next qstat in 1 min")
