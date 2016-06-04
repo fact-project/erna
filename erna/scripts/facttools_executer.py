@@ -12,12 +12,12 @@ def main():
     logger = logging.getLogger(__name__)
     logger.info("facttools executor has been started.")
 
-    input_path  = os.environ.get("INPUTFILE")
-    jar         = os.environ.get("JARFILE")
-    xml         = os.environ.get("XMLFILE")
+    input_path = os.environ.get("INPUTFILE")
+    jar = os.environ.get("JARFILE")
+    xml = os.environ.get("XMLFILE")
     output_path = os.environ.get("OUTPUTFILE")
-    db_path      = os.environ.get("DBPATH")
-    jobname     = os.environ.get("JOBNAME")
+    db_path = os.environ.get("DBPATH")
+    # jobname = os.environ.get("JOBNAME")
 
     # logger.info("Writing {} entries to json file  {}".format(len(df), filename))
     call = [
@@ -53,7 +53,7 @@ def main():
 
     os.remove(input_path)
 
-    #try to read nans else return empty frame
+    # try to read nans else return empty frame
     with open(output_path,'r') as text:
         try:
             logger.info("Reading fact-tools output.")
@@ -73,8 +73,7 @@ def main():
 
         except Exception as e:
             print(e)
-            logger.error( "error gathering output")
-
+            logger.error("error gathering output")
 
 
 if __name__ == "__main__":
