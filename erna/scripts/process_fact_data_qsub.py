@@ -14,7 +14,7 @@ from gridmap import Job
 
 import erna
 import erna.datacheck_conditions as dcc
-from erna.qsub import *
+import erna.qsub as q
 
 from IPython import embed
 logger = logging.getLogger(__name__)
@@ -177,9 +177,9 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
     df_runs.to_hdf(out, "jobinfo", mode="w")
 
     while(nfinished < nsubmited):
-        finished_jobs = get_finished_jobs(jobids)
-        running_jobs = get_running_jobs(jobids, queue)
-        pending_jobs = get_pending_jobs(jobids, queue)
+        finished_jobs = q.get_finished_jobs(jobids)
+        running_jobs = q.get_running_jobs(jobids, queue)
+        pending_jobs = q.get_pending_jobs(jobids, queue)
 
         nfinished = len(finished_jobs)
         logger.info("Processing Status: running: {}, pending: {}, queued: {}, finished: {}/{}"
