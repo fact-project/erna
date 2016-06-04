@@ -59,7 +59,8 @@ def generate_qsub_command(name, queue, jar, xml, inputfile, outputfile, dbpath,
 
     return command_template.format(**settings)
 
-def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue, vmem, num_jobs_per_bunch, walltime, dbpath, mail_setting):
+def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
+                     vmem, num_jobs_per_bunch, walltime, dbpath, mail_setting):
     jobs = []
     # create job objects
     # split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
@@ -79,22 +80,25 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue, vme
         input_path = os.path.join(tempfolder, job_name+".json")
         output_path = os.path.join(tempfolder, job_name+"_out.json")
 
-        df.to_json(input_path, orient='records', date_format='epoch' )
+        df.to_json(input_path, orient='records', date_format='epoch')
 
-        script_folder = os.path.dirname(os.path.realpath(__file__))
+        command = generate_qsub_command(name=job_name, queue=queue, jar=jar,
+                                        xml=xml, inputfile=input_path,
+                                        outputfile=output_path, dbpath=dbpath,
+                                        mail_address=mail_address,
+                                        mail_setting=mail_setting,
+                                        stdout=stdout_file, stderr=stderr_file,
+                                        engine=engine,
+                                        script="facttools_executer")
 
-        command = generate_qsub_command(name=job_name, queue=queue, jar=jar, xml=xml, inputfile=input_path,
-                                    outputfile=output_path, dbpath=dbpath, mail_address = mail_address, mail_setting=mail_setting, stdout=stdout_file, stderr=stderr_file, engine=engine,
-                                    # script=os.path.join(script_folder, "facttools_executer.py"))
-                                    script="facttools_executer")
-        print(command)
         return_code = subprocess.check_output(command, shell=True)
-        print(return_code)
+        logger.info(return_code.decode())
 
         if engine == "SGE":
             df["JOBID"] = int(str(return_code.decode()).split(" ")[2])
         if engine == "PBS":
             df["JOBID"] = int(str(return_code.decode()).split(".")[0])
+
 
         df["output_path"] = output_path
         df["bunch_index"] = num
@@ -102,17 +106,19 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue, vme
         df["fact_tools"] = os.path.basename(jar)
         df["xml"] = os.path.basename(xml)
         jobs.append(df)
+        if num>1:
+            break
 
     return pd.concat(jobs, ignore_index=True)
 
 @click.command()
 @click.argument('earliest_night')
-@click.argument('latest_night' )
-@click.argument('data_dir', type=click.Path(exists=True, dir_okay=True, file_okay=False, readable=True) )
-@click.argument('jar', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('db', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True) )
+@click.argument('latest_night')
+@click.argument('data_dir', type=click.Path(exists=True, dir_okay=True, file_okay=False, readable=True))
+@click.argument('jar', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
+@click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
+@click.argument('db', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
+@click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True))
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--mail', help='qsub mail settings.', default='a')
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
@@ -126,7 +132,9 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue, vme
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
+         walltime, engine, num_runs, vmem, log_level, port, source, conditions,
+         max_delta_t, local, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -137,7 +145,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
         level = logging.INFO
 
     logging.captureWarnings(True)
-    logging.basicConfig(format=('%(asctime)s - %(levelname)s - ' +  '%(message)s'), level=level)
+    logging.basicConfig(format=('%(asctime)s - %(levelname)s - ' + '%(message)s'), level=level)
 
     jarpath = os.path.abspath(jar)
     xmlpath =os. path.abspath(xml)
@@ -145,7 +153,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
     erna.ensure_output(out)
     db_path = os.path.abspath(db)
     output_directory = os.path.dirname(outpath)
-    #create dir if it doesnt exist
+
+    # create dir if it doesnt exist
     os.makedirs(output_directory, exist_ok=True)
     logger.info("Writing output data  to {}".format(out))
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
