@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 from datetime import timedelta
 from . import datacheck_conditions as dcc
+from . import qsub
 
 logger = logging.getLogger(__name__)
 

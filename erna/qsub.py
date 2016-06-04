@@ -33,7 +33,7 @@ def get_finished_jobs(job_ids):
     finished_jobs = []
 
     if len(data) == 0:
-        return finished_jobs
+        return job_ids
 
     ids_in_data = data[data["JOBID"].isin(job_ids)]
     finished_jobs = np.setdiff1d(job_ids, ids_in_data["JOBID"])
