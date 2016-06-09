@@ -165,21 +165,25 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     processing_identifier = "{}_{}".format(source, time.strftime('%Y%m%d%H%M'))
-    df_runs = submit_qsub_jobs(processing_identifier, jarpath, xmlpath, db_path, df_runs,  engine, queue, vmem, num_runs, walltime, db, mail)
+    df_submitted = submit_qsub_jobs(processing_identifier, jarpath, xmlpath, db_path, df_runs,  engine, queue, vmem, num_runs, walltime, db, mail)
 
-    jobids = df_runs["JOBID"].unique()
+    jobids = df_submitted["JOBID"].unique()
 
     nsubmited = len(jobids)
+    logger.info("Submitted {} jobs in total".format(nsubmited))
+    
     nfinished = 0
     last_finished = []
-    job_output_paths = []
 
-    df_runs.to_hdf(out, "jobinfo", mode="w")
+    # embed()
+    df_submitted.to_hdf(out+".tmp", "jobinfo", mode="w")
+
+    job_outputs = []
 
     while(nfinished < nsubmited):
         finished_jobs = q.get_finished_jobs(jobids)
-        running_jobs = q.get_running_jobs(jobids, queue)
-        pending_jobs = q.get_pending_jobs(jobids, queue)
+        running_jobs = q.get_running_jobs(jobids)
+        pending_jobs = q.get_pending_jobs(jobids)
 
         nfinished = len(finished_jobs)
         logger.info("Processing Status: running: {}, pending: {}, queued: {}, finished: {}/{}"
@@ -187,23 +191,33 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
 
         last_finished = np.setdiff1d(finished_jobs, last_finished)
 
+
         if len(last_finished) > 0:
             for jobid in last_finished:
-                json_path = os.path.abspath(df_runs.query("JOBID == {}".format(jobid)).output_path.unique().item())
-                name, extension = os.path.splitext(json_path)
-                hdf_path = os.path.abspath(name+".hdf")
+                ft_out_path = os.path.abspath(df_submitted.query("JOBID == {}".format(jobid)).output_path.unique().item())
+                hdf_path = os.path.abspath(ft_out_path+".hdf")
                 logger.info("appending: {}".format(hdf_path))
-                job_output_paths.append(hdf_path)
+
+                try:
+                    df_out = pd.read_hdf(hdf_path, "data")
+                    job_outputs.append(df_out)
+
+                except Exception as e:
+                    logger.error("{} could not be appended.".format(hdf_path))
+                    print(e)
                 # try:
                 #     os.remove(json_path)
                 # except FileNotFoundError as e:
                 #     logger.error("No Fact-tools output: {}".format(e))
         last_finished = finished_jobs
 
+        logger.info("Checking qstat in 10 min again")
         time.sleep(1*60)
-        logger.info("next qstat in 1 min")
 
+    logger.info("All jobs are finished, processing done")
+    erna.collect_output(job_outputs, out, df_started_runs=df_runs)
     # erna.collect_output(job_output_paths, out)
+    df_submitted.to_hdf(out, "jobinfo", mode="a")
 
 if __name__ == "__main__":
     main()
