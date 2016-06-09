@@ -71,16 +71,16 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
 
     jobname = "_".join(jobname.split())
 
-    for num, df in df_mapping.groupby("bunch_index"):
-        df=df.copy()
+    for num, group in df_mapping.groupby("bunch_index"):
+        df_jobs=group.copy()
         job_name = "{}_{}".format(jobname, num)
 
         stdout_file = os.path.join(tempfolder, job_name+".o")
         stderr_file = os.path.join(tempfolder, job_name+".e")
         input_path = os.path.join(tempfolder, job_name+".json")
-        output_path = os.path.join(tempfolder, job_name+"_out.json")
+        output_path = os.path.join(tempfolder, job_name+"_out")
 
-        df.to_json(input_path, orient='records', date_format='epoch')
+        group.to_json(input_path, orient='records', date_format='epoch')
 
         command = generate_qsub_command(name=job_name, queue=queue, jar=jar,
                                         xml=xml, inputfile=input_path,
@@ -95,21 +95,21 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
         logger.info(return_code.decode())
 
         if engine == "SGE":
-            df["JOBID"] = int(str(return_code.decode()).split(" ")[2])
+            df_jobs["JOBID"] = int(str(return_code.decode()).split(" ")[2])
         if engine == "PBS":
-            df["JOBID"] = int(str(return_code.decode()).split(".")[0])
+            df_jobs["JOBID"] = int(str(return_code.decode()).split(".")[0])
 
 
-        df["output_path"] = output_path
-        df["bunch_index"] = num
-        df["command"] = command
-        df["fact_tools"] = os.path.basename(jar)
-        df["xml"] = os.path.basename(xml)
-        jobs.append(df)
-        if num>1:
-            break
+        df_jobs["output_path"] = output_path
+        df_jobs["bunch_index"] = num
+        df_jobs["command"] = command
+        df_jobs["fact_tools"] = os.path.basename(jar)
+        df_jobs["xml"] = os.path.basename(xml)
+        jobs.append(df_jobs)
+            # if num>=1:
+            #     break
 
-    return pd.concat(jobs, ignore_index=True)
+    return pd.concat(jobs)
 
 @click.command()
 @click.argument('earliest_night')
