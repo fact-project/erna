@@ -72,20 +72,4 @@ def run(jar, xml, df, num, db_path=None):
                 return "fact-tools error"
 
         #try to read nans else return empty frame
-        with open(output_path,'r') as text:
-            try:
-                logger.info("Reading fact-tools output.")
-                y=json.loads(text.read())
-                df_out=pd.DataFrame(y)
-                df_out["fact_tools"] = os.path.basename(jar)
-                df_out["xml"] = os.path.basename(xml)
-
-                logger.info("Returning data frame with {} entries".format(len(df_out)))
-                return df_out
-            except ValueError as e:
-                logger.error("Fact-tools output could not be read.")
-                print(e)
-                return "error reading json"
-            except Exception as e:
-                print(e)
-                return "error gathering output"
+        return ft_json_to_df(output_path)
