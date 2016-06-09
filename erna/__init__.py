@@ -65,7 +65,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     df_returned_data = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
 
-    if not df_started_runs == None:
+    if df_started_runs is not None:
         df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
         total_on_time_in_seconds = df_merged.on_time.sum()
         logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
