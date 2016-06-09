@@ -14,6 +14,7 @@ def get_qstat_as_df():
         df = df.drop(df.index[0]).copy()
         # convert objects to numeric otherwise numbers are strings
         df["JOBID"] = pd.to_numeric(df["job-ID"], errors='coerce')
+        # df.set_index("JOBID")
         df = df.drop('job-ID', 1)
 
     except ValueError as e:
@@ -54,13 +55,13 @@ def get_running_jobs(job_ids=None, queue=None):
     if len(data) == 0:
         return data
     if queue is not None:
-        data = data[data["queue"].str.contains(str(queue))].copy()
+        data = data[data["queue"].str.contains(str(queue))]
     if job_ids is not None:
         data = data[data["JOBID"].isin(job_ids)]
     return data[data["state"] == "r"]
 
 
-def get_pending_jobs(job_ids=None, queue=None):
+def get_pending_jobs(job_ids=None):
     """Get a DataFrame with the qstat output of pending jobs of the current user.
     optionally a certain list of job ids and/or a certain queue can be given
 
@@ -72,8 +73,7 @@ def get_pending_jobs(job_ids=None, queue=None):
     data = get_qstat_as_df()
     if len(data) == 0:
         return data
-    if queue is not None:
-        data = data[data["queue"].str.contains(str(queue))].copy()
+    #     data = data[data["queue"].str.contains(str(queue))].copy()
     if job_ids is not None:
         data = data[data["JOBID"].isin(job_ids)]
     return data[data["state"] == "qw"]
