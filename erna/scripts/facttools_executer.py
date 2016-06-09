@@ -18,6 +18,8 @@ def main():
     output_path = os.environ.get("OUTPUTFILE")
     db_path = os.environ.get("DBPATH")
     # jobname = os.environ.get("JOBNAME")
+    json_output_path = output_path+".json"
+    hdf_output_path = output_path+".hdf"
 
     # logger.info("Writing {} entries to json file  {}".format(len(df), filename))
     call = [
@@ -32,7 +34,7 @@ def main():
             jar,
             xml,
             '-Dinput=file:{}'.format(input_path),
-            '-Doutput=file:{}'.format(output_path),
+            '-Doutput=file:{}'.format(json_output_path),
             '-Ddb=file:{}'.format(db_path),
     ]
 
