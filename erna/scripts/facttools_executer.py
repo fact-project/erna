@@ -4,6 +4,7 @@ import logging
 import tempfile
 import json
 import pandas as pd
+from erna import ft_json_to_df
 
 def main():
     '''
@@ -48,35 +49,21 @@ def main():
     except subprocess.CalledProcessError as e:
         logger.error("Fact tools returned an error:")
         logger.error(e)
-        if os.path.exists(output_path):
+        if os.path.exists(json_output_path):
             logger.error("Trying to collect output files")
         else:
             logger.error("fact-tools error")
 
-    os.remove(input_path)
-
-    # try to read nans else return empty frame
-    with open(output_path,'r') as text:
-        try:
-            logger.info("Reading fact-tools output.")
-            y=json.loads(text.read())
-            df_out=pd.DataFrame(y)
-            df_out["fact_tools"] = os.path.basename(jar)
-            df_out["xml"] = os.path.basename(xml)
-
-            logger.info("Saving data to hdf with {} entries".format(len(df_out)))
-            name, extension = os.path.splitext(output_path)
-            df_out.to_json(os.path.abspath(name+".hdf"), orient='records', date_format='epoch')
-            os.remove(output_path)
-
-        except ValueError as e:
-            logger.error("Fact-tools output could not be read.")
-            print(e)
-
-        except Exception as e:
-            print(e)
-            logger.error("error gathering output")
-
-
+    try:
+        df_out = ft_json_to_df(json_output_path)
+        df_out["fact_tools"] = os.path.basename(jar)
+        df_out["xml"] = os.path.basename(xml)
+        df_out.to_hdf(os.path.abspath(hdf_output_path), 'data', mode='w')
+        os.remove(input_path)
+        os.remove(json_output_path)
+    except Exception as e:
+        logger.error("Fact-tools output could not be read.")
+        print(e)
+    
 if __name__ == "__main__":
     main()
