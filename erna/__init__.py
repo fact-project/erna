@@ -3,6 +3,7 @@ import pandas as pd
 import os
 import numpy as np
 import datetime
+import json
 from datetime import timedelta
 from . import datacheck_conditions as dcc
 from . import qsub
@@ -201,3 +202,19 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
 
     return mapping
+
+def ft_json_to_df(json_path):
+    with open(json_path,'r') as text:
+        try:
+            logger.info("Reading fact-tools output.")
+            y=json.loads(text.read())
+            df_out=pd.DataFrame(y)
+            logger.info("Returning data frame with {} entries".format(len(df_out)))
+            return df_out
+        except ValueError as e:
+            logger.error("Fact-tools output could not be read.")
+            print(e)
+            return "error reading json"
+        except Exception as e:
+            print(e)
+            return "error gathering output"
