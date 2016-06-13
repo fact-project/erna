@@ -84,6 +84,7 @@ def generate_qsub_command(name, queue, jar, xml, inputfile, outputfile, dbpath,
 
     return command_template.format(**settings)
 
+
 def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
                      vmem, num_jobs_per_bunch, walltime, dbpath, mail_setting):
     jobs = []
