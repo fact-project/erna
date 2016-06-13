@@ -19,6 +19,31 @@ import erna.qsub as q
 from IPython import embed
 logger = logging.getLogger(__name__)
 
+
+def last_finished_out_paths(df_submitted, last_finished):
+    output_paths = []
+
+    for jobid in last_finished:
+        row = df_submitted.query("JOBID == {}".format(jobid))
+        for outpath in row.output_path.unique():
+            hdf_path = os.path.abspath(outpath+".hdf")
+            logger.info("appending: {}".format(hdf_path))
+            output_paths.append(hdf_path)
+    return output_paths
+
+
+def read_outputs_to_list(job_output_paths):
+    job_outputs = []
+    for job_output_path in job_output_paths:
+        try:
+            df_out = pd.read_hdf(job_output_path, "data")
+            job_outputs.append(df_out)
+        except Exception as e:
+            logger.error("{} could not be appended.".format(job_output_path))
+            print(e)
+    return job_outputs
+
+
 def generate_qsub_command(name, queue, jar, xml, inputfile, outputfile, dbpath,
                           mail_address,mail_setting, stdout, stderr, engine, script):
     command_template = []
