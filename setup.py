@@ -43,8 +43,7 @@ setup(
         'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
         'process_fact_run_list = erna.scripts.process_fact_run_list:main',
         'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
-        'facttools_executer = erna.scripts.facttools_executer:main',
-        'facttools_combine_output = erna.scripts.collect_output:main',
+        'facttools_executer = erna.scripts.facttools_executer:main'
     ],
   }
 )
