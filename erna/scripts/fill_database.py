@@ -2,8 +2,9 @@ import pandas as pd
 from fact.credentials import create_factdb_engine
 from dateutil import parser as date_parser
 import click
+import yaml
 
-from ..database import RawDataFile, DrsFile, database, init_database
+from ..database import database, init_database, fill_data_runs, fill_drs_runs
 
 
 def parse_date(date):
@@ -27,8 +28,15 @@ WHERE
 @click.command()
 @click.argument('start', type=parse_date)
 @click.argument('end', type=parse_date)
-def main(start, end):
+@click.option('--config', '-c', help='yaml config file with datebase credentials')
+def main(start, end, config):
+    with open(config or 'config.yaml') as f:
+        db_config = yaml.safe_load(f)
+
+    database.init(**db_config)
+    database.connect()
     init_database(drop=False)
+
     runs = pd.read_sql_query(
         query.format(
             columns=', '.join(['fNight', 'fRunID', 'fDrsStep', 'fRunTypeKey']),
@@ -45,16 +53,4 @@ def main(start, end):
         elif runtype == 2:
             fill_drs_runs(df, database=database)
 
-
-def fill_data_runs(runs, database):
-    runs.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    runs.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
-    with database.atomic():
-        RawDataFile.insert_many(runs.to_dict(orient='records')).execute()
-
-
-def fill_drs_runs(runs, database):
-    runs.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    runs.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
-    with database.atomic():
-        DrsFile.insert_many(runs.to_dict(orient='records')).execute()
+    database.close()

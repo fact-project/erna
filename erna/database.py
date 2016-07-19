@@ -1,6 +1,6 @@
 from peewee import (
     Model, MySQLDatabase, CharField, IntegerField, BooleanField,
-    ForeignKeyField, CompositeKey, SqliteDatabase, DateField, Field
+    ForeignKeyField, SqliteDatabase, DateField, Field
 )
 from datetime import date
 import os
@@ -18,7 +18,7 @@ class NightField(Field):
         return date(value // 10000, value // 100, value % 100)
 
 
-database = SqliteDatabase('test.sqlite')  # specify database at runtime
+database = MySQLDatabase(None, fields={'night': 'integer'})  # specify database at runtime
 
 
 rawdirs = {
@@ -78,3 +78,17 @@ class FactToolsRun(Model):
 
     class Meta:
         database = database
+
+
+def fill_data_runs(df, database):
+    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
+    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
+    with database.atomic():
+        RawDataFile.insert_many(df.to_dict(orient='records')).execute()
+
+
+def fill_drs_runs(df, database):
+    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
+    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
+    with database.atomic():
+        DrsFile.insert_many(df.to_dict(orient='records')).execute()
