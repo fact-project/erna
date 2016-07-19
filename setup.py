@@ -11,7 +11,6 @@ setup(
     packages=[
         'erna',
         'erna.scripts',
-        'erna.database',
     ],
     package_data={
         'erna': ['resources/*'],
@@ -41,6 +40,7 @@ setup(
             'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
             'process_fact_run_list = erna.scripts.process_fact_run_list:main',
             'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
+            'erna_fill_database = erna.scripts.fill_database:main',
         ],
     }
 )

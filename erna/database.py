@@ -40,8 +40,8 @@ def init_database(drop=False):
 class File(Model):
     night = NightField()
     run_id = IntegerField()
-    available_dortmund = BooleanField(null=False)
-    available_isdc = BooleanField(null=False)
+    available_dortmund = BooleanField(null=True)
+    available_isdc = BooleanField(null=True)
 
     class Meta:
         database = database
