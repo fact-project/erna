@@ -78,6 +78,9 @@ class File(Model):
         night, runid = parse_path(path)
         return cls(night=night, runid=runid)
 
+    def __repr__(self):
+        return self.basename
+
 
 class RawDataFile(File):
     @property

@@ -2,11 +2,13 @@ from glob import iglob
 import os
 import socket
 import click
-import re
-from datetime import date
 import yaml
+import logging
 
-from .database import basedirs, RawDataFile, DrsFile, database
+from .database import basedirs, RawDataFile, DrsFile, database, drsfile_re, datafile_re
+
+log = logging.getLogger('erna')
+log.setLevel(logging.INFO)
 
 
 @click.command
@@ -14,18 +16,27 @@ from .database import basedirs, RawDataFile, DrsFile, database
 @click.option('--month', help='The month to update (default all)')
 @click.option('--day', help='The day to update (default all)')
 @click.option('--config', '-c', help='Yaml file containing database credentials')
-def main(year, month, day, config):
+@click.option('--verbose', '-v', help='Set logging level to DEBUG', is_flag=True)
+def main(year, month, day, config, verbose):
+
+    if verbose:
+        log.setLevel(logging.DEBUG)
 
     with open(config or 'config.yaml') as f:
+        log.debug('Reading config file {}'.format(f.name))
         db_config = yaml.safe_load(f)
 
+    log.debug('Connecting to database')
     database.init(**db_config)
     database.connect()
+    log.info('Database connection established')
 
     if 'isdc' in socket.gethostname():
+        log.info('Assuming isdc')
         basedir = basedirs['isdc']
         location = 'isdc'
     else:
+        log.info('Assuming isdc')
         basedir = basedirs['phido']
         location = 'dortmund'
 
@@ -39,29 +50,26 @@ def main(year, month, day, config):
 
     for filename in iglob(pattern):
 
-        f = RawDataFile.from_path(filename)
+        if datafile_re.match(filename):
+            f = RawDataFile.from_path(filename)
+
+        elif drsfile_re.match(filename):
+            f = DrsFile.from_path(filename)
+        else:
+            continue
+
         if location == 'isdc':
             f.available_isdc = True
-            f.save(only='available_isdc')
+            f.save(only=[
+                RawDataFile.night, RawDataFile.run_id, RawDataFile.available_isdc
+            ])
+
         if location == 'dortmund':
             f.available_dortmund = True
-            f.save(only='available_dortmund')
+            f.save(only=[
+                RawDataFile.night, RawDataFile.run_id, RawDataFile.available_dortmund
+            ])
 
-    pattern = os.path.join(
-        basedir,
-        year or '*',
-        ('0' + month)[-2:] if month else '*',
-        ('0' + day)[-2:] if day else '*',
-        '*.drs.fits.gz'
-    )
-
-    for filename in iglob(pattern):
-        f = DrsFile.from_path(filename)
-        if location == 'isdc':
-            f.available_isdc = True
-            f.save(only='available_isdc')
-        if location == 'dortmund':
-            f.available_dortmund = True
-            f.save(only='available_dortmund')
+        log.debug('Updated availability of file {}'.format(f.basename))
 
     database.close()
