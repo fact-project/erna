@@ -50,9 +50,8 @@ def main():
         logger.info("Calling fact-tools with call: {}".format(call))
         try:
             subprocess.check_call(call)
-        except subprocess.CalledProcessError as e:
-            logger.error("Fact tools returned an error:")
-            logger.error(e)
+        except subprocess.CalledProcessError:
+            logger.exception("Fact tools returned an error:")
             if os.path.exists(json_output_path):
                 logger.error("Trying to collect output files")
             else:
