@@ -3,8 +3,10 @@ import pandas as pd
 import os
 import numpy as np
 import datetime
+import json
 from datetime import timedelta
 from . import datacheck_conditions as dcc
+from . import qsub
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,7 @@ def ensure_output(output_path):
         os.makedirs(directory, exist_ok=True)
 
 
-def collect_output(job_outputs, output_path, df_started_runs=None):
+def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     '''
     Collects the output from the list of job_outputs and merges them into a dataframe. The Dataframe will then be written
     to a file as specified by the output_path.
@@ -71,16 +73,16 @@ def collect_output(job_outputs, output_path, df_started_runs=None):
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch' )
+        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension == '.json':
         logger.info("Writing JSON to {}".format(output_path))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch' )
+        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        df_returned_data.to_hdf(output_path, 'table', mode='w')
+        df_returned_data.to_hdf(output_path, 'data', mode='w', **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
-        df_returned_data.to_csv(output_path)
+        df_returned_data.to_csv(output_path, **kwargs)
 
 
 
@@ -200,3 +202,18 @@ def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", 
     # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
 
     return mapping
+
+def ft_json_to_df(json_path):
+    with open(json_path,'r') as text:
+        try:
+            logger.info("Reading fact-tools output.")
+            y=json.loads(text.read())
+            df_out=pd.DataFrame(y)
+            logger.info("Returning data frame with {} entries".format(len(df_out)))
+            return df_out
+        except ValueError:
+            logger.exception("Fact-tools output could not be read.")
+            return "error reading json"
+        except Exception:
+            logger.exception("Fact-tools output could not be gathered.")
+            return "error gathering output"
