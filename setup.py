@@ -17,7 +17,6 @@ setup(
         'erna': ['resources/*'],
     },
     install_requires=[
-        'dask>=0.9'         # in anaconda
         'pandas',           # in anaconda
         'numpy',            # in anaconda
         'matplotlib>=1.4',  # in anaconda
