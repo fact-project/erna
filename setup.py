@@ -12,6 +12,7 @@ setup(
         'erna',
         'erna.scripts',
     ],
+    # dependency_links = ['git+https://github.com/mackaiver/gridmap.git#egg=gridmap'],
     package_data={
         'erna': ['resources/*'],
     },
@@ -24,23 +25,26 @@ setup(
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
+        # 'hdf5',
         'click',
         'drmaa',
         'pyzmq',
         'peewee',
         'numexpr',
-        'pytest',  # also in  conda
+        'pytest', # also in  conda
         # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
     ],
-    zip_safe=False,
-    entry_points={
-        'console_scripts': [
-            'process_fact_data = erna.scripts.process_fact_data:main',
-            'process_fact_mc = erna.scripts.process_fact_mc:main',
-            'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
-            'process_fact_run_list = erna.scripts.process_fact_run_list:main',
-            'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
-            'erna_fill_database = erna.scripts.fill_database:main',
-        ],
-    }
+   zip_safe=False,
+   entry_points={
+    'console_scripts': [
+        'process_fact_data = erna.scripts.process_fact_data:main',
+        'process_fact_data_qsub = erna.scripts.process_fact_data_qsub:main',
+        'process_fact_mc = erna.scripts.process_fact_mc:main',
+        'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
+        'process_fact_run_list = erna.scripts.process_fact_run_list:main',
+        'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
+        'facttools_executer = erna.scripts.facttools_executer:main',
+	'erna_fill_database = erna.scripts.fill_database:main',
+    ],
+  }
 )
