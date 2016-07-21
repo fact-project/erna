@@ -18,30 +18,34 @@ def main():
     xml = os.environ.get("XMLFILE")
     output_path = os.environ.get("OUTPUTFILE")
     db_path = os.environ.get("DBPATH")
-    # jobname = os.environ.get("JOBNAME")
-    json_output_path = output_path+".json"
+
     hdf_output_path = output_path+".hdf"
 
-    # logger.info("Writing {} entries to json file  {}".format(len(df), filename))
-    call = [
-            'java',
-            '-XX:MaxHeapSize=1024m',
-            '-XX:InitialHeapSize=512m',
-            '-XX:CompressedClassSpaceSize=64m',
-            '-XX:MaxMetaspaceSize=128m',
-            '-XX:+UseConcMarkSweepGC',
-            '-XX:+UseParNewGC',
-            '-jar',
-            jar,
-            xml,
-            '-Dinput=file:{}'.format(input_path),
-            '-Doutput=file:{}'.format(json_output_path),
-            '-Ddb=file:{}'.format(db_path),
-    ]
+    with tempfile.TemporaryDirectory() as output_directory:
+        name, _ = os.path.splitext(os.path.basename(output_path))
+        json_output_path = os.path.join(output_directory, "{}.json".format(name))
 
-    subprocess.check_call(['which', 'java'])
-    subprocess.check_call(['free', '-m'])
-    subprocess.check_call(['java', '-Xmx512m', '-version'])
+        # logger.info("Writing {} entries to json file  {}".format(len(df), filename))
+        call = [
+                'java',
+                '-XX:MaxHeapSize=1024m',
+                '-XX:InitialHeapSize=512m',
+                '-XX:CompressedClassSpaceSize=64m',
+                '-XX:MaxMetaspaceSize=128m',
+                '-XX:+UseConcMarkSweepGC',
+                '-XX:+UseParNewGC',
+                '-jar',
+                jar,
+                xml,
+                '-Dinput=file:{}'.format(input_path),
+                '-Doutput=file:{}'.format(json_output_path),
+                '-Ddb=file:{}'.format(db_path),
+        ]
+
+        subprocess.check_call(['which', 'java'])
+        subprocess.check_call(['free', '-m'])
+        subprocess.check_call(['java', '-Xmx512m', '-version'])
+
 
     logger.info("Calling fact-tools with call: {}".format(call))
     try:
