@@ -6,11 +6,12 @@ import json
 import pandas as pd
 from erna import ft_json_to_df
 
+logger = logging.getLogger(__name__)
+
 def main():
     '''
     This is what will be executed on the cluster
     '''
-    logger = logging.getLogger(__name__)
     logger.info("facttools executor has been started.")
 
     input_path = os.environ.get("INPUTFILE")
@@ -46,28 +47,27 @@ def main():
         subprocess.check_call(['free', '-m'])
         subprocess.check_call(['java', '-Xmx512m', '-version'])
 
+        logger.info("Calling fact-tools with call: {}".format(call))
+        try:
+            subprocess.check_call(call)
+        except subprocess.CalledProcessError as e:
+            logger.error("Fact tools returned an error:")
+            logger.error(e)
+            if os.path.exists(json_output_path):
+                logger.error("Trying to collect output files")
+            else:
+                logger.error("fact-tools error")
 
-    logger.info("Calling fact-tools with call: {}".format(call))
-    try:
-        subprocess.check_call(call)
-    except subprocess.CalledProcessError as e:
-        logger.error("Fact tools returned an error:")
-        logger.error(e)
-        if os.path.exists(json_output_path):
-            logger.error("Trying to collect output files")
-        else:
-            logger.error("fact-tools error")
+        try:
+            df_out = ft_json_to_df(json_output_path)
+            df_out["fact_tools"] = os.path.basename(jar)
+            df_out["xml"] = os.path.basename(xml)
+            df_out.to_hdf(os.path.abspath(hdf_output_path), 'data', mode='w')
+            os.remove(input_path)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            logger.exception("Fact-tools output could not be read.")
 
-    try:
-        df_out = ft_json_to_df(json_output_path)
-        df_out["fact_tools"] = os.path.basename(jar)
-        df_out["xml"] = os.path.basename(xml)
-        df_out.to_hdf(os.path.abspath(hdf_output_path), 'data', mode='w')
-        os.remove(input_path)
-        os.remove(json_output_path)
-    except Exception as e:
-        logger.error("Fact-tools output could not be read.")
-        print(e)
-    
 if __name__ == "__main__":
     main()

@@ -38,9 +38,10 @@ def read_outputs_to_list(job_output_paths):
         try:
             df_out = pd.read_hdf(job_output_path, "data")
             job_outputs.append(df_out)
-        except Exception as e:
-            logger.error("{} could not be appended.".format(job_output_path))
-            print(e)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            logger.exception("{} could not be appended.".format(job_output_path))
     return job_outputs
 
 

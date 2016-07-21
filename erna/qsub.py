@@ -2,6 +2,8 @@ import numpy as np
 import os
 import pandas as pd
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
 
 def get_qstat_as_df():
     """Get the current users output of qstat as a DataFrame.
@@ -17,8 +19,8 @@ def get_qstat_as_df():
         # df.set_index("JOBID")
         df = df.drop('job-ID', 1)
 
-    except ValueError as e:
-        print("No jobs in queues for user {}".format(user), e)
+    except ValueError:
+        logger.exception("No jobs in queues for user {}".format(user))
         df = pd.DataFrame()
     return df
 

@@ -211,10 +211,9 @@ def ft_json_to_df(json_path):
             df_out=pd.DataFrame(y)
             logger.info("Returning data frame with {} entries".format(len(df_out)))
             return df_out
-        except ValueError as e:
-            logger.error("Fact-tools output could not be read.")
-            print(e)
+        except ValueError:
+            logger.exception("Fact-tools output could not be read.")
             return "error reading json"
-        except Exception as e:
-            print(e)
+        except Exception:
+            logger.exception("Fact-tools output could not be gathered.")
             return "error gathering output"
