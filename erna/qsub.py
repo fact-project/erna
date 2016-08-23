@@ -11,7 +11,8 @@ def get_qstat_as_df():
     """
     user = os.environ.get("USER")
     try:
-        ret = subprocess.Popen(["qstat", "-u", str(user)], stdout=subprocess.PIPE)
+        ret = subprocess.Popen(["qstat", "-u", str(user)],
+                               stdout=subprocess.PIPE)
         df = pd.read_csv(ret.stdout, delimiter="\s+")
         # drop the first line since it is just one long line
         df = df.drop(df.index[0]).copy()
@@ -83,7 +84,8 @@ def get_pending_jobs(job_ids=None):
 
 
 def generate_qsub_command(name, queue, jar, xml, inputfile, outputfile, dbpath,
-                          mail_address,mail_setting, stdout, stderr, engine, script):
+                          mail_address, mail_setting, stdout, stderr, engine,
+                          script):
     command_template = []
     command_template.append("qsub")
     command_template.append("-N {name}")
@@ -128,7 +130,8 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
     jobs = []
     # create job objects
     # split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
-    df_mapping["bunch_index"]= np.arange(len(df_mapping)) // num_jobs_per_bunch
+    df_mapping["bunch_index"] =
+    np.arange(len(df_mapping)) // num_jobs_per_bunch
 
     tempfolder = os.environ.get('DEFAULT_TEMP_DIR')
     mail_address = os.environ.get('ERROR_MAIL_RECIPIENT')
@@ -136,13 +139,13 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
     jobname = "_".join(jobname.split())
 
     for num, group in df_mapping.groupby("bunch_index"):
-        df_jobs=group.copy()
+        df_jobs = group.copy()
         job_name = "{}_{}".format(jobname, num)
 
-        stdout_file = os.path.join(tempfolder, job_name+".o")
-        stderr_file = os.path.join(tempfolder, job_name+".e")
-        input_path = os.path.join(tempfolder, job_name+".json")
-        output_path = os.path.join(tempfolder, job_name+"_out")
+        stdout_file = os.path.join(tempfolder, job_name + ".o")
+        stderr_file = os.path.join(tempfolder, job_name + ".e")
+        input_path = os.path.join(tempfolder, job_name + ".json")
+        output_path = os.path.join(tempfolder, job_name + "_out")
 
         group.to_json(input_path, orient='records', date_format='epoch')
 
@@ -163,15 +166,14 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
         if engine == "PBS":
             df_jobs["JOBID"] = int(str(return_code.decode()).split(".")[0])
 
-
         df_jobs["output_path"] = output_path
         df_jobs["bunch_index"] = num
         df_jobs["command"] = command
         df_jobs["fact_tools"] = os.path.basename(jar)
         df_jobs["xml"] = os.path.basename(xml)
         jobs.append(df_jobs)
-            # if num>=1:
-            #     break
+        # if num>=1:
+        #     break
     if len(jobs) == 0:
         return pd.DataFrame()
 
