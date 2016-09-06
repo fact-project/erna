@@ -4,7 +4,7 @@ import os
 import json
 import logging
 import tempfile
-
+from erna import ft_json_to_df
 
 def run(jar, xml, df, num, db_path=None):
     '''
