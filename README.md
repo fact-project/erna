@@ -1,6 +1,8 @@
 # Easy RuN Access (ERNA)
 A collection of tools to handle FACT data and to execute jobs on a SGE/TORQUE cluster.
 
+![http://www.itbusiness.ca/wp-content/uploads/2012/10/Old-women-on-laptop.jpg](http://www.itbusiness.ca/wp-content/uploads/2012/10/Old-women-on-laptop.jpg)
+
 The erna module allows you to find datafiles and the optimal (closest) drs-files for a chosen period of time.
 In the main you can choose the parameters for your search (at the moment: the beginning and the end of the requested period of time (*earliest_run* and *latest_run*), the source (*source_name*) and *timedelta_in_minutes*).
 The parameter *timedelta_in_minutes* determines the maximum allowed time lag between the timestamp of the data-file and the timestamp of the appropriate drs-file. The default value is 30 minutes. Which works fine in my experience.
