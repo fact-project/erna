@@ -5,7 +5,7 @@ import click
 import yaml
 import logging
 
-from .database import basedirs, RawDataFile, DrsFile, database, drsfile_re, datafile_re
+from erna.database import rawdirs, RawDataFile, DrsFile, database, drsfile_re, datafile_re
 
 log = logging.getLogger('erna')
 log.setLevel(logging.INFO)
