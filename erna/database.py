@@ -49,13 +49,12 @@ rawdirs = {
 
 
 def init_database(drop=False):
-    for model in (RawDataFile, DrsFile, FactToolsRun):
-        if model.table_exists():
-            if drop is True:
-                model.drop_table()
-                model.create_table()
-        else:
-            model.create_table()
+    if drop is True:
+        log.info("dropping tables")
+        database.drop_tables(
+            [RawDataFile, DrsFile, FactToolsRun], safe=True, cascade=True
+        )
+    database.create_tables([RawDataFile, DrsFile, FactToolsRun], safe=True)
 
 
 class File(Model):
