@@ -130,8 +130,7 @@ def submit_qsub_jobs(jobname, jar, xml, db_path, df_mapping,  engine, queue,
     jobs = []
     # create job objects
     # split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
-    df_mapping["bunch_index"] =
-    np.arange(len(df_mapping)) // num_jobs_per_bunch
+    df_mapping["bunch_index"] = np.arange(len(df_mapping)) // num_jobs_per_bunch
 
     tempfolder = os.environ.get('DEFAULT_TEMP_DIR')
     mail_address = os.environ.get('ERROR_MAIL_RECIPIENT')
