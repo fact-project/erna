@@ -34,7 +34,7 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, pa
 
     data_conditions=dcc.conditions[conditions]
     mapping = erna.load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
-    if not mapping:
+    if mapping.empty:
         logger.error('No entries matching the conditions could be found in the RunDB')
         return
 
