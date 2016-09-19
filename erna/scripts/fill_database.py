@@ -54,3 +54,7 @@ def main(start, end, config):
             fill_drs_runs(df, database=database)
 
     database.close()
+
+
+if __name__ == '__main__':
+    main()
