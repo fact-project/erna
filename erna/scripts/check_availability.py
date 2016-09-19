@@ -11,7 +11,7 @@ log = logging.getLogger('erna')
 log.setLevel(logging.INFO)
 
 
-@click.command
+@click.command()
 @click.option('--year', help='The year to update (default all)')
 @click.option('--month', help='The month to update (default all)')
 @click.option('--day', help='The day to update (default all)')
@@ -73,3 +73,7 @@ def main(year, month, day, config, verbose):
         log.debug('Updated availability of file {}'.format(f.basename))
 
     database.close()
+
+
+if __name__ == '__main__':
+    main()
