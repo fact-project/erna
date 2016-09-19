@@ -4,7 +4,7 @@ from dateutil import parser as date_parser
 import click
 import yaml
 
-from ..database import database, init_database, fill_data_runs, fill_drs_runs
+from erna.database import database, init_database, fill_data_runs, fill_drs_runs
 
 
 def parse_date(date):
