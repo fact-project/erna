@@ -33,11 +33,11 @@ def main(year, month, day, config, verbose):
 
     if 'isdc' in socket.gethostname():
         log.info('Assuming isdc')
-        basedir = basedirs['isdc']
+        basedir = rawdirs['isdc']
         location = 'isdc'
     else:
-        log.info('Assuming isdc')
-        basedir = basedirs['phido']
+        log.info('Assuming dortmund')
+        basedir = rawdirs['phido']
         location = 'dortmund'
 
     pattern = os.path.join(
