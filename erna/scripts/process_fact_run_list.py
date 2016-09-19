@@ -13,7 +13,8 @@ from gridmap import Job
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_jobs, walltime):
+def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
+              vmem, num_jobs, walltime):
     jobs = []
     # create job objects
     split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
