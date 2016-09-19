@@ -1,10 +1,14 @@
 from peewee import (
     Model, MySQLDatabase, CharField, IntegerField, BooleanField,
-    ForeignKeyField, SqliteDatabase, DateField, Field
+    ForeignKeyField, SqliteDatabase, DateField, Field, FixedCharField
 )
 from datetime import date
 import os
 import re
+import logging
+
+log = logging.getLogger('erna')
+log.setLevel(logging.INFO)
 
 __all__ = ['RawDataFile', 'DrsFile', 'FactToolsRun']
 
@@ -99,7 +103,8 @@ class FactToolsRun(Model):
     drs_file_id = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
     fact_tools_version = CharField()
     result_file = CharField()
-    successful = BooleanField()
+    status = CharField()
+    md5hash = FixedCharField(null=True)
 
     class Meta:
         database = database
