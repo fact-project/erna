@@ -56,6 +56,7 @@ def main(year, month, day, config, verbose):
     log.debug("pattern is: {}".format(pattern))
 
     for filename in iglob(pattern):
+        filename = os.path.basename(filename)
 
         if datafile_re.match(filename):
             f = RawDataFile.from_path(filename)
