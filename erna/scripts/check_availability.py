@@ -43,6 +43,8 @@ def main(year, month, day, config, verbose):
         basedir = rawdirs['phido']
         location = 'dortmund'
 
+    log.info("basedir is: {}".format(basedir))
+
     pattern = os.path.join(
         basedir,
         year or '*',
@@ -51,14 +53,19 @@ def main(year, month, day, config, verbose):
         '*.fits.[fg]z'
     )
 
+    log.debug("pattern is: {}".format(pattern))
+
     for filename in iglob(pattern):
 
         if datafile_re.match(filename):
             f = RawDataFile.from_path(filename)
+            log.debug("is a raw data file")
 
         elif drsfile_re.match(filename):
             f = DrsFile.from_path(filename)
+            log.debug("is a drs file")
         else:
+            log.debug("does not match any pattern")
             continue
 
         if location == 'isdc':
