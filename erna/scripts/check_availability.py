@@ -35,11 +35,11 @@ def main(year, month, day, config, verbose):
     log.info('Database connection established')
 
     if 'isdc' in socket.gethostname():
-        log.info('Assuming isdc')
+        log.info('Assuming ISDC')
         basedir = rawdirs['isdc']
         location = 'isdc'
     else:
-        log.info('Assuming dortmund')
+        log.info('Assuming PHIDO')
         basedir = rawdirs['phido']
         location = 'dortmund'
 
