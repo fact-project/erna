@@ -22,6 +22,9 @@ def main(year, month, day, config, verbose):
     if verbose:
         log.setLevel(logging.DEBUG)
 
+        logging.captureWarnings(True)
+        logging.basicConfig(format=('%(asctime)s - %(levelname)s - ' + '%(message)s'))
+
     with open(config or 'config.yaml') as f:
         log.debug('Reading config file {}'.format(f.name))
         db_config = yaml.safe_load(f)
