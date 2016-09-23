@@ -36,7 +36,7 @@ class NightField(Field):
         return 10000 * value.year + 100 * value.month + value.day
 
     def python_value(self, value):
-        return date(value // 10000, value // 100, value % 100)
+        return date(value // 10000, (value % 10000) // 100, value % 100)
 
 
 database = MySQLDatabase(None, fields={'night': 'integer'})  # specify database at runtime
