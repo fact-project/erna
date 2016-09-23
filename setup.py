@@ -45,9 +45,9 @@ setup(
         'process_fact_run_list = erna.scripts.process_fact_run_list:main',
         'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
         'facttools_executer = erna.scripts.facttools_executer:main',
-	    'erna_fill_database = erna.scripts.fill_database:main',
-        'check_availibility = erna.scripts.check_availibility:main',
-        'create_tables = erna.scripts.create_db:main',
+        'erna_fill_database = erna.scripts.fill_database:main',
+        'erna_check_availability = erna.scripts.check_availability:main',
+        'erna_create_tables = erna.scripts.create_db:main',
     ],
   }
 )
