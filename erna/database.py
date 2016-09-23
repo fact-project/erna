@@ -78,8 +78,11 @@ class File(Model):
 
     @classmethod
     def from_path(cls, path):
-        night, runid = parse_path(path)
-        return cls(night=night, runid=runid)
+        night, run_id = parse_path(path)
+        try:
+            return cls.select().where(cls.night==night and cls.run_id == run_id).get()
+        except cls.DoesNotExist:
+            return cls(night=night, run_id=run_id)
 
     def __repr__(self):
         return self.basename
