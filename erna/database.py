@@ -24,9 +24,9 @@ def parse_path(path):
     if match is None:
         raise IOError('File seems not to be a drs or data file')
 
-    year, month, day, runid = map(int, match.groups)
+    year, month, day, run_id = map(int, match.groups())
 
-    return date(year, month, day), runid
+    return date(year, month, day), run_id
 
 
 class NightField(Field):
