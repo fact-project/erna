@@ -59,7 +59,7 @@ def main(year, month, day, config, verbose):
     log.debug("pattern is: {}".format(pattern))
 
     for filename in iglob(pattern):
-        filename = os.path.basename(filename)
+        log.debug('Checking availability of file {}'.format(os.path.basename(filename)))
 
         if datafile_re.match(filename):
             f = RawDataFile.from_path(filename)
@@ -84,7 +84,6 @@ def main(year, month, day, config, verbose):
                 RawDataFile.night, RawDataFile.run_id, RawDataFile.available_dortmund
             ])
 
-        log.debug('Updated availability of file {}'.format(f.basename))
 
     database.close()
 
