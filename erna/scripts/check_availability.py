@@ -10,6 +10,11 @@ from erna.database import rawdirs, RawDataFile, DrsFile, database, drsfile_re, d
 log = logging.getLogger('erna')
 log.setLevel(logging.INFO)
 
+handler = logging.StreamHandler()
+formatter = logging.Formatter(fmt='%(asctime)s|%(levelname)s|%(name)s|%(message)s')
+handler.setFormatter(formatter)
+log.addHandler(handler)
+
 
 @click.command()
 @click.option('--year', help='The year to update (default all)')
@@ -21,9 +26,7 @@ def main(year, month, day, config, verbose):
 
     if verbose:
         log.setLevel(logging.DEBUG)
-
         logging.captureWarnings(True)
-        logging.basicConfig(format=('%(asctime)s - %(levelname)s - ' + '%(message)s'))
 
     with open(config or 'config.yaml') as f:
         log.debug('Reading config file {}'.format(f.name))
