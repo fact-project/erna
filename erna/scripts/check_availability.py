@@ -84,6 +84,7 @@ def main(year, month, day, config, verbose):
                 RawDataFile.night, RawDataFile.run_id, RawDataFile.available_dortmund
             ])
 
+        log.debug("setting {}_{} as available on {}".format(f.night, f.run_id, location))
 
     database.close()
 
