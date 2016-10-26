@@ -7,14 +7,13 @@ import os
 import re
 import logging
 
-log = logging.getLogger('erna')
-log.setLevel(logging.INFO)
+log = logging.getLogger(__name__)
 
 __all__ = ['RawDataFile', 'DrsFile', 'FactToolsRun']
 
 
-datafile_re = re.compile(r'([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3}).fits.[fg]z')
-drsfile_re = re.compile(r'([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3}).drs.fits.gz')
+datafile_re = re.compile(r'(?:.*/)?([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3})\.fits(?:\.[fg]z)?$')
+drsfile_re = re.compile(r'(?:.*/)?([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3})\.drs\.fits(?:\.gz)?$')
 
 
 def parse_path(path):
@@ -80,8 +79,11 @@ class File(Model):
     def from_path(cls, path):
         night, run_id = parse_path(path)
         try:
-            return cls.select().where(cls.night==night and cls.run_id == run_id).get()
+            run = cls.select().where(cls.night==night and cls.run_id == run_id).get()
+            log.debug("returnig existing instance")
+            return run
         except cls.DoesNotExist:
+            log.debug("returnig new instance")
             return cls(night=night, run_id=run_id)
 
     def __repr__(self):
