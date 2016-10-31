@@ -32,9 +32,11 @@ class NightField(Field):
     db_field = 'night'
 
     def db_value(self, value):
+        log.debug('Converting date to night integer')
         return 10000 * value.year + 100 * value.month + value.day
 
     def python_value(self, value):
+        log.debug('Converting night integer to date ')
         return date(value // 10000, (value % 10000) // 100, value % 100)
 
 
@@ -77,6 +79,7 @@ class File(Model):
 
     @classmethod
     def from_path(cls, path):
+        log.debug('In from_path')
         night, run_id = parse_path(path)
         try:
             run = cls.select().where(cls.night==night & cls.run_id == run_id).get()
