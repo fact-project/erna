@@ -7,7 +7,7 @@ import logging
 
 from erna.database import rawdirs, RawDataFile, DrsFile, database, drsfile_re, datafile_re
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 log.setLevel(logging.INFO)
 
 handler = logging.StreamHandler()
