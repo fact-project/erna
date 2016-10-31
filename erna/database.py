@@ -82,7 +82,7 @@ class File(Model):
         log.debug('In from_path')
         night, run_id = parse_path(path)
         try:
-            run = cls.select().where(cls.night==night & cls.run_id == run_id).get()
+            run = cls.select().where((cls.night == night) & (cls.run_id == run_id)).get()
             log.debug("returnig existing instance")
             return run
         except cls.DoesNotExist:
