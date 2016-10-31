@@ -7,7 +7,7 @@ import logging
 
 from erna.database import rawdirs, RawDataFile, DrsFile, database, drsfile_re, datafile_re
 
-log = logging.getLogger('erna')
+log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 handler = logging.StreamHandler()
@@ -27,6 +27,9 @@ def main(year, month, day, config, verbose):
     if verbose:
         log.setLevel(logging.DEBUG)
         logging.captureWarnings(True)
+
+    logging.captureWarnings(True)
+    logging.basicConfig(format=('%(asctime)s - %(levelname)s - ' + '%(message)s'))
 
     with open(config or 'config.yaml') as f:
         log.debug('Reading config file {}'.format(f.name))
