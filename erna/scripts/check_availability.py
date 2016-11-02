@@ -8,6 +8,7 @@ import pandas as pd
 from dateutil.parser import parse as parse_date
 import datetime
 from sqlalchemy import create_engine
+from tqdm import tqdm
 
 from ..database import rawdirs, RawDataFile, DrsFile, database, night_int_to_date
 
@@ -116,7 +117,7 @@ def main(year, month, day, config, verbose, start, end):
 
     log.info('Checking data files')
 
-    for run in runs.itertuples():
+    for run in tqdm(runs.itertuples()):
         check_availability(run, basedir=basedir, location=location)
 
     database.close()
