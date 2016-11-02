@@ -117,7 +117,7 @@ def main(year, month, day, config, verbose, start, end):
 
     log.info('Checking data files')
 
-    for run in tqdm(runs.itertuples()):
+    for run in tqdm(runs.itertuples(), total=len(runs)):
         check_availability(run, basedir=basedir, location=location)
 
     database.close()
