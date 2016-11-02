@@ -4,6 +4,7 @@ import socket
 import click
 import yaml
 import logging
+from tqdm import tqdm
 
 from erna.database import rawdirs, RawDataFile, DrsFile, database, drsfile_re, datafile_re
 
@@ -58,7 +59,7 @@ def main(year, month, day, config, verbose):
 
     log.debug("pattern is: {}".format(pattern))
 
-    for filename in iglob(pattern):
+    for filename in tqdm(iglob(pattern)):
         log.debug('Checking availability of file {}'.format(os.path.basename(filename)))
 
         if datafile_re.match(filename):
