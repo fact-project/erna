@@ -1,9 +1,11 @@
 import logging
 import pandas as pd
 import os
+from shutil import copyfile
 import numpy as np
 import datetime
 import json
+import tempfile
 from datetime import timedelta
 from . import datacheck_conditions as dcc
 from . import qsub
@@ -54,40 +56,44 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     The datatframe df_started_runs is joined with the job outputs to get the real ontime.
     '''
     logger.info("Concatenating results from each job and writing result to {}".format(output_path))
-    frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
+    frames = 0
+    nevents=0
+    tmp_out_file = tempfile.NamedTemporaryFile(suffix=".hdf")
 
-    if len(frames) != len(job_outputs):
+    for f in job_outputs:
+        if not isinstance(f, type(pd.DataFrame())):
+            continue
+
+        frames += 1
+        nevents += len(f)
+        f.to_hdf(tmp_out_file.name, 'data', format="table",data_column=True,append=True)
+
+    if frames != len(job_outputs):
         logger.warn("Only {} jobs returned a proper DataFrame.".format(len(frames)))
 
-    if len(frames) == 0:
+    if frames == 0:
         return
 
-    df_returned_data = pd.concat(frames, ignore_index=True)
-    logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
+    logger.info("There are a total of {} events in the result".format(nevents))
 
     if df_started_runs is not None:
-        df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
-        total_on_time_in_seconds = df_merged.on_time.sum()
-        logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
-
-        difference = pd.Index(df_started_runs).difference(pd.Index(df_returned_data))
-
-        df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
-        df_returned_data.failed_jobs=difference
+        df_started_runs.to_hdf(tmp_out_file.name, 'started_runs', format="table",data_column=True,append=True)
 
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
+        pd.read_hdf(tmp_out_file.name, 'data').to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension == '.json':
         logger.info("Writing JSON to {}".format(output_path))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
+        pd.read_hdf(tmp_out_file.name, 'data').to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        df_returned_data.to_hdf(output_path, 'data', mode='w', **kwargs)
+        copyfile(tmp_out_file.name, output_path)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
-        df_returned_data.to_csv(output_path, **kwargs)
+        pd.read_hdf(tmp_out_file.name, 'data').to_csv(output_path, **kwargs)
+
+    tmp_out_file.close()
 
 
 
