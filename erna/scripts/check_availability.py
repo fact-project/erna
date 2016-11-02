@@ -33,8 +33,8 @@ def check_availability(run, basedir='/fact/raw', location='isdc'):
     log.debug('Checking run {:%Y%m%d}_{:03d}'.format(run.night, run.run_id))
 
     basename = os.path.join(
-        basedir, str(run.night.year), str(run.night.month), str(run.night.day),
-        '{:%Y%m%d}_{:03d}'.format(run.night, run.run_id)
+        basedir, str(run.night.year), '{:02d}'.format(run.night.month),
+        '{:02d}'.format(run.night.day), '{:%Y%m%d}_{:03d}'.format(run.night, run.run_id)
     )
     log.debug('Basename: {}'.format(basename))
 
