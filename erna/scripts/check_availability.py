@@ -59,7 +59,7 @@ def check_availability(run, basedir='/fact/raw', location='isdc'):
         log.debug('is a drs file')
         f = DrsFile.select_night_runid(run.night, run.run_id)
         available = isfile(basename + '.drs.fits.gz')
-        log.info('Available: {}'.format(available))
+        log.debug('Available: {}'.format(available))
         if location == 'isdc':
             f.available_isdc = available
             f.save(only=[
