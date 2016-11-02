@@ -26,6 +26,7 @@ setup(
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
         # 'hdf5',
+        'tqdm',
         'click',
         'drmaa',
         'pyzmq',
