@@ -16,6 +16,10 @@ datafile_re = re.compile(r'(?:.*/)?([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3})\.fi
 drsfile_re = re.compile(r'(?:.*/)?([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3})\.drs\.fits(?:\.gz)?$')
 
 
+def night_int_to_date(night):
+    return date(night // 10000, (night % 10000) // 100, night % 100)
+
+
 def parse_path(path):
     match = datafile_re.search(path)
     if match is None:
@@ -37,7 +41,7 @@ class NightField(Field):
 
     def python_value(self, value):
         log.debug('Converting night integer to date ')
-        return date(value // 10000, (value % 10000) // 100, value % 100)
+        return night_int_to_date(value)
 
 
 database = MySQLDatabase(None, fields={'night': 'integer'})  # specify database at runtime
@@ -51,7 +55,7 @@ rawdirs = {
 
 def init_database(drop=False):
     if drop is True:
-        log.info("dropping tables")
+        log.info('dropping tables')
         database.drop_tables(
             [RawDataFile, DrsFile, FactToolsRun], safe=True, cascade=True
         )
@@ -78,15 +82,21 @@ class File(Model):
         )
 
     @classmethod
-    def from_path(cls, path):
+    def select_from_path(cls, path):
+        ''' Selects either an existing database entry or returns a new instance '''
         log.debug('In from_path')
         night, run_id = parse_path(path)
+        return cls.select_night_runid(night, run_id)
+
+    @classmethod
+    def select_night_runid(cls, night, run_id):
+        ''' Selects either an existing database entry or returns a new instance '''
         try:
             run = cls.select().where((cls.night == night) & (cls.run_id == run_id)).get()
-            log.debug("returnig existing instance")
+            log.debug('returnig existing instance')
             return run
         except cls.DoesNotExist:
-            log.debug("returnig new instance")
+            log.debug('returnig new instance')
             return cls(night=night, run_id=run_id)
 
     def __repr__(self):
