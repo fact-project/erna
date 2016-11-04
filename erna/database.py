@@ -120,6 +120,7 @@ class FactToolsRun(Model):
     drs_file_id = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
     fact_tools_version = CharField()
     result_file = CharField()
+    priority = IntegerField()
     status = CharField()
     md5hash = FixedCharField(null=True)
 
