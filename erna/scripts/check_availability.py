@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from tqdm import tqdm
 
 from ..database import rawdirs, RawDataFile, DrsFile, database, night_int_to_date
+from erna.automatic_processing import load_config
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -88,9 +89,7 @@ def main(year, month, day, config, verbose, start, end):
         log.setLevel(logging.DEBUG)
         logging.captureWarnings(True)
 
-    with open(config or 'config.yaml') as f:
-        log.debug('Reading config file {}'.format(f.name))
-        config = yaml.safe_load(f)
+    config = load_config(config=config)
 
     log.debug('Connecting to database')
     database.init(**config['processing_database'])
