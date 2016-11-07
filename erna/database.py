@@ -52,6 +52,11 @@ rawdirs = {
     'phido': '/fhgfs/groups/app/fact/raw'
 }
 
+facttoolsdirs = {
+    'isdc': '/gpfs1/scratch/fact/facttools_std_analysis',
+    'phido': '/fhgfs/groups/app/fact/facttools_std_analysis'
+}
+
 
 def init_database(drop=False):
     if drop is True:
