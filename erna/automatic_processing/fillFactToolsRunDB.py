@@ -149,6 +149,5 @@ def main(start, end, out, priority, ftversion, location, verbose, config):
 
     embed()
 
-
 if __name__ == '__main__':
     main()
