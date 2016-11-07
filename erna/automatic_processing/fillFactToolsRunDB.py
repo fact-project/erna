@@ -87,6 +87,8 @@ def main(start, end, out, priority, ftversion, location, verbose, config):
     # if location == "isdc":
     #     config['fact_database']['host'] = 'lp-fact'
 
+    #TODO: Check that location is valid
+
     raw_query = RawDataFile.select()
     drs_query = DrsFile.select()
     if location == "isdc":
