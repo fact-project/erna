@@ -5,11 +5,12 @@ import yaml
 import logging
 
 from sqlalchemy import create_engine
+import os
 
 
 from dateutil.parser import parse as parse_date
 from peewee import SQL
-from erna.database import database, RawDataFile, DrsFile, FactToolsRun, night_int_to_date
+from erna.database import database, RawDataFile, DrsFile, FactToolsRun, night_int_to_date, facttoolsdirs
 from erna.automatic_processing import load_config, get_host_settings
 
 from IPython import embed
@@ -87,6 +88,8 @@ def main(start, end, out, priority, ftversion, location, verbose, config):
     elif location == "dortmund":
         raw_query = raw_query.where(RawDataFile.available_dortmund)
         drs_query = drs_query.where(DrsFile.available_dortmund)
+
+    basedir = facttoolsdirs[location]
 
     if start:
         log.info('Begin: {}'.format(start))
