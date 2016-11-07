@@ -124,7 +124,28 @@ def main(start, end, out, priority, ftversion, location, verbose, config):
         raw_path = run.get_path(location=location)
         drs_file = select_drs_file(drs_query, run)
 
-
+        result_path = os.path.join(
+                        str(basedir),
+                        ftversion,
+                        str(run.night.year),
+                        str(run.night.month).zfill(2),
+                        str(run.night.day).zfill(2),
+                        "{}{:02d}{:02d}_{:03d}.hdf".format(
+                            run.night.year,
+                            run.night.month,
+                            run.night.day,
+                            run.run_id)
+                        )
+        ft_run = FactToolsRun(
+                    raw_data_id=run,
+                    drs_file_id=drs_file,
+                    fac_tools_version=ftversion,
+                    result_file=result_path,
+                    # priority=1,
+                    status="inserted"
+            )
+        ft_run.save()
+        print(ft_run.__dict__)
 
     embed()
 
