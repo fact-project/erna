@@ -120,8 +120,8 @@ def main(start, end, out, priority, ftversion, location, verbose, config):
     # TODO: Only add the difference of raw_query and ft_query
     # missing_runs = (raw_query - ft_query).order_by(SQL('night'))
 
-    for run in raw_query.limit(50):
-        # path = run.get_path(location=location)
+    for run in raw_query.limit(5):
+        raw_path = run.get_path(location=location)
         drs_file = select_drs_file(drs_query, run)
 
 
