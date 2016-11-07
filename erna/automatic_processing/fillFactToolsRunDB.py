@@ -43,8 +43,9 @@ def select_drs_file(drs_query, run):
         drs = drs_files.first()
         log.debug("raw file:{}_{}".format(run.night, run.run_id))
         log.debug("Drs file:{}_{}".format(drs.night, drs.run_id))
+        return drs
 
-    return drs
+    return None
 
 
 @click.command()
