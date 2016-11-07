@@ -77,6 +77,13 @@ def main(start, end, out, priority, ftversion, location, verbose, config):
     database.init(**config['processing_database'])
     database.connect()
 
+    log.info('Start: {}'.format(start))
+    log.info('End: {}'.format(end))
+    log.info('Outputpath: {}'.format(out))
+    log.info('Priority: {}'.format(priority))
+    log.info('ftversion: {}'.format(ftversion))
+
+
     # if location == "isdc":
     #     config['fact_database']['host'] = 'lp-fact'
 
