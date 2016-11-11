@@ -1,11 +1,12 @@
 from peewee import (
     Model, MySQLDatabase, CharField, IntegerField, BooleanField,
-    ForeignKeyField, SqliteDatabase, DateField, Field, FixedCharField
+    ForeignKeyField, SqliteDatabase, Field, FixedCharField
 )
 from datetime import date
 import os
-import re
 import logging
+
+from .utils import parse_path
 
 log = logging.getLogger(__name__)
 
@@ -14,18 +15,6 @@ __all__ = ['RawDataFile', 'DrsFile', 'FactToolsRun']
 
 def night_int_to_date(night):
     return date(night // 10000, (night % 10000) // 100, night % 100)
-
-
-def parse_path(path):
-    match = datafile_re.search(path)
-    if match is None:
-        match = drsfile_re.search(path)
-    if match is None:
-        raise IOError('File seems not to be a drs or data file')
-
-    year, month, day, run_id = map(int, match.groups())
-
-    return date(year, month, day), run_id
 
 
 class NightField(Field):
@@ -41,8 +30,6 @@ class NightField(Field):
 
 
 database = MySQLDatabase(None, fields={'night': 'integer'})  # specify database at runtime
-
-
 rawdirs = {
     'isdc': '/fact/raw',
     'phido': '/fhgfs/groups/app/fact/raw'
