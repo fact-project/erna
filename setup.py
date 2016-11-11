@@ -11,6 +11,7 @@ setup(
     packages=[
         'erna',
         'erna.scripts',
+        'erna.automatic_processing',
     ],
     # dependency_links = ['git+https://github.com/mackaiver/gridmap.git#egg=gridmap'],
     package_data={
