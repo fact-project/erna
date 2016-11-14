@@ -39,7 +39,7 @@ PROCESSING_STATES = [
 ]
 
 
-def init_database(drop=False):
+def init_database(database, drop=False):
     tables = [
         RawDataFile,
         DrsFile,
@@ -54,11 +54,16 @@ def init_database(drop=False):
 
     database.create_tables(tables, safe=True)
 
-    for state in PROCESSING_STATES:
+    for description in PROCESSING_STATES:
         try:
-            ProcessingState.select().where(ProcessingState.state == state).get()
+            (
+                ProcessingState
+                .select()
+                .where(ProcessingState.description == description)
+                .get()
+            )
         except ProcessingState.DoesNotExist:
-            ProcessingState.create(state=state)
+            ProcessingState.create(description=description)
 
 
 class File(Model):
@@ -165,3 +170,8 @@ class FACTToolsRun(Model):
     class Meta:
         database = database
         db_table = 'fact_tools_runs'
+
+
+MODELS = [
+    RawDataFile, DrsFile, FACTToolsVersion, FACTToolsXML, FACTToolsRun, ProcessingState,
+]
