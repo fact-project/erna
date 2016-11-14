@@ -1,4 +1,3 @@
-from .models import RawDataFile, DrsFile
 import re
 from datetime import date
 
@@ -17,17 +16,3 @@ def parse_path(path):
     year, month, day, run_id = map(int, match.groups())
 
     return date(year, month, day), run_id
-
-
-def fill_data_runs(df, database):
-    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
-    with database.atomic():
-        RawDataFile.insert_many(df.to_dict(orient='records')).upsert().execute()
-
-
-def fill_drs_runs(df, database):
-    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
-    with database.atomic():
-        DrsFile.insert_many(df.to_dict(orient='records')).upsert().execute()

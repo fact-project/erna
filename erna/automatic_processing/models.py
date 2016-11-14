@@ -1,6 +1,6 @@
 from peewee import (
     Model, MySQLDatabase, CharField, IntegerField, BooleanField,
-    ForeignKeyField, SqliteDatabase, Field, FixedCharField, TextField
+    ForeignKeyField, FixedCharField, TextField
 )
 import os
 import logging
@@ -9,7 +9,11 @@ from .utils import parse_path
 from .custom_fields import NightField, LongBlobField
 
 
-__all__ = ['RawDataFile', 'DrsFile', 'FactToolsRun']
+__all__ = [
+    'RawDataFile', 'DrsFile',
+    'FACTToolsVersion', 'FACTToolsXML', 'FACTToolsRun',
+    'ProcessingState',
+]
 
 
 log = logging.getLogger(__name__)
