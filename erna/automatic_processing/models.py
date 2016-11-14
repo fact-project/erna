@@ -1,48 +1,60 @@
 from peewee import (
     Model, MySQLDatabase, CharField, IntegerField, BooleanField,
-    ForeignKeyField, SqliteDatabase, Field, FixedCharField
+    ForeignKeyField, SqliteDatabase, Field, FixedCharField, TextField
 )
-from datetime import date
 import os
 import logging
 
 from .utils import parse_path
+from .custom_fields import NightField, LongBlobField
 
-log = logging.getLogger(__name__)
 
 __all__ = ['RawDataFile', 'DrsFile', 'FactToolsRun']
 
 
-def night_int_to_date(night):
-    return date(night // 10000, (night % 10000) // 100, night % 100)
+log = logging.getLogger(__name__)
 
 
-class NightField(Field):
-    db_field = 'night'
+database = MySQLDatabase(None, fields={
+    'night': 'INTEGER',
+    'longblob': 'LONGBLOB',
+})
 
-    def db_value(self, value):
-        log.debug('Converting date to night integer')
-        return 10000 * value.year + 100 * value.month + value.day
-
-    def python_value(self, value):
-        log.debug('Converting night integer to date ')
-        return night_int_to_date(value)
-
-
-database = MySQLDatabase(None, fields={'night': 'integer'})  # specify database at runtime
 rawdirs = {
     'isdc': '/fact/raw',
     'phido': '/fhgfs/groups/app/fact/raw'
 }
 
+PROCESSING_STATES = [
+    'inserted',
+    'queued',
+    'running',
+    'success',
+    'failed',
+    'walltime_exceeded',
+]
+
 
 def init_database(drop=False):
+    tables = [
+        RawDataFile,
+        DrsFile,
+        FACTToolsVersion,
+        FACTToolsXML,
+        FACTToolsRun,
+        ProcessingState,
+    ]
     if drop is True:
         log.info('dropping tables')
-        database.drop_tables(
-            [RawDataFile, DrsFile, FactToolsRun], safe=True, cascade=True
-        )
-    database.create_tables([RawDataFile, DrsFile, FactToolsRun], safe=True)
+        database.drop_tables(tables, safe=True, cascade=True)
+
+    database.create_tables(tables, safe=True)
+
+    for state in PROCESSING_STATES:
+        try:
+            ProcessingState.select().where(ProcessingState.state == state).get()
+        except ProcessingState.DoesNotExist:
+            ProcessingState.create(state=state)
 
 
 class File(Model):
@@ -91,20 +103,61 @@ class RawDataFile(File):
     def basename(self):
         return '{:%Y%m%d}_{:03d}.fits.fz'.format(self.night, self.run_id)
 
+    class Meta:
+        database = database
+        db_table = 'raw_data_files'
+
 
 class DrsFile(File):
     @property
     def basename(self):
         return '{:%Y%m%d}_{:03d}.drs.fits.gz'.format(self.night, self.run_id)
 
+    class Meta:
+        database = database
+        db_table = 'drs_files'
 
-class FactToolsRun(Model):
-    raw_data_id = ForeignKeyField(RawDataFile, related_name='fact_tools_runs')
-    drs_file_id = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
-    fact_tools_version = CharField()
-    result_file = CharField()
-    status = CharField()
-    md5hash = FixedCharField(null=True)
+
+class FACTToolsVersion(Model):
+    version = CharField(primary_key=True)
+    jar_file = LongBlobField()
 
     class Meta:
         database = database
+        db_table = 'fact_tools_versions'
+
+
+class FACTToolsXML(Model):
+    name = CharField()
+    content = TextField()
+    comment = TextField()
+    fact_tools_version = ForeignKeyField(FACTToolsVersion)
+
+    class Meta:
+        database = database
+        db_table = 'fact_tools_xmls'
+
+
+class ProcessingState(Model):
+    description = CharField(unique=True)
+
+    class Meta:
+        database = database
+        db_table = 'processing_states'
+
+
+class FACTToolsRun(Model):
+    raw_data_id = ForeignKeyField(RawDataFile, related_name='fact_tools_runs')
+    drs_file_id = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
+    fact_tools_version = ForeignKeyField(
+        FACTToolsVersion, related_name='fact_tools_version'
+    )
+    result_file = CharField()
+    status = ForeignKeyField(ProcessingState, related_name='status')
+    priority = IntegerField(default=5)
+    xml = ForeignKeyField(FACTToolsXML)
+    md5hash = FixedCharField(32, null=True)
+
+    class Meta:
+        database = database
+        db_table = 'fact_tools_runs'
