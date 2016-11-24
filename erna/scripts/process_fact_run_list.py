@@ -1,10 +1,11 @@
 import logging
 import click
-import erna
 import numpy as np
 import pandas as pd
 from os import path
 import os
+import erna
+from erna import stream_runner
 import gridmap
 from gridmap import Job
 
@@ -12,14 +13,17 @@ from gridmap import Job
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_jobs, walltime):
+def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
+              vmem, num_jobs, walltime):
     jobs = []
     # create job objects
     split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
     for num, indices in enumerate(split_indices):
         df = df_mapping[indices.min(): indices.max()]
 
-        job = Job(erna.stream_runner.run, [jar, xml, df, num, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
+        job = Job(stream_runner.run, [jar, xml, df, num, db_path],
+                  queue=queue, walltime=walltime, engine=engine,
+                  mem_free='{}mb'.format(vmem))
         jobs.append(job)
 
     return jobs
