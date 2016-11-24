@@ -22,6 +22,19 @@ conditions['std'] = [
 
 # ------------------------------------------------------------------------------
 
+conditions['highZdLowNSB'] = [
+    'fRunTypeKey == 1',  # Data Events
+    'fMoonZenithDistance > 100',
+    'fROI == 300',
+    'fZenithDistanceMean > 30',
+    'fTriggerRateMedian > 40',
+    'fTriggerRateMedian < 85',
+    'fOnTime > 0.95',
+    'fThresholdMinSet < 350'
+]
+
+# ------------------------------------------------------------------------------
+
 conditions['onlyOnTime'] = [
     'fRunTypeKey == 1',  # Data Events
     'fROI == 300',
