@@ -10,7 +10,7 @@ Dates are given in the usual FACT convention: YYYYMMDD.
 
 ##Requirements
   - FACT-Tools
-  - Java 1.7+
+  - Java 1.8+
   - Python 3.5+ (srsly. 3.5 please)
 
 Install my fork of pygridmap
