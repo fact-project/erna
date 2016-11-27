@@ -47,6 +47,7 @@ setup(
             'erna_fill_database = erna.scripts.fill_database:main',
             'erna_check_availability = erna.scripts.check_availability:main',
             'erna_create_tables = erna.scripts.create_db:main',
+            'erna_upload = erna.scripts.upload:main',
         ],
     },
     setup_requires=['pytest-runner'],
