@@ -10,7 +10,8 @@ import datetime
 from sqlalchemy import create_engine
 from tqdm import tqdm
 
-from ..database import rawdirs, RawDataFile, DrsFile, database, night_int_to_date
+from ..automatic_processing.models import rawdirs, RawDataFile, DrsFile, database
+from ..automatic_processing.custom_fields import night_int_to_date
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
