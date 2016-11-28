@@ -1,6 +1,6 @@
 import logging
 
-from .database import RawDataFile, DrsFile
+from .database import RawDataFile, DrsFile, FACTToolsRun
 
 
 log = logging.getLogger(__name__)
@@ -18,3 +18,16 @@ def fill_drs_runs(df, database):
     df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
     with database.atomic():
         DrsFile.insert_many(df.to_dict(orient='records')).upsert().execute()
+
+
+def get_pending_fact_tools_runs(database):
+    runs = (
+        FACTToolsRun
+        .select()
+        .where(FACTToolsRun.status.description == 'inserted')
+        .order_by(
+            FACTToolsRun.raw_data_file.night.desc(),
+            FACTToolsRun.priority,
+        )
+    )
+    return runs
