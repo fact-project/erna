@@ -15,6 +15,7 @@ setup(
     ],
     package_data={
         'erna': ['resources/*'],
+        'erna.automatic_processing': ['xml/*']
     },
     install_requires=[
         'pandas',           # in anaconda
