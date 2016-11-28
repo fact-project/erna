@@ -50,6 +50,7 @@ setup(
             'erna_create_tables = erna.scripts.create_db:main',
             'erna_upload = erna.scripts.upload:main',
             'erna_console = erna.scripts.console:main',
+            'erna_automatic_processing_executor = erna.automatic_processing.executor:main',
         ],
     },
     setup_requires=['pytest-runner'],
