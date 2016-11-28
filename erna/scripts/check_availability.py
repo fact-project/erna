@@ -2,7 +2,6 @@ import os
 from os.path import isfile
 import socket
 import click
-import yaml
 import logging
 import pandas as pd
 from dateutil.parser import parse as parse_date
@@ -12,6 +11,7 @@ from tqdm import tqdm
 
 from ..automatic_processing.database import rawdirs, RawDataFile, DrsFile, database
 from ..automatic_processing.custom_fields import night_int_to_date
+from ..utils import load_config
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -89,9 +89,7 @@ def main(year, month, day, config, verbose, start, end):
         log.setLevel(logging.DEBUG)
         logging.captureWarnings(True)
 
-    with open(config or 'config.yaml') as f:
-        log.debug('Reading config file {}'.format(f.name))
-        config = yaml.safe_load(f)
+    config = load_config(config)
 
     log.debug('Connecting to database')
     database.init(**config['processing_database'])

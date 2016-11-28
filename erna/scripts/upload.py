@@ -2,13 +2,13 @@ import click
 from prompt_toolkit import prompt
 import subprocess as sp
 import logging
-import yaml
 import sys
 import re
 
 from ..automatic_processing.database import (
     database, init_database, FACTToolsVersion, FACTToolsXML
 )
+from ..utils import load_config
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -28,9 +28,7 @@ def main():
 @click.argument('xml-file')
 def xml(config, fact_tools_version, name, comment, xml_file):
 
-    with open(config or 'config.yaml') as f:
-        log.debug('Reading config file {}'.format(f.name))
-        config = yaml.safe_load(f)
+    config = load_config(config)
 
     log.debug('Connecting to database')
     database.init(**config['processing_database'])
@@ -75,9 +73,7 @@ def xml(config, fact_tools_version, name, comment, xml_file):
 @click.argument('jar-file')
 def jar(config, jar_file):
 
-    with open(config or 'config.yaml') as f:
-        log.debug('Reading config file {}'.format(f.name))
-        config = yaml.safe_load(f)
+    config = load_config(config)
 
     log.debug('Connecting to database')
     database.init(**config['processing_database'])
