@@ -85,7 +85,9 @@ def submit_fact_tools(
         **kwargs
         ):
 
-    executable = sp.check_output(['which', 'erna_automatic_processing_executor']).decode()
+    executable = sp.check_output(
+        ['which', 'erna_automatic_processing_executor']
+    ).decode().strip()
 
     cmd = build_qsub_command(
         executable=executable,
