@@ -95,9 +95,9 @@ def submit_fact_tools(
             'JARFILE': jarfile,
             'XMLFILE': xmlfile,
             'OUTPUTPATH': outputpath,
-            'facttools_infile': infile,
-            'facttools_drsfile': drsfile,
-            'facttools_aux_dir': auxdir,
+            'facttools_infile': 'file:' + infile,
+            'facttools_drsfile': 'file:' + drsfile,
+            'facttools_aux_dir': 'file:' + auxdir,
         },
         **kwargs,
     )
