@@ -155,8 +155,8 @@ class ProcessingState(Model):
 
 
 class FACTToolsRun(Model):
-    raw_data_id = ForeignKeyField(RawDataFile, related_name='fact_tools_runs')
-    drs_file_id = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
+    raw_data_file = ForeignKeyField(RawDataFile, related_name='fact_tools_runs')
+    drs_file = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
     fact_tools_version = ForeignKeyField(
         FACTToolsVersion, related_name='fact_tools_version'
     )
