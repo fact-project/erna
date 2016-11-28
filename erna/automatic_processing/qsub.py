@@ -73,3 +73,29 @@ def build_qsub_command(
     command.append(executable)
 
     return command
+
+
+def submit_fact_tools(
+        jarfile,
+        xmlfile,
+        infile,
+        drsfile,
+        auxdir,
+        outputpath,
+        **kwargs
+        ):
+
+    cmd = build_qsub_command(
+        executable='erna_automatic_processing_executor',
+        environment={
+            'JARFILE': jarfile,
+            'XMLFILE': xmlfile,
+            'OUTPUTPATH': outputpath,
+            'facttools_infile': infile,
+            'facttools_drsfile': drsfile,
+            'facttools_aux_dir': auxdir,
+        },
+        **kwargs,
+    )
+
+    sp.check_call(cmd)
