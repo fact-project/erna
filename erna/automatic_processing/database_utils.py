@@ -1,12 +1,13 @@
 import logging
 
-from .database import RawDataFile, DrsFile, FACTToolsRun
+from .database import RawDataFile, DrsFile, FACTToolsRun, ProcessingState, RawDataFile
 
 
 log = logging.getLogger(__name__)
 
 
 def fill_data_runs(df, database):
+    df = df.copy()
     df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
     df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
     with database.atomic():
@@ -14,6 +15,7 @@ def fill_data_runs(df, database):
 
 
 def fill_drs_runs(df, database):
+    df = df.copy()
     df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
     df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
     with database.atomic():
@@ -24,9 +26,9 @@ def get_pending_fact_tools_runs(database):
     runs = (
         FACTToolsRun
         .select()
-        .where(FACTToolsRun.status.description == 'inserted')
+        .where(ProcessingState.description == 'inserted')
         .order_by(
-            FACTToolsRun.raw_data_file.night.desc(),
+            RawDataFile.night.desc(),
             FACTToolsRun.priority,
         )
     )
