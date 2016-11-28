@@ -32,21 +32,22 @@ def main():
         os.makedirs(facttools_output)
 
         call = [
-           'java',
-           '-XX:MaxHeapSize=1024m',
-           '-XX:InitialHeapSize=512m',
-           '-XX:CompressedClassSpaceSize=64m',
-           '-XX:MaxMetaspaceSize=128m',
-           '-XX:+UseConcMarkSweepGC',
-           '-XX:+UseParNewGC',
-           '-jar',
-           jar,
-           xml,
+            'java',
+            '-XX:MaxHeapSize=1024m',
+            '-XX:InitialHeapSize=512m',
+            '-XX:CompressedClassSpaceSize=64m',
+            '-XX:MaxMetaspaceSize=128m',
+            '-XX:+UseConcMarkSweepGC',
+            '-XX:+UseParNewGC',
+            '-jar',
+            jar,
+            xml,
         ]
 
         for k, v in os.environ.items():
             if k.startswith('facttools_'):
-                call.append('-D{}={}'.format(k.lstrip('facttools_'), v))
+                option = '-D{}={}'.format(k.replace('facttools_', '', 1), v)
+                call.append(option)
 
         sp.check_call(['which', java])
         sp.check_call(['free', '-m'])
