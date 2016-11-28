@@ -32,6 +32,7 @@ setup(
         'numexpr',
         'pyyaml',
         'pytest',           # also in  conda
+        'xmltodict',
         # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
     ],
     zip_safe=False,
@@ -48,6 +49,7 @@ setup(
             'erna_check_availability = erna.scripts.check_availability:main',
             'erna_create_tables = erna.scripts.create_db:main',
             'erna_upload = erna.scripts.upload:main',
+            'erna_console = erna.scripts.console:main',
         ],
     },
     setup_requires=['pytest-runner'],

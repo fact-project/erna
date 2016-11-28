@@ -3,6 +3,9 @@ import os
 import pandas as pd
 import subprocess
 import logging
+import xmltodict
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -11,8 +14,10 @@ def get_qstat_as_df():
     """
     user = os.environ.get("USER")
     try:
-        ret = subprocess.Popen(["qstat", "-u", str(user)],
-                               stdout=subprocess.PIPE)
+        ret = subprocess.Popen(
+            ["qstat", "-u", str(user)],
+            stdout=subprocess.PIPE,
+        )
         df = pd.read_csv(ret.stdout, delimiter="\s+")
         # drop the first line since it is just one long line
         df = df.drop(df.index[0]).copy()
@@ -25,6 +30,13 @@ def get_qstat_as_df():
         logger.exception("No jobs in queues for user {}".format(user))
         df = pd.DataFrame()
     return df
+
+
+def parse_qstat_xml(user=None):
+    user = user or os.environ['USER']
+    xml = subprocess.check_output(['qstat', '-u', user, '-xml']).decode()
+    data = xmltodict.parse(xml)
+    return pd.DataFrame.from_dict(data['job_info']['queue_info']['job_list'])
 
 
 def get_finished_jobs(job_ids):
