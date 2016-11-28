@@ -18,13 +18,15 @@ def main():
     java = os.environ.get('JAVA_BIN', 'java')
     log.info('Using java executable: {}'.format(java))
 
-    jar = os.environ['JARFILE']
+    jar = os.path.abspath(os.environ['JARFILE'])
     log.info('Using jar: {}'.format(jar))
 
-    xml = os.environ['XMLFILE']
+    xml = os.path.abspath(os.environ['XMLFILE'])
     log.info('Using xml: {}'.format(xml))
 
-    output_path = os.environ['OUTPUTPATH']
+    output_path = os.path.abspath(os.environ['OUTPUTPATH'])
+
+    os.makedirs(output_path, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         log.debug('Using tmp directory: {}'.format(tmp_dir))
