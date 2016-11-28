@@ -85,8 +85,10 @@ def submit_fact_tools(
         **kwargs
         ):
 
+    executable = sp.check_output(['which', 'erna_automatic_processing_executor']).decode()
+
     cmd = build_qsub_command(
-        executable='erna_automatic_processing_executor',
+        executable=executable,
         environment={
             'JARFILE': jarfile,
             'XMLFILE': xmlfile,
