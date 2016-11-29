@@ -36,18 +36,23 @@ def get_pending_fact_tools_runs(database):
     return runs
 
 
-def find_closest_drs_file(raw_data_file, location=None):
+def find_closest_drs_file(raw_data_file, location=None, closest=True):
     query = DrsFile.select()
     query = query.where(DrsFile.night == raw_data_file.night)
     if location is not None:
         if location == 'isdc':
-            query = query.where(DrsFile.available_isdc == True)
+            query = query.where(DrsFile.available_isdc)
         elif location == 'dortmund':
-            query = query.where(DrsFile.available_dortmund == True)
+            query = query.where(DrsFile.available_dortmund)
         else:
             raise ValueError('Unknown location {}'.format(location))
 
-    query = query.order_by(peewee.fn.Abs(DrsFile.run_id - raw_data_file.run_id))
+    if closest is True:
+        query = query.order_by(peewee.fn.Abs(DrsFile.run_id - raw_data_file.run_id))
+    else:
+        query = (query
+                 .where(DrsFile.run_id < raw_data_file.run_id)
+                 .order_by(DrsFile.run_id.desc()))
     try:
         drs_file = query.get()
     except DrsFile.DoesNotExist:
