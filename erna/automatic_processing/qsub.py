@@ -9,13 +9,26 @@ def get_current_jobs(user=None):
     user = user or os.environ['USER']
     xml = sp.check_output(['qstat', '-u', user, '-xml']).decode()
     data = xmltodict.parse(xml)
-    queue_list = data['job_info']['queue_info']['job_list']
-    job_list = data['job_info']['job_info']['job_list']
-    if not isinstance(job_list, list):
-        job_list = [job_list]
-    if not isinstance(queue_list, list):
-        job_list = [queue_list]
-    df = pd.DataFrame(job_list + queue_list)
+    job_info = data['job_info']
+    queue_info = job_info['queue_info']
+    job_info = job_info['job_info']
+    queued_jobs = queue_info['job_list'] if queue_info else []
+    running_jobs = job_info['job_list'] if job_info else []
+
+    df = pd.DataFrame(columns=[
+        '@state', 'JB_job_number', 'JAT_prio', 'JB_name', 'JB_owner',
+        'state', 'JB_submission_time', 'queue_name', 'slots', 'JAT_start_time'
+    ])
+
+    if not isinstance(running_jobs, list):
+        running_jobs = [running_jobs]
+    if not isinstance(queued_jobs, list):
+        job_list = [queued_jobs]
+
+    df = df.append(pd.DataFrame(running_jobs + queued_jobs), ignore_index=True)
+
+    if len(df) == 0:
+        return df
 
     df.drop('state', axis=1, inplace=True)
     df.rename(inplace=True, columns={
@@ -111,7 +124,7 @@ def submit_fact_tools(
             'facttools_drsfile': 'file:' + drsfile,
             'facttools_aux_dir': 'file:' + auxdir,
         },
-        **kwargs,
+        **kwargs
     )
 
     sp.check_call(cmd)
