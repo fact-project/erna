@@ -9,6 +9,8 @@ def get_current_jobs(user=None):
     user = user or os.environ['USER']
     xml = sp.check_output(['qstat', '-u', user, '-xml']).decode()
     data = xmltodict.parse(xml)
+    if not isinstance(data, list):
+        data = [data]
     df = pd.DataFrame.from_dict(data['job_info']['queue_info']['job_list'])
 
     df.drop('state', axis=1, inplace=True)
