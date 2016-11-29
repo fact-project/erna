@@ -9,10 +9,13 @@ def get_current_jobs(user=None):
     user = user or os.environ['USER']
     xml = sp.check_output(['qstat', '-u', user, '-xml']).decode()
     data = xmltodict.parse(xml)
-    job_list = data['job_info']['queue_info']['job_list']
+    queue_list = data['job_info']['queue_info']['job_list']
+    job_list = data['job_info']['job_info']['job_list']
     if not isinstance(job_list, list):
         job_list = [job_list]
-    df = pd.DataFrame(job_list)
+    if not isinstance(queue_list, list):
+        job_list = [queue_list]
+    df = pd.DataFrame(job_list + queue_list)
 
     df.drop('state', axis=1, inplace=True)
     df.rename(inplace=True, columns={
@@ -20,12 +23,14 @@ def get_current_jobs(user=None):
         'JB_owner': 'owner',
         'JB_name': 'name',
         'JB_job_number': 'job_number',
+        'JB_submission_time': 'submission_time',
         'JAT_prio': 'priority',
         'JAT_start_time': 'start_time',
     })
 
     df = df.astype({'job_number': int, 'priority': float})
     df['start_time'] = pd.to_datetime(df['start_time'])
+    df['submission_time'] = pd.to_datetime(df['submission_time'])
     return df
 
 
