@@ -57,7 +57,7 @@ def main():
 
         log.info('Calling fact-tools with call: {}'.format(call))
         try:
-            sp.check_call(call)
+            sp.check_call(call, cwd=tmp_dir)
         except sp.CalledProcessError:
             log.exception('Fact tools returned an error:')
             sys.exit(1)
