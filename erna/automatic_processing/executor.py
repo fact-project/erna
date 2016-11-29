@@ -62,9 +62,9 @@ def main():
             log.exception('Fact tools returned an error:')
             sys.exit(1)
 
-        for output_file in iglob(facttools_output):
+        for output_file in iglob(os.path.join(facttools_output, '*')):
             log.info('Copying {} to {}'.format(output_file, output_path))
-            shutil.copyfile(output_file, output_path)
+            shutil.copy2(output_file, output_path)
 
 if __name__ == '__main__':
     main()
