@@ -9,7 +9,7 @@ from glob import iglob
 
 log = logging.getLogger('erna')
 log.setLevel(logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler())
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 def main():
