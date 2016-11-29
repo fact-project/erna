@@ -1,6 +1,7 @@
 import logging
 
-from .database import RawDataFile, DrsFile, FACTToolsRun, ProcessingState, RawDataFile
+from .database import RawDataFile, DrsFile, FACTToolsRun, ProcessingState
+import peewee
 
 
 log = logging.getLogger(__name__)
@@ -33,3 +34,25 @@ def get_pending_fact_tools_runs(database):
         )
     )
     return runs
+
+
+def find_closest_drs_file(raw_data_file, location=None):
+    query = DrsFile.select()
+    query = query.where(DrsFile.night == raw_data_file.night)
+    if location is not None:
+        if location == 'isdc':
+            query = query.where(DrsFile.available_isdc == True)
+        elif location == 'dortmund':
+            query = query.where(DrsFile.available_dortmund == True)
+        else:
+            raise ValueError('Unknown location {}'.format(location))
+
+    query = query.order_by(peewee.fn.Abs(DrsFile.run_id - raw_data_file.run_id))
+    try:
+        drs_file = query.get()
+    except DrsFile.DoesNotExist:
+        raise ValueError('No DrsFile found for {:%Y%m%d}_{:03d}'.format(
+            raw_data_file.night, raw_data_file.run_id
+        ))
+
+    return drs_file
