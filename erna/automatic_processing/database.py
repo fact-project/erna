@@ -54,15 +54,7 @@ def init_database(database, drop=False):
     database.create_tables(tables, safe=True)
 
     for description in PROCESSING_STATES:
-        try:
-            (
-                ProcessingState
-                .select()
-                .where(ProcessingState.description == description)
-                .get()
-            )
-        except ProcessingState.DoesNotExist:
-            ProcessingState.create(description=description)
+        ProcessingState.get_or_create(description=description)
 
 
 class File(Model):
@@ -160,7 +152,7 @@ class FACTToolsRun(Model):
     fact_tools_version = ForeignKeyField(
         FACTToolsVersion, related_name='fact_tools_version'
     )
-    result_file = CharField()
+    result_file = CharField(null=True)
     status = ForeignKeyField(ProcessingState, related_name='status')
     priority = IntegerField(default=5)
     xml = ForeignKeyField(FACTToolsXML)

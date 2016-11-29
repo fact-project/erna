@@ -36,7 +36,15 @@ def get_pending_fact_tools_runs(database):
     return runs
 
 
-def find_closest_drs_file(raw_data_file, location=None, closest=True):
+def find_drs_file(raw_data_file, location=None, closest=True):
+    '''
+    Find a drs file for the give raw data file.
+    If closest is True, return the nearest (in terms of runid) drs file,
+    else return the drs run just before the data run.
+
+    If location is not None, only drs files which are available at the
+    given location are taken into account.
+    '''
     query = DrsFile.select()
     query = query.where(DrsFile.night == raw_data_file.night)
     if location is not None:
@@ -61,3 +69,35 @@ def find_closest_drs_file(raw_data_file, location=None, closest=True):
         ))
 
     return drs_file
+
+
+def insert_new_job(
+        night,
+        runid,
+        fact_tools_version,
+        xml,
+        priority=5,
+        location=None,
+        closest_drs_file=True,
+        ):
+
+    raw_data_file = RawDataFile.select().where(
+        (RawDataFile.night == night) & (RawDataFile.run_id == runid)
+    ).get()
+
+    drs_file = find_drs_file(
+        raw_data_file,
+        location=location,
+        closest=closest_drs_file,
+    )
+
+    fact_tools_run = FACTToolsRun(
+        raw_data_file=raw_data_file,
+        drs_file=drs_file,
+        fact_tools_version=fact_tools_version,
+        status=ProcessingState.get(description='inserted'),
+        priority=priority,
+        xml=xml,
+    )
+
+    fact_tools_run.save()
