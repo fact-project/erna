@@ -36,6 +36,7 @@ def build_qsub_command(
         mail_settings='a',
         environment=None,
         resources=None,
+        engine='SGE',
         ):
     command = []
     command.append('qsub')
@@ -48,7 +49,10 @@ def build_qsub_command(
         command.extend(['-M', mail_address])
 
     command.extend(['-m', mail_settings])
-    command.extend(['-b', 'yes'])  # allow a binary executable
+
+    # allow a binary executable
+    if engine == 'SGE':
+        command.extend(['-b', 'yes'])
 
     if stdout:
         command.extend(['-o', stdout])
