@@ -153,7 +153,7 @@ def submit_fact_tools_db_run(fact_tools_run, output_base_dir, data_dir, location
         aux_dir=aux_dir,
         output_basename=output_basename,
         output_dir=output_dir,
-        name='erna_{}'.format(fact_tools_run.id),
+        job_name='erna_{}'.format(fact_tools_run.id),
     )
     fact_tools_run.status = ProcessingState.get(description='queued')
-    gact_tools_run.save()
+    fact_tools_run.save()
