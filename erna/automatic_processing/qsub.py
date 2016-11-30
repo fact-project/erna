@@ -136,7 +136,7 @@ def build_facttools_qsub_command(
     return cmd
 
 
-def submit_fact_tools_db_run(fact_tools_job, output_base_dir, data_dir, location='isdc'):
+def submit_fact_tools_job(fact_tools_job, output_base_dir, data_dir, location='isdc'):
 
     jar_file = save_jar(fact_tools_job.fact_tools_version, data_dir)
     xml_file = save_xml(fact_tools_job.xml, data_dir)
