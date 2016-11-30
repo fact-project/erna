@@ -27,7 +27,7 @@ def get_current_jobs(user=None):
     if not isinstance(running_jobs, list):
         running_jobs = [running_jobs]
     if not isinstance(queued_jobs, list):
-        job_list = [queued_jobs]
+        queued_jobs = [queued_jobs]
 
     df = df.append(pd.DataFrame(running_jobs + queued_jobs), ignore_index=True)
 
@@ -156,4 +156,4 @@ def submit_fact_tools_db_run(fact_tools_run, output_base_dir, data_dir, location
         name='erna_{}'.format(fact_tools_run.id),
     )
     fact_tools_run.status = ProcessingState.get(description='queued')
-    fact_tools_run.save()
+    gact_tools_run.save()
