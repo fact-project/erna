@@ -76,7 +76,11 @@ def main(config, verbose):
     try:
         while True:
             database.connect()
-            process_pending_jobs(config['submitter']['max_queued_jobs'])
+            process_pending_jobs(
+                config['submitter']['max_queued_jobs'],
+                config['submitter']['data_directory'],
+                location=config['location'],
+            )
             database.close()
             time.sleep(config['submitter']['interval'])
     except (KeyboardInterrupt, SystemExit):
