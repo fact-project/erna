@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
     current_jobs = get_current_jobs()
     running_jobs = current_jobs.query('state == "running"')
-    queued_jobs = current_jobs.query('state == "queued"')
+    queued_jobs = current_jobs.query('state == "pending"')
     log.debug('Currently {} jobs running'.format(len(running_jobs)))
     log.debug('Currently {} jobs queued'.format(len(queued_jobs)))
     log.debug('Currently {} pending jobs in database'.format(

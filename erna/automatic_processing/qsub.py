@@ -1,7 +1,8 @@
-import xmltodict
+ xmltodict
 import subprocess as sp
 import os
 import pandas as pd
+import logging
 
 from .utils import get_aux_dir
 from .database_utils import (
@@ -9,6 +10,8 @@ from .database_utils import (
     save_xml, save_jar
 )
 from .database import ProcessingState
+
+log = logging.getLogger(__name__)
 
 
 def get_current_jobs(user=None):
@@ -164,7 +167,8 @@ def submit_job(job, output_base_dir, data_dir, location='isdc'):
         stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(job.id)),
     )
 
-    sp.check_call(cmd)
+    output = sp.check_output(cmd)
+    log.debug(output.decode())
 
     job.status = ProcessingState.get(description='queued')
     job.save()
