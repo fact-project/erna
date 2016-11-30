@@ -89,7 +89,8 @@ def insert_new_job(
         closest_drs_file=True,
         ):
 
-    if not xml.jar.version == jar.version:
+    xml_version = Jar.select(Jar.version).where(Jar.id == xml.jar_id).get().version
+    if not xml_version == jar.version:
         raise ValueError('FACT Tools versions of xml does not fit requested version')
 
     drs_file = find_drs_file(
