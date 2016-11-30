@@ -104,7 +104,7 @@ def build_qsub_command(
     return command
 
 
-def submit_fact_tools(
+def build_facttools_qsub_command(
         jar_file,
         xml_file,
         in_file,
@@ -133,7 +133,7 @@ def submit_fact_tools(
         **kwargs
     )
 
-    sp.check_call(cmd)
+    return cmd
 
 
 def submit_fact_tools_db_run(fact_tools_job, output_base_dir, data_dir, location='isdc'):
@@ -148,7 +148,7 @@ def submit_fact_tools_db_run(fact_tools_job, output_base_dir, data_dir, location
     log_dir = os.path.join(data_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
 
-    submit_fact_tools(
+    cmd = build_facttools_qsub_command(
         jar_file=jar_file,
         xml_file=xml_file,
         in_file=fact_tools_job.raw_data_file.get_path(location=location),
@@ -160,5 +160,8 @@ def submit_fact_tools_db_run(fact_tools_job, output_base_dir, data_dir, location
         stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(fact_tools_job.id)),
         stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(fact_tools_job.id)),
     )
+
+    sp.check_call(cmd)
+
     fact_tools_job.status = ProcessingState.get(description='queued')
     fact_tools_job.save()
