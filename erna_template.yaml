@@ -12,8 +12,8 @@ fact_database:
 
 submitter:
   interval: 1
-  data_directory: /gpsf0/scratch/fact/erna
+  data_directory: /gpfs0/scratch/fact/erna
   max_queued_jobs: 200
-  logfile: /gpsf0/scratch/fact/erna/erna_submitter.log
+  logfile: /gpfs0/scratch/fact/erna/erna_submitter.log
 
 location: isdc
