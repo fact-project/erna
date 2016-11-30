@@ -3,7 +3,7 @@ from playhouse.test_utils import test_database
 
 def test_init():
     from peewee import SqliteDatabase
-    from erna.automatic_processing import models
+    from erna.automatic_processing import database
     import tempfile
 
     with tempfile.NamedTemporaryFile() as f:
@@ -11,13 +11,13 @@ def test_init():
             f.name,
             fields={'night': 'INTEGER', 'longblob': 'BLOB'}
         )
-        with test_database(test_db, models.MODELS):
-            models.init_database(test_db)
+        with test_database(test_db, database.MODELS):
+            database.init_database(test_db)
 
 
 def test_init_twice():
     from peewee import SqliteDatabase
-    from erna.automatic_processing import models
+    from erna.automatic_processing import database
     import tempfile
 
     with tempfile.NamedTemporaryFile() as f:
@@ -25,6 +25,6 @@ def test_init_twice():
             f.name,
             fields={'night': 'INTEGER', 'longblob': 'BLOB'}
         )
-        with test_database(test_db, models.MODELS):
-            models.init_database(test_db)
-            models.init_database(test_db)
+        with test_database(test_db, database.MODELS):
+            database.init_database(test_db)
+            database.init_database(test_db)
