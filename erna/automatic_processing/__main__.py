@@ -2,7 +2,7 @@ from erna.automatic_processing.database import (
     database, init_database, Job, ProcessingState, RawDataFile
 )
 from erna.automatic_processing.database_utils import count_jobs
-from erna.automatic_processing.qsub import get_current_jobs, submit_fact_tools_job
+from erna.automatic_processing.qsub import get_current_jobs, submit_job
 from erna.utils import load_config
 import click
 import logging
@@ -36,7 +36,7 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
 
         for job in pending_jobs:
             try:
-                submit_fact_tools_job(
+                submit_job(
                     job,
                     output_base_dir=os.path.join(data_directory, 'fact-tools'),
                     data_dir=data_directory,
