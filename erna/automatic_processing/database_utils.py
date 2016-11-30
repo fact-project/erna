@@ -126,9 +126,7 @@ def save_xml(xml_id, data_dir):
 
     xml = XML.select(XML.name, XML.jar)
 
-    version = Jar.select(
-        Jar.version
-    ).get(id=xml.jar_id).version
+    version = Jar.select(Jar.version).where(Jar.id == xml.jar_id).get().version
 
     xml_dir = os.path.join(data_dir, 'xmls')
     xml_file = os.path.join(xml_dir, '{}-{}.xml'.format(
@@ -169,7 +167,7 @@ def save_jar(jar_id, data_dir):
 
 
 def build_output_directory_name(job, output_base_dir):
-    version = Jar.select(Jar.version).get(id=job.jar_id)
+    version = Jar.select(Jar.version).where(Jar.id == job.jar_id).get().version
     return os.path.join(
         output_base_dir,
         version,
