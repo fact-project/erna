@@ -62,7 +62,7 @@ def build_qsub_command(
         stdout=None,
         stderr=None,
         job_name=None,
-        queue='fact_short',
+        queue='fact_medium',
         mail_address=None,
         mail_settings='a',
         environment=None,
