@@ -73,7 +73,7 @@ def find_drs_file(raw_data_file, location=None, closest=True):
 
 def insert_new_job(
         night,
-        runid,
+        run_id,
         fact_tools_version,
         xml,
         priority=5,
@@ -84,7 +84,7 @@ def insert_new_job(
     if not xml.fact_tools_version.version == fact_tools_version.version:
         raise ValueError('FACT Tools versions of xml does not fit requested version')
 
-    raw_data_file = RawDataFile.get(night=night, run_id=runid)
+    raw_data_file = RawDataFile.get(night=night, run_id=run_id)
 
     drs_file = find_drs_file(
         raw_data_file,
