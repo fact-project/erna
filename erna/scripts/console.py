@@ -1,7 +1,8 @@
 from IPython import embed
 import click
 
-from ..automatic_processing.database import database
+from ..automatic_processing.database import *
+from ..automatic_processing.database_utils import *
 from ..utils import load_config
 
 

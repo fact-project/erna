@@ -45,10 +45,13 @@ def xml(config, fact_tools_version, name, comment, xml_file):
             .get()
         )
     except FACTToolsVersion.DoesNotExist:
+        database.close()
         log.error(
             'No database entry for FACT Tools version {}'.format(fact_tools_version)
         )
         sys.exit(1)
+
+    database.close()
 
     with open(xml_file) as f:
         xml_content = f.read()
@@ -59,6 +62,7 @@ def xml(config, fact_tools_version, name, comment, xml_file):
             multiline=True,
         )
 
+    database.connect()
     xml = FACTToolsXML(
         content=xml_content,
         fact_tools_version=fact_tools,

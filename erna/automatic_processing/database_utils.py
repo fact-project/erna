@@ -6,6 +6,11 @@ from .database import RawDataFile, DrsFile, FACTToolsJob, ProcessingState
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    'fill_data_runs', 'fill_drs_runs', 'find_drs_file',
+    'count_jobs', 'insert_new_job'
+]
+
 
 def fill_data_runs(df, database):
     df = df.copy()
@@ -101,11 +106,11 @@ def insert_new_job(
     fact_tools_job.save()
 
 
-def count_jobs(state='inserted'):
-    return (
-        FACTToolsJob
-        .select()
-        .join(ProcessingState)
-        .where(ProcessingState.description == state)
-        .count()
-    )
+def count_jobs(state=None):
+    query = FACTToolsJob.select()
+
+    if state is not None:
+        query = query.join(ProcessingState)
+        query = query.where(ProcessingState.description == state)
+
+    return query.count()
