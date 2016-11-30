@@ -18,7 +18,9 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
     queued_jobs = current_jobs.query('state == "queued"')
     log.debug('Currently {} jobs running'.format(len(running_jobs)))
     log.debug('Currently {} jobs queued'.format(len(queued_jobs)))
-    log.debug('Currently {} pending jobs in database', count_jobs(state='inserted'))
+    log.debug('Currently {} pending jobs in database'.format(
+        count_jobs(state='inserted')
+    ))
 
     if len(queued_jobs) < max_queued_jobs:
         pending_jobs = (
