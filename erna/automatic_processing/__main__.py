@@ -1,5 +1,5 @@
 from erna.automatic_processing.database import (
-    database, init_database, FACTToolsJob, ProcessingState, RawDataFile
+    database, init_database, Job, ProcessingState, RawDataFile
 )
 from erna.automatic_processing.database_utils import count_jobs
 from erna.automatic_processing.qsub import get_current_jobs, submit_fact_tools_job
@@ -24,13 +24,13 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
 
     if len(queued_jobs) < max_queued_jobs:
         pending_jobs = (
-            FACTToolsJob
+            Job
             .select()
             .join(ProcessingState)
-            .switch(FACTToolsJob)
+            .switch(Job)
             .join(RawDataFile)
             .where(ProcessingState.description == 'inserted')
-            .order_by(FACTToolsJob.priority, RawDataFile.night.desc())
+            .order_by(Job.priority, RawDataFile.night.desc())
             .limit(max_queued_jobs - len(queued_jobs))
         )
 

@@ -6,7 +6,7 @@ import sys
 import re
 
 from ..automatic_processing.database import (
-    database, init_database, FACTToolsVersion, FACTToolsXML
+    database, init_database, Jar, XML
 )
 from ..utils import load_config
 
@@ -38,13 +38,13 @@ def xml(config, fact_tools_version, name, comment, xml_file):
     init_database(database)
 
     try:
-        fact_tools = (
-            FACTToolsVersion
-            .select()
-            .where(FACTToolsVersion.version == fact_tools_version)
+        jar = (
+            Jar
+            .select(Jar.id)
+            .where(Jar.version == fact_tools_version)
             .get()
         )
-    except FACTToolsVersion.DoesNotExist:
+    except Jar.DoesNotExist:
         database.close()
         log.error(
             'No database entry for FACT Tools version {}'.format(fact_tools_version)
@@ -63,9 +63,9 @@ def xml(config, fact_tools_version, name, comment, xml_file):
         )
 
     database.connect()
-    xml = FACTToolsXML(
+    xml = XML(
         content=xml_content,
-        fact_tools_version=fact_tools,
+        jar=jar,
         name=name,
         comment=comment,
     )
@@ -92,7 +92,7 @@ def jar(config, jar_file):
     database.connect()
     log.info('Database connection established')
     init_database(database)
-    FACTToolsVersion.create(version=version, jar_file=jarblob)
+    Jar.create(version=version, data=jarblob)
     database.close()
 
 

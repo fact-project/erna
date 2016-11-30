@@ -11,7 +11,7 @@ from .custom_fields import NightField, LongBlobField
 
 __all__ = [
     'RawDataFile', 'DrsFile',
-    'FACTToolsVersion', 'FACTToolsXML', 'FACTToolsJob',
+    'Jar', 'XML', 'Job',
     'ProcessingState',
     'database', 'init_database',
 ]
@@ -43,9 +43,9 @@ def init_database(database, drop=False):
     tables = [
         RawDataFile,
         DrsFile,
-        FACTToolsVersion,
-        FACTToolsXML,
-        FACTToolsJob,
+        Jar,
+        XML,
+        Job,
         ProcessingState,
     ]
     if drop is True:
@@ -107,24 +107,24 @@ class DrsFile(File):
         db_table = 'drs_files'
 
 
-class FACTToolsVersion(Model):
-    version = CharField(primary_key=True)
-    jar_file = LongBlobField()
+class Jar(Model):
+    version = CharField()
+    data = LongBlobField()
 
     class Meta:
         database = database
-        db_table = 'fact_tools_versions'
+        db_table = 'jars'
 
 
-class FACTToolsXML(Model):
+class XML(Model):
     name = CharField()
     content = TextField()
     comment = TextField()
-    fact_tools_version = ForeignKeyField(FACTToolsVersion)
+    jar = ForeignKeyField(Jar)
 
     class Meta:
         database = database
-        db_table = 'fact_tools_xmls'
+        db_table = 'xmls'
 
 
 class ProcessingState(Model):
@@ -135,23 +135,19 @@ class ProcessingState(Model):
         db_table = 'processing_states'
 
 
-class FACTToolsJob(Model):
-    raw_data_file = ForeignKeyField(RawDataFile, related_name='fact_tools_jobs')
-    drs_file = ForeignKeyField(DrsFile, related_name='fact_tools_jobs')
-    fact_tools_version = ForeignKeyField(
-        FACTToolsVersion, related_name='fact_tools_version'
-    )
+class Job(Model):
+    raw_data_file = ForeignKeyField(RawDataFile, related_name='raw_data_file')
+    drs_file = ForeignKeyField(DrsFile, related_name='drs_file')
+    jar = ForeignKeyField(Jar, related_name='jar')
     result_file = CharField(null=True)
     status = ForeignKeyField(ProcessingState, related_name='status')
     priority = IntegerField(default=5)
-    xml = ForeignKeyField(FACTToolsXML)
+    xml = ForeignKeyField(XML)
     md5hash = FixedCharField(32, null=True)
 
     class Meta:
         database = database
-        db_table = 'fact_tools_jobs'
+        db_table = 'jobs'
 
 
-MODELS = [
-    RawDataFile, DrsFile, FACTToolsVersion, FACTToolsXML, FACTToolsJob, ProcessingState,
-]
+MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState]

@@ -3,8 +3,11 @@ import subprocess as sp
 import os
 import pandas as pd
 
-from .utils import save_xml, save_jar, get_aux_dir
-from .utils import build_output_base_name, build_output_directory_name
+from .utils import get_aux_dir
+from .database_utils import (
+    build_output_base_name, build_output_directory_name,
+    save_xml, save_jar
+)
 from .database import ProcessingState
 
 
@@ -136,14 +139,14 @@ def build_facttools_qsub_command(
     return cmd
 
 
-def submit_fact_tools_job(fact_tools_job, output_base_dir, data_dir, location='isdc'):
+def submit_job(job, output_base_dir, data_dir, location='isdc'):
 
-    jar_file = save_jar(fact_tools_job.fact_tools_version, data_dir)
-    xml_file = save_xml(fact_tools_job.xml, data_dir)
+    jar_file = save_jar(job.jar_id, data_dir)
+    xml_file = save_xml(job.xml_id, data_dir)
 
-    aux_dir = get_aux_dir(fact_tools_job.raw_data_file.night, location=location)
-    output_dir = build_output_directory_name(fact_tools_job, output_base_dir)
-    output_basename = build_output_base_name(fact_tools_job)
+    aux_dir = get_aux_dir(job.raw_data_file.night, location=location)
+    output_dir = build_output_directory_name(job, output_base_dir)
+    output_basename = build_output_base_name(job)
 
     log_dir = os.path.join(data_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
@@ -151,17 +154,17 @@ def submit_fact_tools_job(fact_tools_job, output_base_dir, data_dir, location='i
     cmd = build_facttools_qsub_command(
         jar_file=jar_file,
         xml_file=xml_file,
-        in_file=fact_tools_job.raw_data_file.get_path(location=location),
-        drs_file=fact_tools_job.drs_file.get_path(location=location),
+        in_file=job.raw_data_file.get_path(location=location),
+        drs_file=job.drs_file.get_path(location=location),
         aux_dir=aux_dir,
         output_basename=output_basename,
         output_dir=output_dir,
-        job_name='erna_{}'.format(fact_tools_job.id),
-        stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(fact_tools_job.id)),
-        stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(fact_tools_job.id)),
+        job_name='erna_{}'.format(job.id),
+        stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(job.id)),
+        stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(job.id)),
     )
 
     sp.check_call(cmd)
 
-    fact_tools_job.status = ProcessingState.get(description='queued')
-    fact_tools_job.save()
+    job.status = ProcessingState.get(description='queued')
+    job.save()
