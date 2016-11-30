@@ -19,6 +19,8 @@ def load_config(filename=None):
             filename = os.environ['ERNA_CONFIG']
         elif os.path.isfile('erna.yaml'):
             filename = 'erna.yaml'
+        else:
+            raise ValueError('No config file found')
 
     log.debug('Loading config file {}'.format(filename))
 

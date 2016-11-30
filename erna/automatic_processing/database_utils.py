@@ -99,3 +99,12 @@ def insert_new_job(
     )
 
     fact_tools_job.save()
+
+
+def count_jobs(state='inserted'):
+    return (
+        FACTToolsJob
+        .select()
+        .where(ProcessingState.description == state)
+        .count()
+    )

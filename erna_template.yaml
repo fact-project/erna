@@ -9,3 +9,11 @@ fact_database:
   host: 129.194.168.95
   user: <user>
   password: <password>
+
+submitter:
+  interval: 1
+  data_directory: /gpsf1/scratch/fact/erna
+  max_queued_jobs: 200
+  logfile: /gpsf1/scratch/fact/erna/erna_submitter.log
+
+location: isdc

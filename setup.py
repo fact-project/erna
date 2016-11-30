@@ -52,6 +52,7 @@ setup(
             'erna_upload = erna.scripts.upload:main',
             'erna_console = erna.scripts.console:main',
             'erna_automatic_processing_executor = erna.automatic_processing.executor:main',
+            'erna_automatic_processing = erna.automatic_processing.__main__:main',
         ],
     },
     setup_requires=['pytest-runner'],
