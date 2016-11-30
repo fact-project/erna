@@ -147,9 +147,7 @@ def save_jar(jar_id, data_dir):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    jar = Jar.select(
-        Jar.version
-    ).get(id=jar_id)
+    jar = Jar.select(Jar.version).where(Jar.id == jar_id).get()
 
     jar_dir = os.path.join(data_dir, 'jars')
     jar_file = os.path.join(
@@ -179,7 +177,7 @@ def build_output_directory_name(job, output_base_dir):
 
 
 def build_output_base_name(job):
-    version = Jar.select(Jar.version).get(id=job.jar_id)
+    version = Jar.select(Jar.version).where(Jar.id == job.jar_id).get()
     return '{night:%Y%m%d}_{run_id:03d}_{version}_{name}'.format(
         night=job.raw_data_file.night,
         run_id=job.raw_data_file.run_id,
