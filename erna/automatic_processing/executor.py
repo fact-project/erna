@@ -24,9 +24,9 @@ def main():
     xml = os.path.abspath(os.environ['XMLFILE'])
     log.info('Using xml: {}'.format(xml))
 
-    output_path = os.path.abspath(os.environ['OUTPUTPATH'])
+    output_dir = os.path.abspath(os.environ['OUTPUTDIR'])
 
-    os.makedirs(output_path, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         log.debug('Using tmp directory: {}'.format(tmp_dir))
@@ -63,8 +63,8 @@ def main():
             sys.exit(1)
 
         for output_file in iglob(os.path.join(facttools_output, '*')):
-            log.info('Copying {} to {}'.format(output_file, output_path))
-            shutil.copy2(output_file, output_path)
+            log.info('Copying {} to {}'.format(output_file, output_dir))
+            shutil.copy2(output_file, output_dir)
 
 if __name__ == '__main__':
     main()

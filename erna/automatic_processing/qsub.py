@@ -3,6 +3,10 @@ import subprocess as sp
 import os
 import pandas as pd
 
+from .utils import save_xml, save_jar, get_aux_dir
+from .utils import build_output_base_name, build_output_directory_name
+from .database import ProcessingState
+
 
 def get_current_jobs(user=None):
     ''' Return a dataframe with current jobs of user '''
@@ -101,12 +105,13 @@ def build_qsub_command(
 
 
 def submit_fact_tools(
-        jarfile,
-        xmlfile,
-        infile,
-        drsfile,
-        auxdir,
-        outputpath,
+        jar_file,
+        xml_file,
+        in_file,
+        drs_file,
+        aux_dir,
+        output_dir,
+        output_basename,
         **kwargs
         ):
 
@@ -117,14 +122,38 @@ def submit_fact_tools(
     cmd = build_qsub_command(
         executable=executable,
         environment={
-            'JARFILE': jarfile,
-            'XMLFILE': xmlfile,
-            'OUTPUTPATH': outputpath,
-            'facttools_infile': 'file:' + infile,
-            'facttools_drsfile': 'file:' + drsfile,
-            'facttools_aux_dir': 'file:' + auxdir,
+            'JARFILE': jar_file,
+            'XMLFILE': xml_file,
+            'OUTPUTDIR': output_dir,
+            'facttools_infile': 'file:' + in_file,
+            'facttools_drsfile': 'file:' + drs_file,
+            'facttools_aux_dir': 'file:' + aux_dir,
+            'facttools_output_basename': output_basename,
         },
         **kwargs
     )
 
     sp.check_call(cmd)
+
+
+def submit_fact_tools_db_run(fact_tools_run, output_base_dir, data_dir, location='isdc'):
+
+    jar_file = save_jar(fact_tools_run.fact_tools_version, data_dir)
+    xml_file = save_xml(fact_tools_run.xml, data_dir)
+
+    aux_dir = get_aux_dir(fact_tools_run.raw_data_file.night, location=location)
+    output_dir = build_output_directory_name(fact_tools_run, output_base_dir)
+    output_basename = build_output_base_name(fact_tools_run)
+
+    submit_fact_tools(
+        jar_file=jar_file,
+        xml_file=xml_file,
+        in_file=fact_tools_run.raw_data_file.get_path(location=location),
+        drs_file=fact_tools_run.drs_file.get_path(location=location),
+        aux_dir=aux_dir,
+        output_basename=output_basename,
+        output_dir=output_dir,
+        name='erna_{}'.format(fact_tools_run.id),
+    )
+    fact_tools_run.status = ProcessingState.get(description='queued')
+    fact_tools_run.save()

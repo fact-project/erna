@@ -8,7 +8,7 @@
   <property name="integralGainFile" value="classpath:/default/gain_sorted_20131127.csv" />
   <property name="pixelDelayFile" value="classpath:/default/delays_lightpulser_20150217.csv" />
 
-  <property name="output_basename" value="file:facttools_output/output" />
+  <property name="output_basename" value="output" />
 
   <!-- <property name="fits_features" value="${keysForOutput}"/> -->
   <property name="json_features" value="PhotonArrivals,PhotonArrivalsBaseLine"/>
@@ -63,7 +63,7 @@
   <include url="classpath:/default/data/sourceParameter.xml" /> 
   <!-- Output: source dependent parameters -->
 
-  <fact.io.FITSWriter url="${output_basename}_level2.fits" keys="${keysForOutput}" />
-  <fact.io.JSONWriter url="${output_basename}_singlepe.jsonl.gz" keys="${json_features}" jsonl="true" gzip="true"/>
+  <fact.io.FITSWriter url="file:facttools_output/${output_basename}_level2.fits" keys="${keysForOutput}" />
+  <fact.io.JSONWriter url="file:facttools_output/${output_basename}_singlepe.jsonl.gz" keys="${json_features}" jsonl="true" gzip="true"/>
   </process>
 </container>

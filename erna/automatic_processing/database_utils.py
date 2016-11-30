@@ -1,7 +1,7 @@
+import peewee
 import logging
 
 from .database import RawDataFile, DrsFile, FACTToolsRun, ProcessingState
-import peewee
 
 
 log = logging.getLogger(__name__)
@@ -80,6 +80,9 @@ def insert_new_job(
         location=None,
         closest_drs_file=True,
         ):
+
+    if not xml.fact_tools_version.version == fact_tools_version.version:
+        raise ValueError('FACT Tools versions of xml does not fit requested version')
 
     raw_data_file = RawDataFile.select().where(
         (RawDataFile.night == night) & (RawDataFile.run_id == runid)
