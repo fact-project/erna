@@ -27,6 +27,7 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
             FACTToolsJob
             .select()
             .join(ProcessingState)
+            .join(RawDataFile)
             .where(ProcessingState.description == 'inserted')
             .order_by(FACTToolsJob.priority, RawDataFile.night.desc())
             .limit(max_queued_jobs - len(queued_jobs))
