@@ -105,6 +105,7 @@ def count_jobs(state='inserted'):
     return (
         FACTToolsJob
         .select()
+        .join(ProcessingState)
         .where(ProcessingState.description == state)
         .count()
     )
