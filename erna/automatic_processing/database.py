@@ -11,8 +11,9 @@ from .custom_fields import NightField, LongBlobField
 
 __all__ = [
     'RawDataFile', 'DrsFile',
-    'FACTToolsVersion', 'FACTToolsXML', 'FACTToolsRun',
+    'FACTToolsVersion', 'FACTToolsXML', 'FACTToolsJob',
     'ProcessingState',
+    'database', 'init_database',
 ]
 
 
@@ -134,9 +135,9 @@ class ProcessingState(Model):
         db_table = 'processing_states'
 
 
-class FACTToolsRun(Model):
-    raw_data_file = ForeignKeyField(RawDataFile, related_name='fact_tools_runs')
-    drs_file = ForeignKeyField(DrsFile, related_name='fact_tools_runs')
+class FACTToolsJob(Model):
+    raw_data_file = ForeignKeyField(RawDataFile, related_name='fact_tools_jobs')
+    drs_file = ForeignKeyField(DrsFile, related_name='fact_tools_jobs')
     fact_tools_version = ForeignKeyField(
         FACTToolsVersion, related_name='fact_tools_version'
     )
@@ -148,9 +149,9 @@ class FACTToolsRun(Model):
 
     class Meta:
         database = database
-        db_table = 'fact_tools_runs'
+        db_table = 'fact_tools_jobs'
 
 
 MODELS = [
-    RawDataFile, DrsFile, FACTToolsVersion, FACTToolsXML, FACTToolsRun, ProcessingState,
+    RawDataFile, DrsFile, FACTToolsVersion, FACTToolsXML, FACTToolsJob, ProcessingState,
 ]

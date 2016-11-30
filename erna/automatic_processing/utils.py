@@ -70,21 +70,21 @@ def get_aux_dir(night, location='isdc'):
     )
 
 
-def build_output_directory_name(fact_tools_run, output_base_dir):
+def build_output_directory_name(fact_tools_job, output_base_dir):
     return os.path.join(
         output_base_dir,
-        fact_tools_run.fact_tools_version.version,
-        fact_tools_run.xml.name,
-        '{:04d}'.format(fact_tools_run.raw_data_file.night.year),
-        '{:02d}'.format(fact_tools_run.raw_data_file.night.month),
-        '{:02d}'.format(fact_tools_run.raw_data_file.night.day)
+        fact_tools_job.fact_tools_version.version,
+        fact_tools_job.xml.name,
+        '{:04d}'.format(fact_tools_job.raw_data_file.night.year),
+        '{:02d}'.format(fact_tools_job.raw_data_file.night.month),
+        '{:02d}'.format(fact_tools_job.raw_data_file.night.day)
     )
 
 
-def build_output_base_name(fact_tools_run):
+def build_output_base_name(fact_tools_job):
     return '{night:%Y%m%d}_{run_id:03d}_{version}_{name}'.format(
-        night=fact_tools_run.raw_data_file.night,
-        run_id=fact_tools_run.raw_data_file.run_id,
-        version=fact_tools_run.fact_tools_version.version,
-        name=fact_tools_run.xml.name
+        night=fact_tools_job.raw_data_file.night,
+        run_id=fact_tools_job.raw_data_file.run_id,
+        version=fact_tools_job.fact_tools_version.version,
+        name=fact_tools_job.xml.name
     )

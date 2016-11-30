@@ -1,7 +1,7 @@
 import peewee
 import logging
 
-from .database import RawDataFile, DrsFile, FACTToolsRun, ProcessingState
+from .database import RawDataFile, DrsFile, FACTToolsJob, ProcessingState
 
 
 log = logging.getLogger(__name__)
@@ -23,14 +23,14 @@ def fill_drs_runs(df, database):
         DrsFile.insert_many(df.to_dict(orient='records')).upsert().execute()
 
 
-def get_pending_fact_tools_runs(database):
+def get_pending_fact_tools_jobs(database):
     runs = (
-        FACTToolsRun
+        FACTToolsJob
         .select()
         .where(ProcessingState.description == 'inserted')
         .order_by(
             RawDataFile.night.desc(),
-            FACTToolsRun.priority,
+            FACTToolsJob.priority,
         )
     )
     return runs
@@ -89,7 +89,7 @@ def insert_new_job(
         closest=closest_drs_file,
     )
 
-    fact_tools_run = FACTToolsRun(
+    fact_tools_job = FACTToolsJob(
         raw_data_file=raw_data_file,
         drs_file=drs_file,
         fact_tools_version=fact_tools_version,
@@ -98,4 +98,4 @@ def insert_new_job(
         xml=xml,
     )
 
-    fact_tools_run.save()
+    fact_tools_job.save()

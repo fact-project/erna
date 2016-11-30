@@ -136,14 +136,14 @@ def submit_fact_tools(
     sp.check_call(cmd)
 
 
-def submit_fact_tools_db_run(fact_tools_run, output_base_dir, data_dir, location='isdc'):
+def submit_fact_tools_db_run(fact_tools_job, output_base_dir, data_dir, location='isdc'):
 
-    jar_file = save_jar(fact_tools_run.fact_tools_version, data_dir)
-    xml_file = save_xml(fact_tools_run.xml, data_dir)
+    jar_file = save_jar(fact_tools_job.fact_tools_version, data_dir)
+    xml_file = save_xml(fact_tools_job.xml, data_dir)
 
-    aux_dir = get_aux_dir(fact_tools_run.raw_data_file.night, location=location)
-    output_dir = build_output_directory_name(fact_tools_run, output_base_dir)
-    output_basename = build_output_base_name(fact_tools_run)
+    aux_dir = get_aux_dir(fact_tools_job.raw_data_file.night, location=location)
+    output_dir = build_output_directory_name(fact_tools_job, output_base_dir)
+    output_basename = build_output_base_name(fact_tools_job)
 
     log_dir = os.path.join(data_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
@@ -151,14 +151,14 @@ def submit_fact_tools_db_run(fact_tools_run, output_base_dir, data_dir, location
     submit_fact_tools(
         jar_file=jar_file,
         xml_file=xml_file,
-        in_file=fact_tools_run.raw_data_file.get_path(location=location),
-        drs_file=fact_tools_run.drs_file.get_path(location=location),
+        in_file=fact_tools_job.raw_data_file.get_path(location=location),
+        drs_file=fact_tools_job.drs_file.get_path(location=location),
         aux_dir=aux_dir,
         output_basename=output_basename,
         output_dir=output_dir,
-        job_name='erna_{}'.format(fact_tools_run.id),
-        stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(fact_tools_run.id)),
-        stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(fact_tools_run.id)),
+        job_name='erna_{}'.format(fact_tools_job.id),
+        stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(fact_tools_job.id)),
+        stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(fact_tools_job.id)),
     )
-    fact_tools_run.status = ProcessingState.get(description='queued')
-    fact_tools_run.save()
+    fact_tools_job.status = ProcessingState.get(description='queued')
+    fact_tools_job.save()
