@@ -77,22 +77,10 @@ class File(Model):
         )
 
     @classmethod
-    def select_from_path(cls, path):
+    def get_or_create_from_path(cls, path):
         ''' Selects either an existing database entry or returns a new instance '''
-        log.debug('In from_path')
         night, run_id = parse_path(path)
-        return cls.select_night_runid(night, run_id)
-
-    @classmethod
-    def select_night_runid(cls, night, run_id):
-        ''' Selects either an existing database entry or returns a new instance '''
-        try:
-            run = cls.select().where((cls.night == night) & (cls.run_id == run_id)).get()
-            log.debug('returnig existing instance')
-            return run
-        except cls.DoesNotExist:
-            log.debug('returnig new instance')
-            return cls(night=night, run_id=run_id)
+        return cls.get_or_create(night=night, run_id=run_id)
 
     def __repr__(self):
         return self.basename

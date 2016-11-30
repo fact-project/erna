@@ -84,9 +84,7 @@ def insert_new_job(
     if not xml.fact_tools_version.version == fact_tools_version.version:
         raise ValueError('FACT Tools versions of xml does not fit requested version')
 
-    raw_data_file = RawDataFile.select().where(
-        (RawDataFile.night == night) & (RawDataFile.run_id == runid)
-    ).get()
+    raw_data_file = RawDataFile.get(night=night, run_id=runid)
 
     drs_file = find_drs_file(
         raw_data_file,
