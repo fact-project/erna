@@ -45,7 +45,7 @@ def init_database(database, drop=False):
         DrsFile,
         FACTToolsVersion,
         FACTToolsXML,
-        FACTToolsRun,
+        FACTToolsJob,
         ProcessingState,
     ]
     if drop is True:
