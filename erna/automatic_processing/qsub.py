@@ -158,7 +158,7 @@ def submit_fact_tools_db_run(fact_tools_run, output_base_dir, data_dir, location
         output_dir=output_dir,
         job_name='erna_{}'.format(fact_tools_run.id),
         stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(fact_tools_run.id)),
-        stderr=os.path.join(log_dir, 'erna_{:08d}.3'.format(fact_tools_run.id)),
+        stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(fact_tools_run.id)),
     )
     fact_tools_run.status = ProcessingState.get(description='queued')
     fact_tools_run.save()
