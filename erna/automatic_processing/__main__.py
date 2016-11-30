@@ -68,11 +68,13 @@ def main(config, verbose):
         handler.setFormatter(formatter)
         logging.getLogger().addHandler(handler)
 
+    log.info('Initialising database')
     database.init(**config['processing_database'])
     database.connect()
     init_database(database)
     database.close()
 
+    log.info('Starting main loop')
     try:
         while True:
             database.connect()
