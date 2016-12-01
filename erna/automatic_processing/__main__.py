@@ -59,9 +59,9 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
 def main(config, verbose):
     config = load_config()
 
-    log.setLevel(logging.INFO)
+    logging.getLogger('erna').setLevel(logging.INFO)
     if verbose:
-        log.setLevel(logging.DEBUG)
+        logging.getLogger('erna').setLevel(logging.DEBUG)
 
     stream_handler = logging.StreamHandler()
     file_handler = logging.FileHandler(config['submitter']['logfile'])
