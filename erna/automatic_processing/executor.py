@@ -88,7 +88,7 @@ def main():
             sys.exit(1)
 
     try:
-        md5sum, _ = sp.check_output(['md5sum', output_file]).decode().split()
+        md5hash, _ = sp.check_output(['md5sum', output_file]).decode().split()
     except:
         log.exception('Error calculating md5sum')
         socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
@@ -99,7 +99,7 @@ def main():
         'job_id': job_id,
         'status': 'success',
         'output_file': output_file,
-        'md5sum': md5sum,
+        'md5hash': md5hash,
     })
     socket.recv()
 
