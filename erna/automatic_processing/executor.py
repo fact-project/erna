@@ -79,6 +79,7 @@ def main():
             output_file = next(iglob(os.path.join(facttools_output, '*')))
             log.info('Copying {} to {}'.format(output_file, output_dir))
             shutil.copy2(output_file, output_dir)
+            output_file = os.path.join(output_dir, os.path.basename(output_file))
             log.info('Copy done')
         except:
             log.exception('Error copying outputfile')
@@ -86,7 +87,13 @@ def main():
             socket.recv()
             sys.exit(1)
 
-    md5sum, _ = sp.check_output(['md5sum', output_file]).decode().split()
+    try:
+        md5sum, _ = sp.check_output(['md5sum', output_file]).decode().split()
+    except:
+        log.exception('Error calculating md5sum')
+        socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
+        socket.recv()
+        sys.exit(1)
 
     socket.send_pyobj({
         'job_id': job_id,
