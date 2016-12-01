@@ -32,11 +32,6 @@
   <include url="classpath:/default/data/calibration.xml" />
   <!-- Output: DataCalibrated -->
 
-  <fact.extraction.SinglePulseExtraction
-          dataKey="DataCalibrated"
-          outputKey="PhotonArrivals"
-  />
-
   <!-- Extraction -->
   <!-- BasicExtraction, RisingEdgeForPositions, RisingEdgePolynomFit, TimeOverThreshold,
   PhotonChargeTimeOverThreshold, HandleSaturation, CorrectPixelDelays-->
@@ -64,6 +59,5 @@
   <!-- Output: source dependent parameters -->
 
   <fact.io.FITSWriter url="file:facttools_output/${output_basename}_level2.fits" keys="${keysForOutput}" />
-  <fact.io.JSONWriter url="file:facttools_output/${output_basename}_singlepe.jsonl.gz" keys="${json_features}" jsonl="true" gzip="true"/>
   </process>
 </container>
