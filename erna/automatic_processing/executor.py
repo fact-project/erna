@@ -98,7 +98,7 @@ def main():
     socket.send_pyobj({
         'job_id': job_id,
         'status': 'success',
-        'outputfile': output_file,
+        'output_file': output_file,
         'md5sum': md5sum,
     })
     socket.recv()
