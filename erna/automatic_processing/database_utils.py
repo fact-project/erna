@@ -36,7 +36,7 @@ def fill_drs_runs(df, database):
 
 
 @requires_database_connection
-def get_pending_jobs(database, limit=None):
+def get_pending_jobs(limit=None):
     runs = (
         Job
         .select()
