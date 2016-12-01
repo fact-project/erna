@@ -11,10 +11,10 @@ fact_database:
   password: <password>
 
 submitter:
-  interval: 1
-  data_directory: /gpfs0/scratch/fact/erna
+  interval: 15
+  data_directory: /gpfs1/scratch/fact/erna
   max_queued_jobs: 200
-  logfile: /gpfs0/scratch/fact/erna/erna_submitter.log
+  logfile: /gpfs1/scratch/fact/erna/erna_submitter.log
   location: isdc
   mail_address: <mail_address>
   mail_settings: a
