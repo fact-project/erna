@@ -183,7 +183,7 @@ def submit_job(
     )
 
     output = sp.check_output(cmd)
-    log.debug(output.decode())
+    log.debug(output.decode().strip())
 
     job.status = ProcessingState.get(description='queued')
     job.save()
