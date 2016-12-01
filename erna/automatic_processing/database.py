@@ -4,6 +4,7 @@ from peewee import (
 )
 import os
 import logging
+import wrapt
 
 from .utils import parse_path
 from .custom_fields import NightField, LongBlobField
@@ -151,3 +152,9 @@ class Job(Model):
 
 
 MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState]
+
+
+@wrapt.decorator
+def requires_database_connection(wrapped, instance, args, kwargs):
+    database.connect()
+    return wrapped(*args, **kwargs)

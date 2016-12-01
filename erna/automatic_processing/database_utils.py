@@ -4,7 +4,8 @@ import os
 
 from .database import(
     RawDataFile, DrsFile, Job,
-    ProcessingState, Jar, XML
+    ProcessingState, Jar, XML,
+    requires_database_connection
 )
 
 
@@ -16,6 +17,7 @@ __all__ = [
 ]
 
 
+@requires_database_connection
 def fill_data_runs(df, database):
     df = df.copy()
     df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
@@ -24,6 +26,7 @@ def fill_data_runs(df, database):
         RawDataFile.insert_many(df.to_dict(orient='records')).upsert().execute()
 
 
+@requires_database_connection
 def fill_drs_runs(df, database):
     df = df.copy()
     df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
@@ -32,6 +35,7 @@ def fill_drs_runs(df, database):
         DrsFile.insert_many(df.to_dict(orient='records')).upsert().execute()
 
 
+@requires_database_connection
 def get_pending_jobs(database):
     runs = (
         Job
@@ -45,6 +49,7 @@ def get_pending_jobs(database):
     return runs
 
 
+@requires_database_connection
 def find_drs_file(raw_data_file, location=None, closest=True):
     '''
     Find a drs file for the give raw data file.
@@ -80,6 +85,7 @@ def find_drs_file(raw_data_file, location=None, closest=True):
     return drs_file
 
 
+@requires_database_connection
 def insert_new_job(
         raw_data_file,
         jar,
@@ -111,6 +117,7 @@ def insert_new_job(
     job.save()
 
 
+@requires_database_connection
 def count_jobs(state=None):
     query = Job.select()
 
@@ -121,6 +128,7 @@ def count_jobs(state=None):
     return query.count()
 
 
+@requires_database_connection
 def save_xml(xml_id, data_dir):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -143,6 +151,7 @@ def save_xml(xml_id, data_dir):
     return xml_file
 
 
+@requires_database_connection
 def save_jar(jar_id, data_dir):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
@@ -164,6 +173,7 @@ def save_jar(jar_id, data_dir):
     return jar_file
 
 
+@requires_database_connection
 def build_output_directory_name(job, output_base_dir):
     version = Jar.select(Jar.version).where(Jar.id == job.jar_id).get().version
     return os.path.join(
@@ -176,6 +186,7 @@ def build_output_directory_name(job, output_base_dir):
     )
 
 
+@requires_database_connection
 def build_output_base_name(job):
     version = Jar.select(Jar.version).where(Jar.id == job.jar_id).get().version
     return '{night:%Y%m%d}_{run_id:03d}_{version}_{name}'.format(
