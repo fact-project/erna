@@ -18,7 +18,7 @@
 
   <service id="calibService" class="fact.calibrationservice.ConstantCalibService" />
 
-  <stream id="fact" class="fact.io.zfits.ZFitsStream"  url="${infile}"/>
+  <stream id="fact" class="fact.io.zfits.ZFitsStream"  url="${infile}" limit="50"/>
 
   <process id="2" input="fact">
   <!-- prevEventAndSkip: -->

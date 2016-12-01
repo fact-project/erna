@@ -34,7 +34,7 @@ class JobMonitor(Thread):
                     socket.send_pyobj(True)
 
     @requires_database_connection
-    def update_job(status_update):
+    def update_job(self, status_update):
         job = Job.get(id=status_update['job_id'])
         status = status_update['status']
         job.status = ProcessingState.get(description=status)
