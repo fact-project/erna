@@ -109,7 +109,7 @@ class DrsFile(File):
 
 
 class Jar(Model):
-    version = CharField()
+    version = CharField(unique=True)
     data = LongBlobField()
 
     class Meta:
@@ -127,6 +127,10 @@ class XML(Model):
         database = database
         db_table = 'xmls'
 
+        indexes = (
+            (('name', 'jar'), True),  # unique constraint
+        )
+
 
 class ProcessingState(Model):
     description = CharField(unique=True)
@@ -134,6 +138,9 @@ class ProcessingState(Model):
     class Meta:
         database = database
         db_table = 'processing_states'
+
+    def __repr__(self):
+        return '{}'.format(self.description)
 
 
 class Job(Model):
@@ -149,6 +156,9 @@ class Job(Model):
     class Meta:
         database = database
         db_table = 'jobs'
+        indexes = (
+            (('raw_data_file', 'jar', 'xml'), True),  # unique constraint
+        )
 
 
 MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState]
