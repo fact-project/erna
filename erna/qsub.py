@@ -3,6 +3,8 @@ import os
 import pandas as pd
 import subprocess
 import logging
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -11,8 +13,10 @@ def get_qstat_as_df():
     """
     user = os.environ.get("USER")
     try:
-        ret = subprocess.Popen(["qstat", "-u", str(user)],
-                               stdout=subprocess.PIPE)
+        ret = subprocess.Popen(
+            ["qstat", "-u", str(user)],
+            stdout=subprocess.PIPE,
+        )
         df = pd.read_csv(ret.stdout, delimiter="\s+")
         # drop the first line since it is just one long line
         df = df.drop(df.index[0]).copy()
