@@ -1,28 +1,43 @@
-import yaml
 import click
 import logging
-from erna.database import FactToolsRun, DrsFile, RawDataFile, init_database
-from erna.database import database as db
-from IPython import embed
+from ..automatic_processing.database import database as db, init_database
+from ..utils import load_config
 
 log = logging.getLogger('erna')
 log.setLevel(logging.INFO)
+logging.getLogger().addHandler(logging.StreamHandler())
 
 
 @click.command()
-@click.argument('configuration_path', type=click.Path(exists=True, dir_okay=False, file_okay=True))
-@click.option('--drop', is_flag=True, default=False, help='drop excisitng tables when creating')
-def main(configuration_path, drop):
+@click.option(
+    '--config', '-c', type=click.Path(exists=True, dir_okay=False, file_okay=True),
+    help=(
+        'Path to the yaml config file.'
+        ' If not given, first the ERNA_CONFIG variable, then "erna.yaml" is tried'
+    ),
+)
+@click.option('--verbose', '-v', help='Set logging level to DEBUG', is_flag=True)
+@click.option(
+    '--drop', is_flag=True, default=False,
+    help='Drop exisiting tables when creating',
+)
+def main(config, verbose, drop):
     """
     Intitiate the Tables from the database model
     """
-    with open(configuration_path) as f:
-        db_config = yaml.load(f)
 
-    db.init(**db_config)
+    if verbose:
+        logging.getLogger('erna').setLevel(logging.DEBUG)
+
+    config = load_config(config)
+
+    db.init(**config['processing_database'])
     db.connect()
-    init_database(drop)
-
+    log.info('Database connection established')
+    log.info('Initialising database with drop={}'.format(drop))
+    init_database(db, drop=drop)
+    db.close()
+    log.info('Done')
 
 
 if __name__ == '__main__':

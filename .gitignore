@@ -1,4 +1,6 @@
+*.swp
 config.yaml
+erna.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
