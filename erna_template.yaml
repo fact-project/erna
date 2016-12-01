@@ -18,3 +18,5 @@ submitter:
   location: isdc
   mail_address: <mail_address>
   mail_settings: a
+  port: 12700
+  host: isdc-in04

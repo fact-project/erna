@@ -5,7 +5,10 @@ import tempfile
 import sys
 import shutil
 from glob import iglob
+import zmq
 
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
 
 log = logging.getLogger('erna')
 log.setLevel(logging.DEBUG)
@@ -14,6 +17,15 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 def main():
     log.info('FACT Tools executor started')
+
+    host = os.environ['SUBMITTER_HOST']
+    port = os.environ['SUBMITTER_PORT']
+    socket.connect('tcp://{}:{}'.format(host, port))
+
+    job_id = int(os.environ['JOB_NAME'].replace('erna_', ''))
+
+    socket.send_pyobj({'job_id': job_id, 'status': 'running'})
+    socket.recv()
 
     java = os.environ.get('JAVA_BIN', 'java')
     log.info('Using java executable: {}'.format(java))
@@ -25,7 +37,6 @@ def main():
     log.info('Using xml: {}'.format(xml))
 
     output_dir = os.path.abspath(os.environ['OUTPUTDIR'])
-
     os.makedirs(output_dir, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -59,12 +70,31 @@ def main():
         try:
             sp.check_call(call, cwd=tmp_dir)
         except sp.CalledProcessError:
-            log.exception('Fact tools returned an error:')
+            socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
+            socket.recv()
+            log.exception('Running FACT-Tools failed')
             sys.exit(1)
 
-        for output_file in iglob(os.path.join(facttools_output, '*')):
+        try:
+            output_file = next(iglob(os.path.join(facttools_output, '*')))
             log.info('Copying {} to {}'.format(output_file, output_dir))
             shutil.copy2(output_file, output_dir)
+            log.info('Copy done')
+        except:
+            log.exception('Error copying outputfile')
+            socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
+            socket.recv()
+            sys.exit(1)
+
+    md5sum, _ = sp.check_output(['md5sum', output_file]).decode().split()
+
+    socket.send_pyobj({
+        'job_id': job_id,
+        'status': 'success',
+        'outputfile': output_file,
+        'md5sum': md5sum,
+    })
+    socket.recv()
 
 if __name__ == '__main__':
     main()

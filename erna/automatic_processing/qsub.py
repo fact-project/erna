@@ -118,6 +118,8 @@ def build_facttools_qsub_command(
         aux_dir,
         output_dir,
         output_basename,
+        submitter_host,
+        submitter_port,
         **kwargs
         ):
 
@@ -131,6 +133,8 @@ def build_facttools_qsub_command(
             'JARFILE': jar_file,
             'XMLFILE': xml_file,
             'OUTPUTDIR': output_dir,
+            'SUBMITTER_HOST': submitter_host,
+            'SUBMITTER_PORT': submitter_port,
             'facttools_infile': 'file:' + in_file,
             'facttools_drsfile': 'file:' + drs_file,
             'facttools_aux_dir': 'file:' + aux_dir,
@@ -142,7 +146,15 @@ def build_facttools_qsub_command(
     return cmd
 
 
-def submit_job(job, output_base_dir, data_dir, location='isdc', **kwargs):
+def submit_job(
+        job,
+        output_base_dir,
+        data_dir,
+        submitter_host,
+        submitter_port,
+        location='isdc',
+        **kwargs
+        ):
 
     jar_file = save_jar(job.jar_id, data_dir)
     xml_file = save_xml(job.xml_id, data_dir)
@@ -162,6 +174,8 @@ def submit_job(job, output_base_dir, data_dir, location='isdc', **kwargs):
         aux_dir=aux_dir,
         output_basename=output_basename,
         output_dir=output_dir,
+        submitter_host=submitter_host,
+        submitter_port=submitter_port,
         job_name='erna_{}'.format(job.id),
         stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(job.id)),
         stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(job.id)),

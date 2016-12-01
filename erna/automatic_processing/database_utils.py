@@ -36,16 +36,18 @@ def fill_drs_runs(df, database):
 
 
 @requires_database_connection
-def get_pending_jobs(database):
+def get_pending_jobs(database, limit=None):
     runs = (
         Job
         .select()
+        .join(ProcessingState)
+        .switch(Job)
+        .join(RawDataFile)
         .where(ProcessingState.description == 'inserted')
-        .order_by(
-            RawDataFile.night.desc(),
-            Job.priority,
-        )
+        .order_by(Job.priority, RawDataFile.night.desc())
     )
+    if limit is not None:
+        runs = runs.limit(limit)
     return runs
 
 

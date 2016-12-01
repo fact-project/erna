@@ -1,9 +1,10 @@
 from erna.automatic_processing.database import (
     database, init_database, Job, ProcessingState, RawDataFile
 )
-from erna.automatic_processing.database_utils import count_jobs
-from erna.automatic_processing.qsub import get_current_jobs, submit_job
-from erna.utils import load_config
+from .database_utils import count_jobs, get_pending_jobs
+from .qsub import get_current_jobs, submit_job
+from ..utils import load_config
+from .job_monitor import JobMonitor
 import click
 import logging
 import os
@@ -12,7 +13,14 @@ import time
 log = logging.getLogger(__name__)
 
 
-def process_pending_jobs(max_queued_jobs, data_directory, location='isdc', **kwargs):
+def process_pending_jobs(
+        max_queued_jobs,
+        data_directory,
+        host,
+        port,
+        location='isdc',
+        **kwargs
+        ):
     current_jobs = get_current_jobs()
     running_jobs = current_jobs.query('state == "running"')
     queued_jobs = current_jobs.query('state == "pending"')
@@ -26,16 +34,7 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc', **kwa
     mail_settings = kwargs.get('mail_settings', 'a')
 
     if len(queued_jobs) < max_queued_jobs:
-        pending_jobs = (
-            Job
-            .select()
-            .join(ProcessingState)
-            .switch(Job)
-            .join(RawDataFile)
-            .where(ProcessingState.description == 'inserted')
-            .order_by(Job.priority, RawDataFile.night.desc())
-            .limit(max_queued_jobs - len(queued_jobs))
-        )
+        pending_jobs = get_pending_jobs(limit=max_queued_jobs - len(queued_jobs))
 
         for job in pending_jobs:
             try:
@@ -45,6 +44,8 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc', **kwa
                     data_dir=data_directory,
                     mail_address=mail_address,
                     mail_settings=mail_settings,
+                    submitter_host=host,
+                    submitter_port=port,
                 )
                 log.info('New job with id {} queued'.format(job.id))
             except:
@@ -84,12 +85,15 @@ def main(config, verbose):
     init_database(database)
     database.close()
 
+    job_monitor = JobMonitor(port=config['submitter']['port'])
+
     log.info('Starting main loop')
     try:
+        job_monitor.start()
         while True:
             database.connect()
             process_pending_jobs(**config['submitter'])
             database.close()
             time.sleep(config['submitter']['interval'])
     except (KeyboardInterrupt, SystemExit):
-        pass
+        job_monitor.terminate()
