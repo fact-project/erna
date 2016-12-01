@@ -12,7 +12,7 @@ import time
 log = logging.getLogger(__name__)
 
 
-def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
+def process_pending_jobs(max_queued_jobs, data_directory, location='isdc', **kwargs):
     current_jobs = get_current_jobs()
     running_jobs = current_jobs.query('state == "running"')
     queued_jobs = current_jobs.query('state == "pending"')
@@ -21,6 +21,9 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
     log.debug('Currently {} pending jobs in database'.format(
         count_jobs(state='inserted')
     ))
+
+    mail_address = kwargs.get('mail_address')
+    mail_settings = kwargs.get('mail_settings', 'a')
 
     if len(queued_jobs) < max_queued_jobs:
         pending_jobs = (
@@ -40,6 +43,8 @@ def process_pending_jobs(max_queued_jobs, data_directory, location='isdc'):
                     job,
                     output_base_dir=os.path.join(data_directory, 'fact-tools'),
                     data_dir=data_directory,
+                    mail_address=mail_address,
+                    mail_settings=mail_settings,
                 )
                 log.info('New job with id {} queued'.format(job.id))
             except:
@@ -83,11 +88,7 @@ def main(config, verbose):
     try:
         while True:
             database.connect()
-            process_pending_jobs(
-                config['submitter']['max_queued_jobs'],
-                config['submitter']['data_directory'],
-                location=config['location'],
-            )
+            process_pending_jobs(**config['submitter'])
             database.close()
             time.sleep(config['submitter']['interval'])
     except (KeyboardInterrupt, SystemExit):

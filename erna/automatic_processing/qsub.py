@@ -142,7 +142,7 @@ def build_facttools_qsub_command(
     return cmd
 
 
-def submit_job(job, output_base_dir, data_dir, location='isdc'):
+def submit_job(job, output_base_dir, data_dir, location='isdc', **kwargs):
 
     jar_file = save_jar(job.jar_id, data_dir)
     xml_file = save_xml(job.xml_id, data_dir)
@@ -165,6 +165,7 @@ def submit_job(job, output_base_dir, data_dir, location='isdc'):
         job_name='erna_{}'.format(job.id),
         stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(job.id)),
         stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(job.id)),
+        **kwargs,
     )
 
     output = sp.check_output(cmd)

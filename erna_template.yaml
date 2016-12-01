@@ -15,5 +15,6 @@ submitter:
   data_directory: /gpfs0/scratch/fact/erna
   max_queued_jobs: 200
   logfile: /gpfs0/scratch/fact/erna/erna_submitter.log
-
-location: isdc
+  location: isdc
+  mail_address: <mail_address>
+  mail_settings: a
