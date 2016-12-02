@@ -62,7 +62,7 @@ def build_qsub_command(
         stdout=None,
         stderr=None,
         job_name=None,
-        queue='fact_medium',
+        queue=None,
         mail_address=None,
         mail_settings='a',
         environment=None,
@@ -75,7 +75,9 @@ def build_qsub_command(
     if job_name:
         command.extend(['-N', job_name])
 
-    command.extend(['-q', queue])
+    if queue:
+        command.extend(['-q', queue])
+
     if mail_address:
         command.extend(['-M', mail_address])
 
@@ -110,7 +112,7 @@ def build_qsub_command(
     return command
 
 
-def build_facttools_qsub_command(
+def build_automatic_processing_qsub_command(
         jar_file,
         xml_file,
         in_file,
@@ -120,6 +122,8 @@ def build_facttools_qsub_command(
         output_basename,
         submitter_host,
         submitter_port,
+        queue,
+        walltime,
         **kwargs
         ):
 
@@ -133,14 +137,14 @@ def build_facttools_qsub_command(
             'JARFILE': jar_file,
             'XMLFILE': xml_file,
             'OUTPUTDIR': output_dir,
+            'WALLTIME': walltime,
             'SUBMITTER_HOST': submitter_host,
             'SUBMITTER_PORT': submitter_port,
             'facttools_infile': 'file:' + in_file,
             'facttools_drsfile': 'file:' + drs_file,
             'facttools_aux_dir': 'file:' + aux_dir,
             'facttools_output_basename': output_basename,
-        },
-        **kwargs
+        }
     )
 
     return cmd
@@ -166,7 +170,7 @@ def submit_job(
     log_dir = os.path.join(data_dir, 'logs')
     os.makedirs(log_dir, exist_ok=True)
 
-    cmd = build_facttools_qsub_command(
+    cmd = build_automatic_processing_qsub_command(
         jar_file=jar_file,
         xml_file=xml_file,
         in_file=job.raw_data_file.get_path(location=location),
@@ -179,6 +183,8 @@ def submit_job(
         job_name='erna_{}'.format(job.id),
         stdout=os.path.join(log_dir, 'erna_{:08d}.o'.format(job.id)),
         stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(job.id)),
+        queue=job.queue.name,
+        walltime=job.queue.walltime,
         **kwargs,
     )
 

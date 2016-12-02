@@ -9,7 +9,7 @@ import datetime
 from sqlalchemy import create_engine
 from tqdm import tqdm
 
-from ..automatic_processing.database import rawdirs, RawDataFile, DrsFile, database
+from ..automatic_processing.database import RawDataFile, DrsFile, database
 from ..automatic_processing.custom_fields import night_int_to_date
 from ..utils import load_config
 
@@ -31,7 +31,7 @@ WHERE (fNight >= {start:%Y%m%d} and fNight <= {end:%Y%m%d});
 '''
 
 
-def check_availability(run, basedir='/fact/raw', location='isdc'):
+def check_availability(run, basedir='/fact/raw'):
     log.debug('Checking run {:%Y%m%d}_{:03d}'.format(run.night, run.run_id))
 
     basename = os.path.join(
@@ -45,32 +45,17 @@ def check_availability(run, basedir='/fact/raw', location='isdc'):
         available = isfile(basename + '.fits.fz') or isfile(basename + '.fits.gz')
         log.debug('Available: {}'.format(available))
 
-        if location == 'isdc':
-            f.available_isdc = available
-            f.save(only=[
-                RawDataFile.night, RawDataFile.run_id, RawDataFile.available_isdc
-            ])
-        elif location == 'dortmund':
-            f.available_dortmund = available
-            f.save(only=[
-                RawDataFile.night, RawDataFile.run_id, RawDataFile.available_dortmund
-            ])
+        f.available = available
+        f.save()
 
     elif run.run_type == 2 and run.drs_step == 2:
         log.debug('is a drs file')
         f = DrsFile.select_night_runid(run.night, run.run_id)
         available = isfile(basename + '.drs.fits.gz')
         log.debug('Available: {}'.format(available))
-        if location == 'isdc':
-            f.available_isdc = available
-            f.save(only=[
-                DrsFile.night, DrsFile.run_id, DrsFile.available_isdc
-            ])
-        if location == 'dortmund':
-            f.available_dortmund = available
-            f.save(only=[
-                DrsFile.night, DrsFile.run_id, DrsFile.available_dortmund
-            ])
+        f.available = available
+        f.save()
+
     else:
         log.debug('Neither drs nor data file')
 
@@ -96,15 +81,7 @@ def main(year, month, day, config, verbose, start, end):
     database.connect()
     log.info('Database connection established')
 
-    if 'isdc' in socket.gethostname():
-        log.info('Assuming ISDC')
-        basedir = rawdirs['isdc']
-        location = 'isdc'
-        config['fact_database']['host'] = 'lp-fact'
-    else:
-        log.info('Assuming PHIDO')
-        basedir = rawdirs['phido']
-        location = 'dortmund'
+    basedir = '/fact/raw'
 
     fact_db = create_engine(db_specification.format(**config['fact_database']))
     runs = pd.read_sql_query(run_query.format(start=start, end=end), fact_db)
@@ -117,7 +94,7 @@ def main(year, month, day, config, verbose, start, end):
     log.info('Checking data files')
 
     for run in tqdm(runs.itertuples(), total=len(runs)):
-        check_availability(run, basedir=basedir, location=location)
+        check_availability(run, basedir=basedir)
 
     database.close()
 

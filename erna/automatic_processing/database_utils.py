@@ -52,24 +52,15 @@ def get_pending_jobs(limit=None):
 
 
 @requires_database_connection
-def find_drs_file(raw_data_file, location=None, closest=True):
+def find_drs_file(raw_data_file, closest=True):
     '''
     Find a drs file for the give raw data file.
     If closest is True, return the nearest (in terms of runid) drs file,
     else return the drs run just before the data run.
-
-    If location is not None, only drs files which are available at the
-    given location are taken into account.
     '''
     query = DrsFile.select()
     query = query.where(DrsFile.night == raw_data_file.night)
-    if location is not None:
-        if location == 'isdc':
-            query = query.where(DrsFile.available_isdc)
-        elif location == 'dortmund':
-            query = query.where(DrsFile.available_dortmund)
-        else:
-            raise ValueError('Unknown location {}'.format(location))
+    query = query.where(DrsFile.available)
 
     if closest is True:
         query = query.order_by(peewee.fn.Abs(DrsFile.run_id - raw_data_file.run_id))
@@ -92,8 +83,8 @@ def insert_new_job(
         raw_data_file,
         jar,
         xml,
+        queue,
         priority=5,
-        location=None,
         closest_drs_file=True,
         ):
 
@@ -103,7 +94,6 @@ def insert_new_job(
 
     drs_file = find_drs_file(
         raw_data_file,
-        location=location,
         closest=closest_drs_file,
     )
 
@@ -111,6 +101,7 @@ def insert_new_job(
         raw_data_file=raw_data_file,
         drs_file=drs_file,
         jar=jar,
+        queue=queue,
         status=ProcessingState.get(description='inserted'),
         priority=priority,
         xml=xml,

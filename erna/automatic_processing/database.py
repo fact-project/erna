@@ -12,18 +12,13 @@ from .custom_fields import NightField, LongBlobField
 
 __all__ = [
     'RawDataFile', 'DrsFile',
-    'Jar', 'XML', 'Job',
+    'Jar', 'XML', 'Job', 'Queue',
     'ProcessingState',
     'database', 'init_database',
 ]
 
 
 log = logging.getLogger(__name__)
-
-rawdirs = {
-    'isdc': '/fact/raw',
-    'phido': '/fhgfs/groups/app/fact/raw'
-}
 
 PROCESSING_STATES = [
     'inserted',
@@ -33,6 +28,12 @@ PROCESSING_STATES = [
     'failed',
     'walltime_exceeded',
 ]
+
+WALLTIMES = {
+    'fact_short': 60 * 60,
+    'fact_medium': 6 * 60 * 60,
+    'fact_long': 7 * 24 * 60 * 60,
+}
 
 database = MySQLDatabase(None, fields={
     'night': 'INTEGER',
@@ -58,12 +59,14 @@ def init_database(database, drop=False):
     for description in PROCESSING_STATES:
         ProcessingState.get_or_create(description=description)
 
+    for name, walltime in WALLTIMES.items():
+        Queue.get_or_create(name=name, walltime=walltime)
+
 
 class File(Model):
     night = NightField()
     run_id = IntegerField()
-    available_dortmund = BooleanField(null=True)
-    available_isdc = BooleanField(null=True)
+    available = BooleanField(null=True)
 
     class Meta:
         database = database
@@ -143,6 +146,15 @@ class ProcessingState(Model):
         return '{}'.format(self.description)
 
 
+class Queue(Model):
+    name = CharField(unique=True)
+    walltime = IntegerField()
+
+    class Meta:
+        database = database
+        db_table = 'queues'
+
+
 class Job(Model):
     raw_data_file = ForeignKeyField(RawDataFile, related_name='raw_data_file')
     drs_file = ForeignKeyField(DrsFile, related_name='drs_file')
@@ -152,6 +164,7 @@ class Job(Model):
     priority = IntegerField(default=5)
     xml = ForeignKeyField(XML)
     md5hash = FixedCharField(32, null=True)
+    queue = ForeignKeyField(Queue, related_name='queue')
 
     class Meta:
         database = database
@@ -160,8 +173,7 @@ class Job(Model):
             (('raw_data_file', 'jar', 'xml'), True),  # unique constraint
         )
 
-
-MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState]
+MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState, Queue]
 
 
 @wrapt.decorator

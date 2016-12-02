@@ -1,3 +1,6 @@
+import time
+start_time = time.perf_counter()
+
 import subprocess as sp
 import os
 import logging
@@ -39,6 +42,9 @@ def main():
     output_dir = os.path.abspath(os.environ['OUTPUTDIR'])
     os.makedirs(output_dir, exist_ok=True)
 
+    walltime = float(os.environ['WALLTIME'])
+    log.info('Walltime = %.0f', walltime)
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         log.debug('Using tmp directory: {}'.format(tmp_dir))
         facttools_output = os.path.join(tmp_dir, 'facttools_output')
@@ -62,18 +68,24 @@ def main():
                 option = '-D{}={}'.format(k.replace('facttools_', '', 1), v)
                 call.append(option)
 
-        sp.check_call(['which', java])
-        sp.check_call(['free', '-m'])
-        sp.check_call([java, '-Xmx512m', '-version'])
-
-        log.info('Calling fact-tools with call: {}'.format(call))
         try:
-            sp.check_call(call, cwd=tmp_dir)
+            sp.run(['which', java], check=True)
+            sp.run(['free', '-m'], check=True)
+            sp.run([java, '-Xmx512m', '-version'], check=True)
+
+            log.info('Calling fact-tools with call: {}'.format(call))
+            timeout = walltime - (time.per_counter() - start_time) - 300
+            log.info('Setting fact-tools timout to %.0f', timeout)
+            sp.run(call, cwd=tmp_dir, check=True, timeout=timeout)
         except sp.CalledProcessError:
             socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
             socket.recv()
             log.exception('Running FACT-Tools failed')
             sys.exit(1)
+        except sp.TimeoutExpired:
+            socket.send_pyobj({'job_id': job_id, 'status': 'walltime_exceeded'})
+            log.exception('FACT Tools about to run into wall-time, terminating')
+            socket.recv()
 
         try:
             output_file = next(iglob(os.path.join(facttools_output, '*')))
@@ -88,7 +100,8 @@ def main():
             sys.exit(1)
 
     try:
-        md5hash, _ = sp.check_output(['md5sum', output_file]).decode().split()
+        process = sp.run(['md5sum', output_file], check=True, stdout=sp.PIPE)
+        md5hash, _ = process.stdout.decode().split()
     except:
         log.exception('Error calculating md5sum')
         socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
