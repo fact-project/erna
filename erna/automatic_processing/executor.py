@@ -86,6 +86,7 @@ def main():
             socket.send_pyobj({'job_id': job_id, 'status': 'walltime_exceeded'})
             log.exception('FACT Tools about to run into wall-time, terminating')
             socket.recv()
+            sys.exit(1)
 
         try:
             output_file = next(iglob(os.path.join(facttools_output, '*')))
