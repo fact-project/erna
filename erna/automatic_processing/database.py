@@ -74,7 +74,7 @@ class File(Model):
 
     def get_path(self, location='isdc'):
         return os.path.join(
-            rawdirs[location],
+            '/fact/raw',
             str(self.night.year),
             '{:02d}'.format(self.night.month),
             '{:02d}'.format(self.night.day),
