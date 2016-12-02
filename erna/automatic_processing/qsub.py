@@ -144,7 +144,8 @@ def build_automatic_processing_qsub_command(
             'facttools_drsfile': 'file:' + drs_file,
             'facttools_aux_dir': 'file:' + aux_dir,
             'facttools_output_basename': output_basename,
-        }
+        },
+        **kwargs,
     )
 
     return cmd
