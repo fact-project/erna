@@ -74,7 +74,7 @@ def main():
             sp.run([java, '-Xmx512m', '-version'], check=True)
 
             log.info('Calling fact-tools with call: {}'.format(call))
-            timeout = walltime - (time.per_counter() - start_time) - 300
+            timeout = walltime - (time.perf_counter() - start_time) - 300
             log.info('Setting fact-tools timout to %.0f', timeout)
             sp.run(call, cwd=tmp_dir, check=True, timeout=timeout)
         except sp.CalledProcessError:
