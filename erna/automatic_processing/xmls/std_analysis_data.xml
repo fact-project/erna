@@ -43,6 +43,10 @@
   <include url="classpath:/default/data/cleaning.xml" />     
   <!-- Output: shower -->   
 
+  <!-- pedestal parameters -->
+  <!-- WaveformFluctuation on non-cleaning pixels-->
+  <include url="classpath:/default/data/pedestalParameters.xml" />
+
   <!-- Parameter calculation (only source independent) -->
   <!-- ArrayMean(photoncharge,arrivalTime), ArrayStatistics(photoncharge,arrivalTime,maxSlopes,
   arrivalTimePos,maxSlopesPos,maxAmplitudePosition,photonchargeSaturated,arrivalTimeTOT), 
