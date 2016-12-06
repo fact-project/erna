@@ -126,7 +126,7 @@ def save_xml(xml_id, data_dir):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
-    xml = XML.select(XML.name, XML.jar_id).get()
+    xml = XML.select(XML.name, XML.jar_id).where(XML.id == xml_id).get()
     version = Jar.select(Jar.version).where(Jar.id == xml.jar_id).get().version
 
     xml_dir = os.path.join(data_dir, 'xmls')
@@ -135,7 +135,7 @@ def save_xml(xml_id, data_dir):
         version
     ))
     if not os.path.isfile(xml_file):
-        xml = XML.get()
+        xml = XML.get(id=xml_id)
         os.makedirs(xml_dir, exist_ok=True)
 
         with open(xml_file, 'w') as f:
