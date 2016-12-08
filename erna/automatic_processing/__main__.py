@@ -1,5 +1,5 @@
 from erna.automatic_processing.database import (
-    database, init_database, Job, ProcessingState, RawDataFile
+    database, setup_database, Job, ProcessingState, RawDataFile
 )
 from .database_utils import count_jobs, get_pending_jobs
 from .qsub import get_current_jobs, submit_job
@@ -82,7 +82,7 @@ def main(config, verbose):
     log.info('Initialising database')
     database.init(**config['processing_database'])
     database.connect()
-    init_database(database)
+    setup_database(database)
     database.close()
 
     job_monitor = JobMonitor(port=config['submitter']['port'])

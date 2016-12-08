@@ -6,7 +6,7 @@ import sys
 import re
 
 from ..automatic_processing.database import (
-    database, init_database, Jar, XML
+    database, setup_database, Jar, XML
 )
 from ..utils import load_config
 
@@ -35,7 +35,7 @@ def xml(config, fact_tools_version, name, comment, xml_file):
     database.connect()
     log.info('Database connection established')
 
-    init_database(database)
+    setup_database(database)
 
     try:
         jar = (
@@ -91,7 +91,7 @@ def jar(config, jar_file):
 
     database.connect()
     log.info('Database connection established')
-    init_database(database)
+    setup_database(database)
     Jar.create(version=version, data=jarblob)
     database.close()
 

@@ -12,7 +12,7 @@ def test_init():
             fields={'night': 'INTEGER', 'longblob': 'BLOB'}
         )
         with test_database(test_db, database.MODELS):
-            database.init_database(test_db)
+            database.setup_database(test_db)
 
 
 def test_init_twice():
@@ -26,5 +26,5 @@ def test_init_twice():
             fields={'night': 'INTEGER', 'longblob': 'BLOB'}
         )
         with test_database(test_db, database.MODELS):
-            database.init_database(test_db)
-            database.init_database(test_db)
+            database.setup_database(test_db)
+            database.setup_database(test_db)

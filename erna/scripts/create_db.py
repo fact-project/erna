@@ -1,6 +1,6 @@
 import click
 import logging
-from ..automatic_processing.database import database as db, init_database
+from ..automatic_processing.database import database as db, setup_database
 from ..utils import load_config
 
 log = logging.getLogger('erna')
@@ -35,7 +35,7 @@ def main(config, verbose, drop):
     db.connect()
     log.info('Database connection established')
     log.info('Initialising database with drop={}'.format(drop))
-    init_database(db, drop=drop)
+    setup_database(db, drop=drop)
     db.close()
     log.info('Done')
 

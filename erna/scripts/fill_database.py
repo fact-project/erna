@@ -3,7 +3,7 @@ from dateutil import parser as date_parser
 import click
 
 from ..automatic_processing import fill_data_runs, fill_drs_runs
-from ..automatic_processing.database import database, init_database
+from ..automatic_processing.database import database, setup_database
 from ..utils import load_config
 from ..utils import create_mysql_engine
 
@@ -36,7 +36,7 @@ def main(start, end, config):
 
     database.init(**config['processing_database'])
     database.connect()
-    init_database(database, drop=False)
+    setup_database(database, drop=False)
 
     runs = pd.read_sql_query(
         query.format(

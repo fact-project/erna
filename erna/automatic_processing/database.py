@@ -14,7 +14,7 @@ __all__ = [
     'RawDataFile', 'DrsFile',
     'Jar', 'XML', 'Job', 'Queue',
     'ProcessingState',
-    'database', 'init_database',
+    'database', 'setup_database',
 ]
 
 
@@ -41,7 +41,7 @@ database = MySQLDatabase(None, fields={
 })
 
 
-def init_database(database, drop=False):
+def setup_database(database, drop=False):
     tables = [
         RawDataFile,
         DrsFile,
