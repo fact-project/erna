@@ -1,4 +1,6 @@
 import logging
+import h5py
+from astropy.io import fits
 
 log = logging.getLogger(__name__)
 
@@ -64,3 +66,20 @@ def append_to_hdf5(f, array, groupname='data'):
         if array[key].ndim == 2:
             dataset[n_existing_rows:, :] = array[key]
         dataset[n_existing_rows:] = array[key]
+
+
+def write_fits_to_hdf5(outputfile, inputfiles, mode='w', compression='gzip'):
+
+    initialized = False
+
+    with h5py.File(outputfile, mode) as hdf_file:
+
+        for inputfile in inputfiles:
+            with fits.open(inputfile) as f:
+                if not initialized:
+                    initialize_hdf5(
+                        hdf_file, f[1].data.dtype, compression=compression
+                    )
+                    initialized = True
+
+                append_to_hdf5(hdf_file, f[1].data)

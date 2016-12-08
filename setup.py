@@ -26,6 +26,8 @@ setup(
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
+        'astropy',
+        'h5py',
         # 'hdf5',
         'tqdm',
         'click',
@@ -56,6 +58,7 @@ setup(
             'erna_console = erna.scripts.console:main',
             'erna_automatic_processing_executor = erna.automatic_processing.executor:main',
             'erna_automatic_processing = erna.automatic_processing.__main__:main',
+            'erna_gather_fits = erna.scripts.gather_fits:main',
         ],
     },
     setup_requires=['pytest-runner'],
