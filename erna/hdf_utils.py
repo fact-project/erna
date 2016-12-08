@@ -1,5 +1,4 @@
 import logging
-import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +52,6 @@ def append_to_hdf5(f, array, groupname='data'):
     '''
 
     group = f.get(groupname)
-    array = np.array(array)
 
     for key in array.dtype.names:
         dataset = group.get(key)
