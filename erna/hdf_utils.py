@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def initialize_hdf5(f, dtypes, groupname='data', **kwargs):
             name,
             shape=tuple(shape),
             maxshape=tuple(maxshape),
-            dtype=dtype,
+            dtype=dtype.base,
             **kwargs
         )
 
@@ -52,14 +53,16 @@ def append_to_hdf5(f, array, groupname='data'):
     '''
 
     group = f.get(groupname)
+    array = np.array(array)
 
     for key in array.dtype.names:
         dataset = group.get(key)
-        num_rows = dataset.shape[0]
 
-        dataset.resize(num_rows + array.shape[0], axis=0)
+        n_existing_rows = dataset.shape[0]
+        n_new_rows = array[key].shape[0]
 
-        if len(dataset.shape) > 1:
-            dataset[num_rows:, :] = array[key]
-        else:
-            dataset[num_rows:] = array[key]
+        dataset.resize(n_existing_rows + n_new_rows, axis=0)
+
+        if array[key].ndim == 2:
+            dataset[n_existing_rows:, :] = array[key]
+        dataset[n_existing_rows:] = array[key]

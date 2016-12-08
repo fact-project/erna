@@ -5,7 +5,8 @@ import numpy as np
 
 data = np.array([
     (1.0, 2, (3, 4)),
-    (5.0, 6, (7, 8))
+    (5.0, 6, (7, 8)),
+    (5.0, 6, (7, 8)),
 ], dtype=[('x', float), ('y', float), ('a', int, 2)])
 
 
@@ -30,6 +31,6 @@ def test_append_h5():
 
         with h5py.File(tmpfile.name, 'r') as f:
 
-            assert f['data']['a'].shape == (10, 2)
-            assert f['data']['x'].shape == (10, )
-            assert f['data']['y'].shape == (10, )
+            assert f['data']['a'].shape == (15, 2)
+            assert f['data']['x'].shape == (15, )
+            assert f['data']['y'].shape == (15, )
