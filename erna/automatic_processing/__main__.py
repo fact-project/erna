@@ -44,7 +44,16 @@ def main(config, verbose):
     database.close()
 
     job_monitor = JobMonitor(port=config['submitter']['port'])
-    job_submitter = JobSubmitter(**config['submitter'])
+    job_submitter = JobSubmitter(
+        interval=config['submitter']['interval'],
+        max_queued_jobs=config['submitter']['max_queued_jobs'],
+        data_directory=config['submitter']['data_directory'],
+        host=config['submitter']['host'],
+        port=config['submitter']['port'],
+        group=config['submitter']['group'],
+        mail_address=config['submitter']['mail_address'],
+        mail_settings=config['submitter']['mail_settings'],
+    )
 
     log.info('Starting main loop')
     try:
