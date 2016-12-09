@@ -18,9 +18,31 @@ def process_pending_jobs(
         data_directory,
         host,
         port,
-        location='isdc',
-        **kwargs
+        mail_address=None,
+        mail_setting='a',
         ):
+    '''
+    Fetches pending runs from the processing database
+    and submits them using qsub if not to many jobs are running already.
+
+    Parameters
+    ----------
+    max_queued_jobs: int
+        Maximum number of jobs in the queue of the grid engine
+        No new jobs are submitted if the number of jobs in the queue is
+        higher than this value
+    data_directory: str
+        patch to the basic structure for erna. Logfiles, jars, xmls and
+        analysis output are stored in subdirectories to this directory.
+    host: str
+        hostname of the submitter node
+    port: int
+        port for the zmq communication
+    mail_address: str
+        mail address to receive the grid engines emails
+    mail_setting: str
+        mail setting for the grid engine
+    '''
     current_jobs = get_current_jobs()
     running_jobs = current_jobs.query('state == "running"')
     queued_jobs = current_jobs.query('state == "pending"')
@@ -29,9 +51,6 @@ def process_pending_jobs(
     log.debug('Currently {} pending jobs in database'.format(
         count_jobs(state='inserted')
     ))
-
-    mail_address = kwargs.get('mail_address')
-    mail_settings = kwargs.get('mail_settings', 'a')
 
     if len(queued_jobs) < max_queued_jobs:
         pending_jobs = get_pending_jobs(limit=max_queued_jobs - len(queued_jobs))
