@@ -65,6 +65,7 @@ def main(config, verbose):
     except (KeyboardInterrupt, SystemExit):
         job_monitor.terminate()
         job_submitter.terminate()
+        job_submitter.join()
         database.connect()
 
         queued = ProcessingState.get(description='queued')
