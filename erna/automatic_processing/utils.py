@@ -19,12 +19,9 @@ def parse_path(path):
     return date(year, month, day), run_id
 
 
-def get_aux_dir(night, location='isdc'):
+def get_aux_dir(night):
 
-    if location == 'dortmund':
-        basepath = '/fhgfs/groups/app/fact/aux'
-    else:
-        basepath = '/fact/aux'
+    basepath = '/fact/aux'
 
     return os.path.join(
         basepath,

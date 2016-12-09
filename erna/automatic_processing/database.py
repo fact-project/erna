@@ -72,7 +72,7 @@ class File(Model):
         database = database
         indexes = ((('night', 'run_id'), True), )  # unique index
 
-    def get_path(self, location='isdc'):
+    def get_path(self):
         return os.path.join(
             '/fact/raw',
             str(self.night.year),

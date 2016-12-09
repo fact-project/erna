@@ -159,7 +159,6 @@ def submit_job(
         data_dir,
         submitter_host,
         submitter_port,
-        location='isdc',
         group,
         **kwargs
         ):
@@ -167,7 +166,7 @@ def submit_job(
     jar_file = save_jar(job.jar_id, data_dir)
     xml_file = save_xml(job.xml_id, data_dir)
 
-    aux_dir = get_aux_dir(job.raw_data_file.night, location=location)
+    aux_dir = get_aux_dir(job.raw_data_file.night)
     output_dir = build_output_directory_name(job, output_base_dir)
     output_basename = build_output_base_name(job)
 
@@ -177,8 +176,8 @@ def submit_job(
     cmd = build_automatic_processing_qsub_command(
         jar_file=jar_file,
         xml_file=xml_file,
-        in_file=job.raw_data_file.get_path(location=location),
-        drs_file=job.drs_file.get_path(location=location),
+        in_file=job.raw_data_file.get_path(),
+        drs_file=job.drs_file.get_path(),
         aux_dir=aux_dir,
         output_basename=output_basename,
         output_dir=output_dir,
