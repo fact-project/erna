@@ -1,4 +1,4 @@
-from peewee import Field, BlobField, TextField
+from peewee import Field, BlobField
 import logging
 from datetime import date
 
@@ -14,11 +14,9 @@ class NightField(Field):
     db_field = 'night'
 
     def db_value(self, value):
-        log.debug('Converting date to night integer')
         return 10000 * value.year + 100 * value.month + value.day
 
     def python_value(self, value):
-        log.debug('Converting night integer to date ')
         return night_int_to_date(value)
 
 
