@@ -2,6 +2,8 @@ import yaml
 import os
 import logging
 from sqlalchemy import create_engine
+import grp
+import pwd
 
 log = logging.getLogger(__name__)
 
@@ -40,3 +42,12 @@ def create_mysql_engine(user, password, host, database, port=3306):
             port=port,
         )
     )
+
+
+def chown(path, username=None, groupname=None):
+    '''
+    Change ownership of given path to username:groupname
+    '''
+    uid = pwd.getpwnam(username).pw_uid if username else -1
+    gid = grp.getgrnam(groupname).gr_gid if groupname else -1
+    os.chown(path, uid, gid)

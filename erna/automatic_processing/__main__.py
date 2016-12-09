@@ -1,5 +1,5 @@
 from erna.automatic_processing.database import (
-    database, setup_database, Job, ProcessingState, RawDataFile
+    database, setup_database, ProcessingState
 )
 from .database_utils import count_jobs, get_pending_jobs
 from .qsub import get_current_jobs, submit_job
@@ -18,8 +18,9 @@ def process_pending_jobs(
         data_directory,
         host,
         port,
+        group,
         mail_address=None,
-        mail_setting='a',
+        mail_settings='a',
         ):
     '''
     Fetches pending runs from the processing database
@@ -65,6 +66,7 @@ def process_pending_jobs(
                     mail_settings=mail_settings,
                     submitter_host=host,
                     submitter_port=port,
+                    group=group,
                 )
                 log.info('New job with id {} queued'.format(job.id))
             except:

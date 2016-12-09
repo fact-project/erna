@@ -124,6 +124,7 @@ def build_automatic_processing_qsub_command(
         submitter_port,
         queue,
         walltime,
+        group,
         **kwargs
         ):
 
@@ -144,6 +145,7 @@ def build_automatic_processing_qsub_command(
             'facttools_drsfile': 'file:' + drs_file,
             'facttools_aux_dir': 'file:' + aux_dir,
             'facttools_output_basename': output_basename,
+            'ERNA_GROUP': group,
         },
         **kwargs,
     )
@@ -158,6 +160,7 @@ def submit_job(
         submitter_host,
         submitter_port,
         location='isdc',
+        group,
         **kwargs
         ):
 
@@ -186,6 +189,7 @@ def submit_job(
         stderr=os.path.join(log_dir, 'erna_{:08d}.e'.format(job.id)),
         queue=job.queue.name,
         walltime=job.queue.walltime,
+        group=group,
         **kwargs,
     )
 

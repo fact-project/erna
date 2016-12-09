@@ -9,6 +9,9 @@ import sys
 import shutil
 from glob import iglob
 import zmq
+import stat
+
+from ..utils import chown
 
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
@@ -105,6 +108,16 @@ def main():
         md5hash, _ = process.stdout.decode().split()
     except:
         log.exception('Error calculating md5sum')
+        socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
+        socket.recv()
+        sys.exit(1)
+
+    try:
+        groupname = os.environ.get('ERNA_GROUP', None)
+        chown(output_file, username=None, groupname=groupname)
+        os.chmod(output_file, stat.S_IWUSR | stat.S_IRUSR | stat.S_IWGRP | stat.S_IRGRP)
+    except OSError:
+        log.exception('Error setting file permissions')
         socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
         socket.recv()
         sys.exit(1)

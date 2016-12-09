@@ -1,8 +1,8 @@
 processing_database:
-  host : fact-mysql.app.tu-dortmund.de
-  user : <user>
-  password : <password>
-  database : erna
+  host: fact-mysql.app.tu-dortmund.de
+  user: <user>
+  password: <password>
+  database: erna
 
 fact_database:
   database: factdata
@@ -20,3 +20,4 @@ submitter:
   mail_settings: a
   port: 12700
   host: isdc-in04
+  group: fact
