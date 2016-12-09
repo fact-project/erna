@@ -46,7 +46,7 @@ class JobSubmitter(Thread):
         '''
         super().__init__()
         self.event = Event()
-        self.inverval = interval
+        self.interval = interval
         self.max_queued_jobs = max_queued_jobs
         self.data_directory = data_directory
         self.host = host
