@@ -88,6 +88,24 @@ def insert_new_job(
         priority=5,
         closest_drs_file=True,
         ):
+    '''
+    Insert a new job into the database
+
+    Parameters
+    ----------
+    raw_data_file: RawDataFile
+        the input file for the job
+    jar: Jar
+        the fact-tools jar to use
+    xml: XML
+        the xml to use
+    queue: Queue
+        the queue to use
+    priority: int
+        Priority for the Job. Lower numbers mean more important.
+    closest_drs_file: bool
+        If true, take the closest drs file else take the closest before the data run
+    '''
 
     xml_version = Jar.select(Jar.version).where(Jar.id == xml.jar_id).get().version
     if not xml_version == jar.version:
