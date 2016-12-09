@@ -1,6 +1,7 @@
 import peewee
 import logging
 import os
+from tqdm import tqdm
 
 from .database import(
     RawDataFile, DrsFile, Job,
@@ -13,7 +14,7 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     'fill_data_runs', 'fill_drs_runs', 'find_drs_file',
-    'count_jobs', 'insert_new_job'
+    'count_jobs', 'insert_new_job', 'insert_new_jobs'
 ]
 
 
@@ -108,6 +109,16 @@ def insert_new_job(
     )
 
     job.save()
+
+
+@requires_database_connection
+def insert_new_jobs(raw_data_files, jar, xml, queue, progress=True, **kwargs):
+
+    for f in tqdm(raw_data_files, total=raw_data_files.count(), disable=not progress):
+        try:
+            insert_new_job(f, jar=jar, xml=xml, queue=queue, **kwargs)
+        except peewee.IntegrityError:
+            log.warning('Job already submitted: {} {}'.format(f.night, f.run_id))
 
 
 @requires_database_connection
