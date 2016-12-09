@@ -63,7 +63,7 @@ def process_pending_jobs(
     '--verbose', '-v', help='Set log level of "erna" to debug', is_flag=True,
 )
 def main(config, verbose):
-    config = load_config()
+    config = load_config(config)
 
     logging.getLogger('erna').setLevel(logging.INFO)
     if verbose:
