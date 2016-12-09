@@ -1,10 +1,16 @@
 from threading import Thread, Event
 import zmq
 import logging
+from retrying import retry
+import peewee
 
 from .database import Job, ProcessingState, requires_database_connection
 
 log = logging.getLogger(__name__)
+
+
+def is_operational_error(exception):
+    return isinstance(exception, peewee.OperationalError)
 
 
 class JobMonitor(Thread):
@@ -28,11 +34,14 @@ class JobMonitor(Thread):
             events = self.poller.poll(timeout=1000)
             for socket, n_messages in events:
                 for i in range(n_messages):
-                    status_update = socket.recv_pyobj()
-                    log.debug('Received status update: {}'.format(status_update))
-                    self.update_job(status_update)
-                    socket.send_pyobj(True)
 
+                    status_update = socket.recv_pyobj()
+                    socket.send_pyobj(True)
+                    log.debug('Received status update: {}'.format(status_update))
+
+                    self.update_job(status_update)
+
+    @retry(retry_on_exception=is_operational_error)
     @requires_database_connection
     def update_job(self, status_update):
         job = Job.get(id=status_update['job_id'])
