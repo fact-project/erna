@@ -1,6 +1,7 @@
 import logging
 import h5py
 from astropy.io import fits
+from tqdm import tqdm
 
 log = logging.getLogger(__name__)
 
@@ -68,13 +69,13 @@ def append_to_hdf5(f, array, groupname='data'):
         dataset[n_existing_rows:] = array[key]
 
 
-def write_fits_to_hdf5(outputfile, inputfiles, mode='w', compression='gzip'):
+def write_fits_to_hdf5(outputfile, inputfiles, mode='w', compression='gzip', progress=True):
 
     initialized = False
 
     with h5py.File(outputfile, mode) as hdf_file:
 
-        for inputfile in inputfiles:
+        for inputfile in tqdm(inputfiles, disable=not progress):
             with fits.open(inputfile) as f:
                 if not initialized:
                     initialize_hdf5(

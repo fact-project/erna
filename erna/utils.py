@@ -4,6 +4,7 @@ import logging
 from sqlalchemy import create_engine
 import grp
 import pwd
+from datetime import date
 
 log = logging.getLogger(__name__)
 
@@ -51,3 +52,11 @@ def chown(path, username=None, groupname=None):
     uid = pwd.getpwnam(username).pw_uid if username else -1
     gid = grp.getgrnam(groupname).gr_gid if groupname else -1
     os.chown(path, uid, gid)
+
+
+def night_int_to_date(night):
+    return date(night // 10000, (night % 10000) // 100, night % 100)
+
+
+def date_to_night_int(night):
+    return 10000 * night.year + 100 * night.month + night.day
