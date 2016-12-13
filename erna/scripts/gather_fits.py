@@ -4,6 +4,7 @@ import h5py
 import dateutil.parser
 import sys
 import os
+import numpy as np
 
 from ..automatic_processing.database import (
     database, Job, RawDataFile, Jar, XML, ProcessingState
@@ -81,8 +82,12 @@ def main(xml_name, ft_version, outputfile, config, start, end, source):
         len(jobs), jobs.ontime.sum()/3600
     ))
 
-    cols = ['night', 'run_id', 'source', 'ontime']
-    runs_array = successful_jobs[cols].to_records(index=False)
+    runs_array = np.core.rec.fromarrays([
+        successful_jobs['night'],
+        successful_jobs['run_id'],
+        successful_jobs['source'].astype('S'),
+        successful_jobs['ontime']
+    ], names=('night', 'run_id', 'source', 'ontime'))
 
     if os.path.isfile(outputfile):
         a = input('Outputfile exists! Overwrite? [y, N]: ')
