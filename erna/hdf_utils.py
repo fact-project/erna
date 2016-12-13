@@ -77,6 +77,9 @@ def write_fits_to_hdf5(outputfile, inputfiles, mode='w', compression='gzip', pro
 
         for inputfile in tqdm(inputfiles, disable=not progress):
             with fits.open(inputfile) as f:
+                if len(f) < 2:
+                    continue
+
                 if not initialized:
                     initialize_hdf5(
                         hdf_file, f[1].data.dtype, compression=compression
