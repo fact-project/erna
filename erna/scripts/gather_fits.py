@@ -1,17 +1,16 @@
 import pandas as pd
-from astropy.io import fits
 import click
 import h5py
 import dateutil.parser
 import sys
+import os
 
 from ..automatic_processing.database import (
-    setup_database, database, Job, RawDataFile, Jar, XML, ProcessingState
+    database, Job, RawDataFile, Jar, XML, ProcessingState
 )
-from ..utils import load_config, create_mysql_engine, night_int_to_date
+from ..utils import load_config, create_mysql_engine
 from ..hdf_utils import write_fits_to_hdf5, append_to_hdf5, initialize_hdf5
 from ..datacheck import get_runs
-
 
 
 @click.command()
@@ -84,7 +83,14 @@ def main(xml_name, ft_version, outputfile, config, start, end, source):
 
     cols = ['night', 'run_id', 'source', 'ontime']
     runs_array = successful_jobs[cols].to_records(index=False)
-    initialize_hdf5(outputfile, dtypes=runs_array.dtype, groupname='runs')
-    append_to_hdf5(outputfile, runs_array, groupname='runs')
 
-    write_fits_to_hdf5(outputfile, successful_jobs.result_file)
+    if os.path.isfile(outputfile):
+        a = input('Outputfile exists! Overwrite? [y, N]: ')
+        if not a.lower().startswith('y'):
+            sys.exit()
+
+    with h5py.File(outputfile, 'w') as f:
+        initialize_hdf5(f, dtypes=runs_array.dtype, groupname='runs')
+        append_to_hdf5(f, runs_array, groupname='runs')
+
+    write_fits_to_hdf5(outputfile, successful_jobs.result_file, mode='a')

@@ -72,7 +72,7 @@ def append_to_hdf5(f, array, groupname='events'):
 def write_fits_to_hdf5(
         outputfile,
         inputfiles,
-        mode='w',
+        mode='a',
         compression='gzip',
         progress=True,
         groupname='events',
