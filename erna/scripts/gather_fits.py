@@ -9,7 +9,7 @@ from ..automatic_processing.database import (
     setup_database, database, Job, RawDataFile, Jar, XML, ProcessingState
 )
 from ..utils import load_config, create_mysql_engine, night_int_to_date
-from ..hdf_utils import write_fits_to_hdf5
+from ..hdf_utils import write_fits_to_hdf5, append_to_hdf5, initialize_hdf5
 from ..datacheck import get_runs
 
 
@@ -81,5 +81,10 @@ def main(xml_name, ft_version, outputfile, config, start, end, source):
     print('Found {} runs with a total ontime of {:1.2f} h'.format(
         len(jobs), jobs.ontime.sum()/3600
     ))
+
+    cols = ['night', 'run_id', 'source', 'ontime']
+    runs_array = successful_jobs[cols].to_records(index=False)
+    initialize_hdf5(outputfile, dtype=runs_array.dtype, groupname='runs')
+    append_to_hdf5(outputfile, runs_array, groupname='runs')
 
     write_fits_to_hdf5(outputfile, successful_jobs.result_file)

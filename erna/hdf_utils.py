@@ -6,7 +6,7 @@ from tqdm import tqdm
 log = logging.getLogger(__name__)
 
 
-def initialize_hdf5(f, dtypes, groupname='data', **kwargs):
+def initialize_hdf5(f, dtypes, groupname='events', **kwargs):
     '''
     Create a group with name `groupname` and empty datasets for each
     entry in dtypes.
@@ -39,7 +39,7 @@ def initialize_hdf5(f, dtypes, groupname='data', **kwargs):
     return group
 
 
-def append_to_hdf5(f, array, groupname='data'):
+def append_to_hdf5(f, array, groupname='events'):
     '''
     Append a numpy record or structured array to the given hdf5 file
     The file should have been previously initialized with initialize_hdf5
@@ -69,7 +69,14 @@ def append_to_hdf5(f, array, groupname='data'):
         dataset[n_existing_rows:] = array[key]
 
 
-def write_fits_to_hdf5(outputfile, inputfiles, mode='w', compression='gzip', progress=True):
+def write_fits_to_hdf5(
+        outputfile,
+        inputfiles,
+        mode='w',
+        compression='gzip',
+        progress=True,
+        groupname='events',
+        ):
 
     initialized = False
 
@@ -82,8 +89,12 @@ def write_fits_to_hdf5(outputfile, inputfiles, mode='w', compression='gzip', pro
 
                 if not initialized:
                     initialize_hdf5(
-                        hdf_file, f[1].data.dtype, compression=compression
+                        hdf_file,
+                        f[1].data.dtype,
+                        groupname=groupname,
+                        compression=compression,
                     )
                     initialized = True
 
-                append_to_hdf5(hdf_file, f[1].data)
+
+                append_to_hdf5(hdf_file, f[1].data, groupname=groupname)
