@@ -84,7 +84,7 @@ def main(xml_name, ft_version, outputfile, config, start, end, source):
 
     cols = ['night', 'run_id', 'source', 'ontime']
     runs_array = successful_jobs[cols].to_records(index=False)
-    initialize_hdf5(outputfile, dtype=runs_array.dtype, groupname='runs')
+    initialize_hdf5(outputfile, dtypes=runs_array.dtype, groupname='runs')
     append_to_hdf5(outputfile, runs_array, groupname='runs')
 
     write_fits_to_hdf5(outputfile, successful_jobs.result_file)
