@@ -12,6 +12,7 @@ from ..automatic_processing.database import (
 from ..utils import load_config, create_mysql_engine
 from ..hdf_utils import write_fits_to_hdf5, append_to_hdf5, initialize_hdf5
 from ..datacheck import get_runs
+from ..datacheck_conditions import conditions as datacheck_conditions
 
 
 @click.command()
@@ -19,13 +20,20 @@ from ..datacheck import get_runs
 @click.argument('ft-version')
 @click.argument('outputfile')
 @click.option('--config', '-c')
-@click.option('--start', '-s')
-@click.option('--end', '-e', )
+@click.option('--start', '-s', help='First night to get data from')
+@click.option('--end', '-e', help='Last night to get data from')
 @click.option('--source', default='Crab')
-def main(xml_name, ft_version, outputfile, config, start, end, source):
+@click.option('--datacheck', help='The name of a condition set for the datacheck')
+def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck):
     config = load_config(config)
     database.init(**config['processing_database'])
     database.connect()
+
+    if datacheck is not None and datacheck not in datacheck_conditions:
+        print('Conditions must be any of: ')
+        for key in datacheck_conditions:
+            print(key)
+        sys.exit(1)
 
     processing_db = create_mysql_engine(**config['processing_database'])
     fact_db = create_mysql_engine(**config['fact_database'])
@@ -60,12 +68,15 @@ def main(xml_name, ft_version, outputfile, config, start, end, source):
     sql, params = job_query.sql()
 
     jobs = pd.read_sql_query(sql, processing_db, params=params)
-    runs = get_runs(fact_db, conditions=[
-        'fRunTypeName = "data"',
+    conditions = [
         'fNight <= {}'.format(jobs.night.max()),
         'fNight >= {}'.format(jobs.night.min()),
         'fSourceName = "{}"'.format(source),
-    ])
+    ]
+    if datacheck is not None:
+        conditions.extend(datacheck_conditions[datacheck])
+
+    runs = get_runs(fact_db, conditions=conditions)
     jobs = jobs.join(runs, on=['night', 'run_id'], how='inner')
     successful_jobs = jobs.query('status == "success"')
 
@@ -86,8 +97,9 @@ def main(xml_name, ft_version, outputfile, config, start, end, source):
         successful_jobs['night'],
         successful_jobs['run_id'],
         successful_jobs['source'].astype('S'),
-        successful_jobs['ontime']
-    ], names=('night', 'run_id', 'source', 'ontime'))
+        successful_jobs['ontime'],
+        successful_jobs['zenith'],
+    ], names=('night', 'run_id', 'source', 'ontime', 'zenith'))
 
     if os.path.isfile(outputfile):
         a = input('Outputfile exists! Overwrite? [y, N]: ')
