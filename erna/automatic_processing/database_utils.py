@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     'fill_data_runs', 'fill_drs_runs', 'find_drs_file',
-    'count_jobs', 'insert_new_job', 'insert_new_jobs'
+    'count_jobs', 'insert_new_job', 'insert_new_jobs',
+    'resubmit_walltime_exceeded'
 ]
 
 
@@ -221,3 +222,20 @@ def build_output_base_name(job):
         version=version,
         name=job.xml.name
     )
+
+
+@requires_database_connection
+def resubmit_walltime_exceeded(old_queue, new_queue):
+    '''
+    Resubmit jobs where walltime was exceeded.
+    Change queue from old_queue to new_queue
+    '''
+    if old_queue.walltime >= new_queue.walltime:
+        raise ValueError('New queue must have longer walltime for this to make sense')
+
+    return (
+        Job
+        .update(queue=new_queue, status=ProcessingState.get(description='inserted'))
+        .where(Job.status == ProcessingState.get(description='walltime_exceeded'))
+        .where(Job.queue == old_queue)
+    ).execute()
