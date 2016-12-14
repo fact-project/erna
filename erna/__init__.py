@@ -91,7 +91,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
 
 
-def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30", data_conditions=dcc.conditions["std"]):
+def load(earliest_night, latest_night, path_to_data, factdb,source_name="Crab", timedelta_in_minutes="30", data_conditions=dcc.conditions["standard"]):
     '''
     Given the earliest and latest night to fetch as a factnight string (as in 20141024) this method returns a DataFrame
     containing the paths to data files and their correpsonding .drs files. The maximum time difference between the
