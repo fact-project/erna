@@ -110,4 +110,6 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
         initialize_hdf5(f, dtypes=runs_array.dtype, groupname='runs')
         append_to_hdf5(f, runs_array, groupname='runs')
 
+        f['runs'].attrs['datacheck'] = ' AND '.join(conditions)
+
     write_fits_to_hdf5(outputfile, successful_jobs.result_file, mode='a')
