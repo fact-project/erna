@@ -5,9 +5,9 @@ import pandas as pd
 default_columns = (
     'fNight AS night',
     'fRunID AS run_id',
-    'fOnTime AS ontime',
     'fSourceName AS source',
-    'fRunTypeName AS runtype',
+    'fOnTime AS ontime',
+    'fZenithDistanceMean AS zenith',
 )
 
 
