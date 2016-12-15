@@ -76,7 +76,7 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     if datacheck is not None:
         conditions.extend(datacheck_conditions[datacheck])
 
-    runs = get_runs(fact_db, conditions=conditions)
+    runs = get_runs(fact_db, conditions=conditions).set_index(('night', 'run_id'))
     jobs = jobs.join(runs, on=['night', 'run_id'], how='inner')
     successful_jobs = jobs.query('status == "success"')
 
