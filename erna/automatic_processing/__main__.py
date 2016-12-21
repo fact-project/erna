@@ -63,9 +63,11 @@ def main(config, verbose):
             time.sleep(10)
 
     except (KeyboardInterrupt, SystemExit):
+        log.info('Shutting done')
         job_monitor.terminate()
         job_submitter.terminate()
         job_submitter.join()
+        log.info('Clean up running jobs')
         database.connect()
 
         queued = ProcessingState.get(description='queued')
