@@ -50,7 +50,7 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     job_query = (
         Job
         .select(
-            RawDataFile.night, RawDataFile.run_id,
+            RawDataFile.night.alias('night'), RawDataFile.run_id.alias('run_id'),
             Job.result_file, ProcessingState.description.alias('status')
         )
         .join(RawDataFile)

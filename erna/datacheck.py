@@ -17,7 +17,7 @@ FROM RunInfo
 JOIN Source
 ON RunInfo.fSourceKey = Source.fSourceKey
 JOIN RunType
-ON RunType.fRunTypeKey = RunType.fRunTypeKey
+ON RunInfo.fRunTypeKey = RunType.fRunTypeKey
 WHERE {conditions}
 ;
 '''
