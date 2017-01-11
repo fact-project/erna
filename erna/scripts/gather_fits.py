@@ -98,11 +98,10 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     total = len(jobs)
     successful = len(successful_jobs)
     if total != successful:
-        answer = input('Only {} of {} jobs finished, continue? [y, N] :'.format(
-            successful, total
-        ))
-        if not answer.lower().startswith('y'):
-            sys.exit()
+        click.confirm(
+            'Only {} of {} jobs finished, continue? [y, N] :'.format(successful, total),
+            abort=True,
+        )
 
     print('Found {} runs with a total ontime of {:1.2f} h'.format(
         len(jobs), jobs.ontime.sum()/3600
