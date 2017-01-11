@@ -147,6 +147,7 @@ def build_automatic_processing_qsub_command(
             'facttools_output_basename': output_basename,
             'ERNA_GROUP': group,
         },
+        queue=queue,
         **kwargs,
     )
 
