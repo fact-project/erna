@@ -19,12 +19,27 @@ from ..datacheck_conditions import conditions as datacheck_conditions
 @click.argument('xml-name')
 @click.argument('ft-version')
 @click.argument('outputfile')
-@click.option('--config', '-c')
+@click.option(
+    '--config', '-c', type=click.Path(exists=True, dir_okay=False),
+    help='Path to yaml config file with credentials'
+)
 @click.option('--start', '-s', help='First night to get data from')
 @click.option('--end', '-e', help='Last night to get data from')
 @click.option('--source', default='Crab')
 @click.option('--datacheck', help='The name of a condition set for the datacheck')
 def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck):
+    '''
+    Gather the fits outputfiles of the erna automatic processing into a hdf5 file.
+    The hdf5 file is written using h5py and contains the level 2 features in the
+    `events` group and some metadata for each run in the `runs` group.
+
+    It is possible to only gather files that pass a given datacheck with the --datacheck
+    option. The possible conditions are implemented in erna.datacheck_conditions/
+
+    XML_NAME: name of the xml for which you want to gather output
+    FT_VERSION: FACT Tools version for which you want to gather output
+    OUTPUTFILE: the outputfile
+    '''
     config = load_config(config)
     database.init(**config['processing_database'])
     database.connect()
