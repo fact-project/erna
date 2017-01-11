@@ -69,6 +69,11 @@ def check_availability(run, basedir='/fact/raw'):
 @click.option('--start', type=parse_date, default=str(datetime.date(2011, 10, 1)))
 @click.option('--end', type=parse_date, default=str(datetime.date.today()))
 def main(year, month, day, config, verbose, start, end):
+    '''
+    Check if RawDataFiles and DrsFiles are available.
+    Goes through the database entries and checks if the file is where it is expected
+    to be.
+    '''
 
     if verbose:
         log.setLevel(logging.DEBUG)
