@@ -55,8 +55,10 @@ def chown(path, username=None, groupname=None):
 
 
 def night_int_to_date(night):
+    ''' Convert the crazy FACT int to da date instance'''
     return date(night // 10000, (night % 10000) // 100, night % 100)
 
 
 def date_to_night_int(night):
+    ''' convert a date or datetime instance to the crazy FACT int '''
     return 10000 * night.year + 100 * night.month + night.day
