@@ -12,12 +12,13 @@ from ..utils import load_config
 def reconnect():
     while True:
         database.connect()
-        sleep(30)
+        sleep(10)
 
 
 @click.command()
 @click.option('--config', '-c', help='Path to the yaml config file')
 def main(config):
+    ''' Starts an IPython shell with helpful imports to work with erna '''
     config = load_config(config)
 
     database.init(**config['processing_database'])
