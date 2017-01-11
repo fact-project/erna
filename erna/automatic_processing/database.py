@@ -42,6 +42,10 @@ database = MySQLDatabase(None, fields={
 
 
 def setup_database(database, drop=False):
+    '''
+    Initiliaze all tables in the databse
+    If drop is True, drop all tables before recreating them.
+    '''
     tables = [
         RawDataFile,
         DrsFile,
