@@ -31,6 +31,10 @@ WHERE
 @click.argument('end', type=parse_date)
 @click.option('--config', '-c', help='yaml config file with database credentials')
 def main(start, end, config):
+    '''
+    Fill RawDataFile and DrsFile tables from the FACT RunInfo database
+    from START to END.
+    '''
 
     config = load_config(config)
 
