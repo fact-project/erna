@@ -40,3 +40,23 @@ When calling the `execute_list.py` script you get
 The script creates a json-file (*earliest_run_latest_run_source_name.json*), which contains the found data and drs-files
 The created file can be used in conjunction with `execute_list.py` to start jobs with the files contained in the .json file.
 This is useful if you don't have internet access on the machine where you submit your jobs from. *coughISDCcough*
+
+
+## Submit runs:
+
+Fire up erna_console and enter: 
+
+```
+files = (
+    RawDataFile
+    .select()
+    .where(RawDataFile.night >= date(2013, 1, 1))
+    .where(RawDataFile.night <= date(2023, 12, 31))
+)
+print("files.count():", files.count())
+jar = Jar.select(Jar.id, Jar.version).where(jar.version == '0.17.2').get()
+xml = XML.get(name='std_analysis', jar=jar)
+queue = Queue.get(name='fact_short')
+
+insert_jobs(files, xml=xml, jar=jar, queue=queue)
+```
