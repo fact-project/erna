@@ -46,14 +46,16 @@ This is useful if you don't have internet access on the machine where you submit
 
 Fire up erna_console and enter: 
 
-```
+```python
 files = (
     RawDataFile
     .select()
     .where(RawDataFile.night >= date(2013, 1, 1))
-    .where(RawDataFile.night <= date(2023, 12, 31))
+    .where(RawDataFile.night <= date(2013, 12, 31))
 )
 print("files.count():", files.count())
+
+# We only select Jar.id and Jar.version to not download the 20 MB binary blob
 jar = Jar.select(Jar.id, Jar.version).where(jar.version == '0.17.2').get()
 xml = XML.get(name='std_analysis', jar=jar)
 queue = Queue.get(name='fact_short')
