@@ -48,7 +48,8 @@ def main():
     walltime = float(os.environ['WALLTIME'])
     log.info('Walltime = %.0f', walltime)
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
+    job_name = 'fact_erna_job_id_'+str(job_id)+'_'
+    with tempfile.TemporaryDirectory(prefix=job_name) as tmp_dir:
         log.debug('Using tmp directory: {}'.format(tmp_dir))
         facttools_output = os.path.join(tmp_dir, 'facttools_output')
         os.makedirs(facttools_output)
