@@ -2,12 +2,14 @@ from peewee import (
     Model, CharField, IntegerField, BooleanField,
     ForeignKeyField, FixedCharField, TextField, MySQLDatabase
 )
+from playhouse.shortcuts import RetryOperationalError
 import os
 import logging
 import wrapt
 
 from .utils import parse_path
 from .custom_fields import NightField, LongBlobField
+
 
 
 __all__ = [
@@ -35,7 +37,13 @@ WALLTIMES = {
     'fact_long': 7 * 24 * 60 * 60,
 }
 
-database = MySQLDatabase(None, fields={
+
+class RetryMySQLDatabase(RetryOperationalError, MySQLDatabase):
+    ''' Automatically reconnect when connection went down'''
+    pass
+
+
+database = RetryMySQLDatabase(None, fields={
     'night': 'INTEGER',
     'longblob': 'LONGBLOB',
 })

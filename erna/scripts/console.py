@@ -9,11 +9,6 @@ from ..automatic_processing.database import *
 from ..automatic_processing.database_utils import *
 from ..utils import load_config
 
-def reconnect():
-    while True:
-        database.connect()
-        sleep(10)
-
 
 @click.command()
 @click.option('--config', '-c', help='Path to the yaml config file')
@@ -23,9 +18,6 @@ def main(config):
 
     database.init(**config['processing_database'])
     database.connect()
-
-    t = Thread(target=reconnect, daemon=True)
-    t.start()
 
     embed()
 
