@@ -6,7 +6,7 @@ default_columns = (
     'fNight AS night',
     'fRunID AS run_id',
     'fSourceName AS source',
-    'fOnTime AS ontime',
+    'TIMESTAMPDIFF(SECOND, fRunStart, fRunStop) * fEffectiveOn AS ontime',
     'fZenithDistanceMean AS zenith',
 )
 
