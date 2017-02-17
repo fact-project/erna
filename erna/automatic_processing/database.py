@@ -104,6 +104,10 @@ class File(Model):
 
 
 class RawDataFile(File):
+
+    run_type_key = IntegerField(null=True)
+    run_type_name = CharField(null=True)
+
     @property
     def basename(self):
         return '{:%Y%m%d}_{:03d}.fits.fz'.format(self.night, self.run_id)

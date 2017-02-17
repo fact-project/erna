@@ -21,20 +21,42 @@ __all__ = [
 
 @requires_database_connection
 def fill_data_runs(df, database):
+    if len(df) == 0:
+        return
     df = df.copy()
-    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
+    df.rename(
+        columns={
+            'fNight': 'night',
+            'fRunID': 'run_id',
+            'fRunTypeKey': 'run_type_key',
+            'fRunTypeName': 'run_type_name',
+        },
+        inplace=True,
+    )
+    df.drop('fDrsStep', axis=1, inplace=True)
     with database.atomic():
-        RawDataFile.insert_many(df.to_dict(orient='records')).upsert().execute()
+        query = (
+            RawDataFile
+            .insert_many(df.to_dict(orient='records'))
+            .on_conflict('IGNORE')
+        )
+        query.execute()
 
 
 @requires_database_connection
 def fill_drs_runs(df, database):
+    if len(df) == 0:
+        return
     df = df.copy()
     df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
     df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
     with database.atomic():
-        DrsFile.insert_many(df.to_dict(orient='records')).upsert().execute()
+        query = (
+            DrsFile
+            .insert_many(df.to_dict(orient='records'))
+            .on_conflict('IGNORE')
+        )
+        query.execute()
 
 
 @requires_database_connection

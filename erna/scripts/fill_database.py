@@ -16,11 +16,13 @@ def parse_date(date):
 query = '''
 SELECT {columns}
 FROM RunInfo
+JOIN RunType
+ON RunType.fRunTypeKey = RunInfo.fRunTypeKey
 WHERE
     fNight >= {start}
     AND fNight < {end}
     AND (
-        fRunTypeKey = 1 OR (fDrsStep = 2 AND fRunTypeKey = 2)
+        RunInfo.fRunTypeKey = 1 OR (fDrsStep = 2 AND RunInfo.fRunTypeKey = 2)
     )
 ;
 '''
@@ -44,7 +46,9 @@ def main(start, end, config):
 
     runs = pd.read_sql_query(
         query.format(
-            columns=', '.join(['fNight', 'fRunID', 'fDrsStep', 'fRunTypeKey']),
+            columns=', '.join([
+                'fNight', 'fRunID', 'fDrsStep', 'RunInfo.fRunTypeKey AS fRunTypeKey', 'fRunTypeName'
+            ]),
             start=start,
             end=end,
         ),
@@ -52,11 +56,10 @@ def main(start, end, config):
     )
     runs['fNight'] = pd.to_datetime(runs.fNight.astype(str), format='%Y%m%d')
 
-    for runtype, df in runs.groupby('fRunTypeKey'):
-        if runtype == 1:
-            fill_data_runs(df, database=database)
-        elif runtype == 2:
-            fill_drs_runs(df, database=database)
+    # fill all non drs runs into raw_data_files
+    fill_data_runs(runs.query('fDrsStep != 2'), database=database)
+    # fill all drs runs into drs_files
+    fill_drs_runs(runs.query('(fRunTypeKey == 2) & (fDrsStep == 2)'), database=database)
 
     database.close()
 
