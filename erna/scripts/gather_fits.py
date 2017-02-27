@@ -27,7 +27,8 @@ from ..datacheck_conditions import conditions as datacheck_conditions
 @click.option('--end', '-e', help='Last night to get data from')
 @click.option('--source', default='Crab')
 @click.option('--datacheck', help='The name of a condition set for the datacheck')
-def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck):
+@click.option('-r', '--run-type', default='data', help='The runtype to consider')
+def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck, run_type):
     '''
     Gather the fits outputfiles of the erna automatic processing into a hdf5 file.
     The hdf5 file is written using h5py and contains the level 2 features in the
@@ -71,7 +72,11 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
         .join(RawDataFile)
         .switch(Job)
         .join(ProcessingState)
-        .where(Job.jar == jar, Job.xml == xml)
+        .where(
+            Job.jar == jar,
+            Job.xml == xml,
+            RawDataFile.run_type_name == run_type,
+        )
     )
     if start:
         start = dateutil.parser.parse(start).date()
