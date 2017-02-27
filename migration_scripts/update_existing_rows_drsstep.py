@@ -36,7 +36,7 @@ def main(config):
         night = drs_file.night.year * 10000 + drs_file.night.month * 100 + drs_file.night.day
 
         drs_file.roi = df.loc[(night, drs_file.run_id), 'fROI']
-        drs_file.drs_step = df.loc((night, drs_file.run_id), 'fDrsStep')
+        drs_file.drs_step = df.loc[(night, drs_file.run_id), 'fDrsStep']
         drs_file.save()
 
 
