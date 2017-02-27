@@ -21,9 +21,6 @@ ON RunType.fRunTypeKey = RunInfo.fRunTypeKey
 WHERE
     fNight >= {start}
     AND fNight < {end}
-    AND (
-        RunInfo.fRunTypeKey = 1 OR (fDrsStep = 2 AND RunInfo.fRunTypeKey = 2)
-    )
 ;
 '''
 
@@ -47,7 +44,9 @@ def main(start, end, config):
     runs = pd.read_sql_query(
         query.format(
             columns=', '.join([
-                'fNight', 'fRunID', 'fDrsStep', 'RunInfo.fRunTypeKey AS fRunTypeKey', 'fRunTypeName'
+                'fNight', 'fRunID', 'fDrsStep',
+                'RunInfo.fRunTypeKey AS fRunTypeKey',
+                'fRunTypeName'
             ]),
             start=start,
             end=end,
