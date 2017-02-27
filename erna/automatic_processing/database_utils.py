@@ -100,6 +100,13 @@ def find_drs_file(raw_data_file, closest=True):
     query = query.where(DrsFile.night == raw_data_file.night)
     query = query.where(DrsFile.available)
 
+    if raw_data_file.roi == 300:
+        query = query.where((DrsFile.drs_step == 2) & (DrsFile.roi == 300))
+    elif raw_data_file.roi == 1024:
+        query = query.where((DrsFile.drs_step == 1) & (DrsFile.roi == 1024))
+    else:
+        raise ValueError('ROI {} not supported'.format(raw_data_file.roi))
+
     if closest is True:
         query = query.order_by(peewee.fn.Abs(DrsFile.run_id - raw_data_file.run_id))
     else:
