@@ -79,6 +79,7 @@ class File(Model):
     night = NightField()
     run_id = IntegerField()
     available = BooleanField(null=True)
+    roi = IntegerField(null=True)
 
     class Meta:
         database = database
@@ -118,6 +119,9 @@ class RawDataFile(File):
 
 
 class DrsFile(File):
+
+    drs_step = IntegerField()
+
     @property
     def basename(self):
         return '{:%Y%m%d}_{:03d}.drs.fits.gz'.format(self.night, self.run_id)
