@@ -40,7 +40,9 @@ def fill_data_runs(df, database):
             .insert_many(df.to_dict(orient='records'))
             .on_conflict('IGNORE')
         )
-        query.execute()
+        sql, params = query.sql()
+        sql = sql.replace('INSERT OR IGNORE', 'INSERT IGNORE')
+        database.execute_sql(sql, params=params)
 
 
 @requires_database_connection
@@ -48,15 +50,24 @@ def fill_drs_runs(df, database):
     if len(df) == 0:
         return
     df = df.copy()
-    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
+    print(df.columns)
+    df.drop(['fDrsStep', 'fRunTypeKey', 'fRunTypeName'], axis=1, inplace=True)
+    df.rename(
+        columns={
+            'fNight': 'night',
+            'fRunID': 'run_id',
+        },
+        inplace=True,
+    )
     with database.atomic():
         query = (
             DrsFile
             .insert_many(df.to_dict(orient='records'))
             .on_conflict('IGNORE')
         )
-        query.execute()
+        sql, params = query.sql()
+        sql = sql.replace('INSERT OR IGNORE', 'INSERT IGNORE')
+        database.execute_sql(sql, params=params)
 
 
 @requires_database_connection
