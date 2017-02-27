@@ -42,6 +42,7 @@ def fill_data_runs(df, database):
             .on_conflict('IGNORE')
         )
         sql, params = query.sql()
+        # See https://github.com/coleifer/peewee/issues/1067
         sql = sql.replace('INSERT OR IGNORE', 'INSERT IGNORE')
         database.execute_sql(sql, params=params)
 
@@ -69,6 +70,7 @@ def fill_drs_runs(df, database):
             .on_conflict('IGNORE')
         )
         sql, params = query.sql()
+        # See https://github.com/coleifer/peewee/issues/1067
         sql = sql.replace('INSERT OR IGNORE', 'INSERT IGNORE')
         database.execute_sql(sql, params=params)
 
