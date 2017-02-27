@@ -30,6 +30,7 @@ def fill_data_runs(df, database):
             'fRunID': 'run_id',
             'fRunTypeKey': 'run_type_key',
             'fRunTypeName': 'run_type_name',
+            'fROI': 'roi',
         },
         inplace=True,
     )
@@ -51,11 +52,13 @@ def fill_drs_runs(df, database):
         return
     df = df.copy()
     print(df.columns)
-    df.drop(['fDrsStep', 'fRunTypeKey', 'fRunTypeName'], axis=1, inplace=True)
+    df.drop(['fRunTypeKey', 'fRunTypeName'], axis=1, inplace=True)
     df.rename(
         columns={
             'fNight': 'night',
             'fRunID': 'run_id',
+            'fROI': 'roi',
+            'fDrsStep': 'drs_step',
         },
         inplace=True,
     )

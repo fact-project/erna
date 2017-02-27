@@ -44,7 +44,7 @@ def main(start, end, config):
     runs = pd.read_sql_query(
         query.format(
             columns=', '.join([
-                'fNight', 'fRunID', 'fDrsStep',
+                'fNight', 'fRunID', 'fDrsStep', 'fROI',
                 'RunInfo.fRunTypeKey AS fRunTypeKey',
                 'fRunTypeName'
             ]),
