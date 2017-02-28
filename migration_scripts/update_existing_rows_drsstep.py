@@ -8,6 +8,11 @@ import click
 @click.command()
 @click.option('-c', '--config')
 def main(config):
+    '''
+    After we added the new columns drsstep and roi,
+    existing rois contained nulls. This script updates those rows
+    with the correct values.
+    '''
 
     config = load_config(config)
 
