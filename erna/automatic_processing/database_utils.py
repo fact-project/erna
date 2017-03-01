@@ -21,20 +21,58 @@ __all__ = [
 
 @requires_database_connection
 def fill_data_runs(df, database):
+    if len(df) == 0:
+        return
     df = df.copy()
-    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
+    df.rename(
+        columns={
+            'fNight': 'night',
+            'fRunID': 'run_id',
+            'fRunTypeKey': 'run_type_key',
+            'fRunTypeName': 'run_type_name',
+            'fROI': 'roi',
+        },
+        inplace=True,
+    )
+    df.drop('fDrsStep', axis=1, inplace=True)
     with database.atomic():
-        RawDataFile.insert_many(df.to_dict(orient='records')).upsert().execute()
+        query = (
+            RawDataFile
+            .insert_many(df.to_dict(orient='records'))
+            .on_conflict('IGNORE')
+        )
+        sql, params = query.sql()
+        # See https://github.com/coleifer/peewee/issues/1067
+        sql = sql.replace('INSERT OR IGNORE', 'INSERT IGNORE')
+        database.execute_sql(sql, params=params)
 
 
 @requires_database_connection
 def fill_drs_runs(df, database):
+    if len(df) == 0:
+        return
     df = df.copy()
-    df.rename(columns={'fNight': 'night', 'fRunID': 'run_id'}, inplace=True)
-    df.drop(['fDrsStep', 'fRunTypeKey'], axis=1, inplace=True)
+    print(df.columns)
+    df.drop(['fRunTypeKey', 'fRunTypeName'], axis=1, inplace=True)
+    df.rename(
+        columns={
+            'fNight': 'night',
+            'fRunID': 'run_id',
+            'fROI': 'roi',
+            'fDrsStep': 'drs_step',
+        },
+        inplace=True,
+    )
     with database.atomic():
-        DrsFile.insert_many(df.to_dict(orient='records')).upsert().execute()
+        query = (
+            DrsFile
+            .insert_many(df.to_dict(orient='records'))
+            .on_conflict('IGNORE')
+        )
+        sql, params = query.sql()
+        # See https://github.com/coleifer/peewee/issues/1067
+        sql = sql.replace('INSERT OR IGNORE', 'INSERT IGNORE')
+        database.execute_sql(sql, params=params)
 
 
 @requires_database_connection
@@ -63,6 +101,13 @@ def find_drs_file(raw_data_file, closest=True):
     query = DrsFile.select()
     query = query.where(DrsFile.night == raw_data_file.night)
     query = query.where(DrsFile.available)
+
+    if raw_data_file.roi == 300:
+        query = query.where((DrsFile.drs_step == 2) & (DrsFile.roi == 300))
+    elif raw_data_file.roi == 1024:
+        query = query.where((DrsFile.drs_step == 1) & (DrsFile.roi == 1024))
+    else:
+        raise ValueError('ROI {} not supported'.format(raw_data_file.roi))
 
     if closest is True:
         query = query.order_by(peewee.fn.Abs(DrsFile.run_id - raw_data_file.run_id))
