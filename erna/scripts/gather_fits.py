@@ -115,9 +115,11 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     runs_array = np.core.rec.fromarrays([
         successful_jobs['night'],
         successful_jobs['run_id'],
-        successful_jobs['source'].astype('S'),
+        successful_jobs['source'].values.astype('S'),
         successful_jobs['ontime'],
         successful_jobs['zenith'],
+        successful_jobs['run_start'].values.astype('S'),
+        successful_jobs['run_stop'].values.astype('S'),
     ], names=('night', 'run_id', 'source', 'ontime', 'zenith'))
 
     if os.path.isfile(outputfile):

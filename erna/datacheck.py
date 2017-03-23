@@ -8,6 +8,8 @@ default_columns = (
     'fSourceName AS source',
     'TIMESTAMPDIFF(SECOND, fRunStart, fRunStop) * fEffectiveOn AS ontime',
     'fZenithDistanceMean AS zenith',
+    'fRunStart AS run_start',
+    'fRunStop AS run_stop',
 )
 
 
