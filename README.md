@@ -41,6 +41,17 @@ The script creates a json-file (*earliest_run_latest_run_source_name.json*), whi
 The created file can be used in conjunction with `execute_list.py` to start jobs with the files contained in the .json file.
 This is useful if you don't have internet access on the machine where you submit your jobs from. *coughISDCcough*
 
+# Automatic processing with erna at isdc
+
+The erna job submitter should be running as `fact_tools` user on
+isdc-in04.
+
+To run it, start the screen session with the screenrc coming in this repo:
+```
+$ screen -c screenrc_erna
+```
+
+It sets up the necessary port forwarding and proxy to speak to the non-isdc world and starts the erna submitter processing.
 
 ## Submit runs:
 
