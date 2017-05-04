@@ -40,24 +40,28 @@ def check_availability(run, basedir='/fact/raw'):
     )
     log.debug('Basename: {}'.format(basename))
 
-    if run.run_type == 1:
-        f = RawDataFile.select_night_runid(run.night, run.run_id)
-        available = isfile(basename + '.fits.fz') or isfile(basename + '.fits.gz')
-        log.debug('Available: {}'.format(available))
-
-        f.available = available
-        f.save()
-
-    elif run.run_type == 2 and run.drs_step == 2:
+    if run.drs_step == 2:
         log.debug('is a drs file')
-        f = DrsFile.select_night_runid(run.night, run.run_id)
-        available = isfile(basename + '.drs.fits.gz')
-        log.debug('Available: {}'.format(available))
-        f.available = available
-        f.save()
+
+        try:
+            f = DrsFile.get(night=run.night, run=run.run_id)
+            available = isfile(basename + '.drs.fits.gz')
+            log.debug('Available: {}'.format(available))
+            f.available = available
+            f.save()
+        except DrsFile.DoesNotExist:
+            log.info('Run not not erna database')
 
     else:
-        log.debug('Neither drs nor data file')
+        try:
+            f = RawDataFile.get(night=run.night, run=run.run_id)
+            available = isfile(basename + '.fits.fz') or isfile(basename + '.fits.gz')
+            log.debug('Available: {}'.format(available))
+
+            f.available = available
+            f.save()
+        except RawDataFile.DoesNotExist:
+            log.info('Run not not erna database')
 
 
 @click.command()
