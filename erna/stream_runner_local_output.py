@@ -74,7 +74,7 @@ def run(jar, xml, df, num, output_dest, db_path=None):
             else:
                 return "fact-tools error"
 
-        copyfile(output_directory, output_dest)
+        copyfile(output_path, os.path.join(output_dest, output_filename))
 
         #try to read nans else return empty frame
         return ft_json_to_df(input_path)

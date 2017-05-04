@@ -22,9 +22,8 @@ def make_jobs(jar, xml, data_paths, drs_paths,  output_path,
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
-        out = path.join(output_path, "{}_{}".format(name, num))
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
-        job = Job(stream_runner.run, [jar, xml, df, num, out], queue=queue,
+        job = Job(stream_runner.run, [jar, xml, df, num, output_path], queue=queue,
                   walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         jobs.append(job)
 
