@@ -5,12 +5,13 @@ import dateutil.parser
 import sys
 import os
 import numpy as np
+from fact.io import append_to_h5py, initialize_h5py
 
 from ..automatic_processing.database import (
     database, Job, RawDataFile, Jar, XML, ProcessingState
 )
 from ..utils import load_config, create_mysql_engine
-from ..hdf_utils import write_fits_to_hdf5, append_to_hdf5, initialize_hdf5
+from ..hdf_utils import write_fits_to_hdf5
 from ..datacheck import get_runs
 from ..datacheck_conditions import conditions as datacheck_conditions
 
@@ -139,8 +140,8 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
             sys.exit()
 
     with h5py.File(outputfile, 'w') as f:
-        initialize_hdf5(f, dtypes=runs_array.dtype, groupname='runs')
-        append_to_hdf5(f, runs_array, groupname='runs')
+        initialize_h5py(f, dtypes=runs_array.dtype, groupname='runs')
+        append_to_h5py(f, runs_array, groupname='runs')
 
         f['runs'].attrs['datacheck'] = ' AND '.join(conditions)
 
