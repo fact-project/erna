@@ -140,8 +140,8 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
             sys.exit()
 
     with h5py.File(outputfile, 'w') as f:
-        initialize_h5py(f, dtypes=runs_array.dtype, groupname='runs')
-        append_to_h5py(f, runs_array, groupname='runs')
+        initialize_h5py(f, dtypes=runs_array.dtype, key='runs')
+        append_to_h5py(f, runs_array, key='runs')
 
         f['runs'].attrs['datacheck'] = ' AND '.join(conditions)
 

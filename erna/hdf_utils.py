@@ -16,7 +16,7 @@ def write_fits_to_hdf5(
         mode='a',
         compression='gzip',
         progress=True,
-        groupname='events',
+        key='events',
         ):
 
     initialized = False
@@ -32,9 +32,9 @@ def write_fits_to_hdf5(
                     initialize_h5py(
                         hdf_file,
                         f[1].data.dtype,
-                        groupname=groupname,
+                        key=key,
                         compression=compression,
                     )
                     initialized = True
 
-                append_to_h5py(hdf_file, f[1].data, groupname=groupname)
+                append_to_h5py(hdf_file, f[1].data, key=key)
