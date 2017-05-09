@@ -8,7 +8,7 @@ In the main you can choose the parameters for your search (at the moment: the be
 The parameter *timedelta_in_minutes* determines the maximum allowed time lag between the timestamp of the data-file and the timestamp of the appropriate drs-file. The default value is 30 minutes. Which works fine in my experience.
 Dates are given in the usual FACT convention: YYYYMMDD.
 
-##Requirements
+## Requirements
   - FACT-Tools
   - Java 1.8+
   - Python 3.5+ (srsly. 3.5 please)
