@@ -28,8 +28,9 @@ from ..datacheck_conditions import conditions as datacheck_conditions
 @click.option('--end', '-e', help='Last night to get data from')
 @click.option('--source', default='Crab')
 @click.option('--datacheck', help='The name of a condition set for the datacheck')
+@click.option('--runlist', help='A csv file with columns night, run_id, the runs to get')
 @click.option('-r', '--run-type', default='data', help='The runtype to consider')
-def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck, run_type):
+def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck, runlist, run_type):
     '''
     Gather the fits outputfiles of the erna automatic processing into a hdf5 file.
     The hdf5 file is written using h5py and contains the level 2 features in the
@@ -45,6 +46,10 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     config = load_config(config)
     database.init(**config['processing_database'])
     database.connect()
+
+    if datacheck and runlist:
+        print('Only one of datacheck or runlist allowed')
+        sys.exit(1)
 
     if datacheck is not None:
         if not (datacheck in datacheck_conditions or os.path.isfile(datacheck)):
@@ -102,11 +107,19 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     sql, params = job_query.sql()
 
     jobs = pd.read_sql_query(sql, processing_db, params=params)
-    conditions = [
-        'fNight <= {}'.format(jobs.night.max()),
-        'fNight >= {}'.format(jobs.night.min()),
-        'fSourceName = "{}"'.format(source),
-    ]
+    if runlist is None:
+        conditions = [
+            'fNight <= {}'.format(jobs.night.max()),
+            'fNight >= {}'.format(jobs.night.min()),
+            'fSourceName = "{}"'.format(source),
+        ]
+    else:
+        wanted_runs = pd.read_csv(runlist)
+        conditions = [
+            'fNight <= {}'.format(wanted_runs.night.max()),
+            'fNight >= {}'.format(wanted_runs.night.min()),
+        ]
+
     if datacheck is not None:
         if os.path.isfile(datacheck):
             with open(datacheck, 'r') as f:
@@ -116,13 +129,30 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
 
     runs = get_runs(fact_db, conditions=conditions).set_index(['night', 'run_id'])
     jobs = jobs.join(runs, on=['night', 'run_id'], how='inner')
-    successful_jobs = jobs.query('status == "success"')
 
+    if runlist is not None:
+        jobs = wanted_runs.join(
+            jobs.set_index(['night', 'run_id']),
+            on=['night', 'run_id'],
+            how='inner',
+        )
+
+    successful_jobs = jobs.query('status == "success"')
     total = len(jobs)
     successful = len(successful_jobs)
+
+    if runlist is not None:
+        if len(wanted_runs) != successful:
+            click.confirm(
+                'Only {} of {} runs available, continue?:'.format(
+                    total, len(wanted_runs)
+                ),
+                abort=True,
+            )
+
     if total != successful:
         click.confirm(
-            'Only {} of {} jobs finished, continue? [y, N] :'.format(successful, total),
+            'Only {} of {} jobs finished, continue?'.format(successful, total),
             abort=True,
         )
 
