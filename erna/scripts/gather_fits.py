@@ -95,7 +95,11 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
         'fSourceName = "{}"'.format(source),
     ]
     if datacheck is not None:
-        conditions.extend(datacheck_conditions[datacheck])
+        if os.path.isfile(datacheck):
+            with open(datacheck, 'r') as f:
+                conditions.extend(f.read().splitlines())
+        else:
+            conditions.extend(datacheck_conditions[datacheck])
 
     runs = get_runs(fact_db, conditions=conditions).set_index(['night', 'run_id'])
     jobs = jobs.join(runs, on=['night', 'run_id'], how='inner')
