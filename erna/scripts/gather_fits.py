@@ -46,11 +46,12 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     database.init(**config['processing_database'])
     database.connect()
 
-    if datacheck is not None and datacheck not in datacheck_conditions:
-        print('Conditions must be any of: ')
-        for key in datacheck_conditions:
-            print(key)
-        sys.exit(1)
+    if datacheck is not None:
+        if not (datacheck in datacheck_conditions or os.path.isfile(datacheck)):
+            print('Conditions must be a file or any of: ')
+            for key in datacheck_conditions:
+                print(key)
+            sys.exit(1)
 
     processing_db = create_mysql_engine(**config['processing_database'])
     fact_db = create_mysql_engine(**config['fact_database'])
