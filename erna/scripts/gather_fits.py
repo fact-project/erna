@@ -56,14 +56,26 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     processing_db = create_mysql_engine(**config['processing_database'])
     fact_db = create_mysql_engine(**config['fact_database'])
 
-    jar = (
-        Jar
-        .select(Jar.id, Jar.version)
-        .where(Jar.version == ft_version)
-        .get()
-    )
+    try:
+        jar = (
+            Jar
+            .select(Jar.id, Jar.version)
+            .where(Jar.version == ft_version)
+            .get()
+        )
+    except Jar.DoesNotExist:
+        print('FACT-Tools version not found, avaliable jars are')
+        for jar in Jar.select(Jar.version):
+            print(jar.version)
+        sys.exit(1)
 
-    xml = XML.get(jar=jar, name=xml_name)
+    try:
+        xml = XML.get(jar=jar, name=xml_name)
+    except XML.DoesNotExist:
+        print('XML not found, avaliable xmls are:')
+        for xml in XML.select(XML.name).join(Jar).where(Jar.version == ft_version):
+            print(xml.name)
+        sys.exit(1)
 
     job_query = (
         Job
