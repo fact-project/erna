@@ -25,10 +25,17 @@ snake_re_1 = re.compile('(.)([A-Z][a-z]+)')
 snake_re_2 = re.compile('([a-z0-9])([A-Z])')
 
 
+renames = {'RUNID': 'run_id'}
+
+
 def camel2snake(key):
     ''' see http://stackoverflow.com/a/1176023/3838691 '''
     s1 = snake_re_1.sub(r'\1_\2', key)
     return snake_re_2.sub(r'\1_\2', s1).lower().replace('__', '_')
+
+
+def rename_columns(columns):
+    return [camel2snake(renames.get(col, col)) for col in columns]
 
 
 def write_fits_to_hdf5(
@@ -52,7 +59,7 @@ def write_fits_to_hdf5(
                 array = f[1].data[:]
 
                 # convert all names to snake case
-                array.dtype.names = list(map(camel2snake, array.dtype.names))
+                array.dtype.names = rename_columns(array.dtype.names)
 
                 # add columns with theta in degrees
                 for in_col, out_col in zip(theta_columns, theta_deg_columns):
