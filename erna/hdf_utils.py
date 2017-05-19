@@ -7,6 +7,7 @@ from fact.io import append_to_h5py, initialize_h5py
 from fact.instrument import camera_distance_mm_to_deg
 import re
 from numpy.lib import recfunctions
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ snake_re_1 = re.compile('(.)([A-Z][a-z]+)')
 snake_re_2 = re.compile('([a-z0-9])([A-Z])')
 
 
-renames = {'RUNID': 'run_id'}
+renames = {'RUNID': 'run_id', 'COGx': 'cog_x', 'COGy': 'cog_y'}
 
 
 def camel2snake(key):
@@ -58,7 +59,7 @@ def write_fits_to_hdf5(
                 if len(f) < 2:
                     continue
 
-                array = f[1].data[:]
+                array = np.array(f[1].data[:])
 
                 # convert all names to snake case
                 array.dtype.names = rename_columns(array.dtype.names)
@@ -75,7 +76,7 @@ def write_fits_to_hdf5(
                 if not initialized:
                     initialize_h5py(
                         hdf_file,
-                        array.data.dtype,
+                        array.dtype,
                         key=key,
                         compression=compression,
                     )
