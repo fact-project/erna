@@ -69,7 +69,7 @@ def write_fits_to_hdf5(
                         recfunctions.append_fields(
                             array,
                             out_col,
-                            camera_distance_mm_to_deg(in_col)
+                            camera_distance_mm_to_deg(array[in_col])
                         )
 
                 if not initialized:
