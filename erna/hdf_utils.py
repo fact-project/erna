@@ -31,7 +31,9 @@ renames = {'RUNID': 'run_id'}
 def camel2snake(key):
     ''' see http://stackoverflow.com/a/1176023/3838691 '''
     s1 = snake_re_1.sub(r'\1_\2', key)
-    return snake_re_2.sub(r'\1_\2', s1).lower().replace('__', '_')
+    s2 = snake_re_2.sub(r'\1_\2', s1).lower().replace('__', '_')
+    s3 = re.sub('^m_', '', s2)
+    return s3.replace('.f_', '_')
 
 
 def rename_columns(columns):
