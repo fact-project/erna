@@ -5,7 +5,7 @@ import dateutil.parser
 import sys
 import os
 import numpy as np
-from fact.io import append_to_h5py, initialize_h5py
+from fact.io import to_h5py
 
 from ..automatic_processing.database import (
     database, Job, RawDataFile, Jar, XML, ProcessingState
@@ -113,36 +113,24 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
         len(jobs), jobs.ontime.sum()/3600
     ))
 
-    runs_array = np.core.rec.fromarrays(
-        [
-            successful_jobs['night'],
-            successful_jobs['run_id'],
-            successful_jobs['source'].values.astype('S'),
-            successful_jobs['ontime'],
-            successful_jobs['zenith'],
-            successful_jobs['run_start'].values.astype('S'),
-            successful_jobs['run_stop'].values.astype('S'),
-        ],
-        names=(
-            'night',
-            'run_id',
-            'source',
-            'ontime',
-            'zenith',
-            'run_start',
-            'run_stop',
-        )
-    )
-
     if os.path.isfile(outputfile):
         a = input('Outputfile exists! Overwrite? [y, N]: ')
         if not a.lower().startswith('y'):
             sys.exit()
 
-    with h5py.File(outputfile, 'w') as f:
-        initialize_h5py(f, dtypes=runs_array.dtype, key='runs')
-        append_to_h5py(f, runs_array, key='runs')
+    columns = [
+        'night',
+        'run_id',
+        'source',
+        'ontime',
+        'zenith',
+        'azimuth',
+        'run_start',
+        'run_stop',
+    ]
+    to_h5py(outputfile, successful_jobs[columns], key='runs', mode='w')
 
+    with h5py.File(outputfile, 'a') as f:
         f['runs'].attrs['datacheck'] = ' AND '.join(conditions)
 
     write_fits_to_hdf5(outputfile, successful_jobs.result_file, mode='a')

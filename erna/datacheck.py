@@ -1,6 +1,4 @@
-from .utils import load_config
 import pandas as pd
-
 
 default_columns = (
     'fNight AS night',
@@ -8,6 +6,7 @@ default_columns = (
     'fSourceName AS source',
     'TIMESTAMPDIFF(SECOND, fRunStart, fRunStop) * fEffectiveOn AS ontime',
     'fZenithDistanceMean AS zenith',
+    'fAzimuthMean AS azimuth',
     'fRunStart AS run_start',
     'fRunStop AS run_stop',
 )
