@@ -37,12 +37,11 @@ def run(jar, xml, df, num, output_dest, db_path=None):
         except subprocess.CalledProcessError as e:
             logger.error("Fact tools returned an error:")
             logger.error(e)
-            if os.path.exists(output_path):
-                logger.error("Trying to collect output files")
-            else:
-                return "fact-tools error"
+            return "fact-tools error"
 
-        copyfile(output_path, os.path.join(output_dest, output_filename))
+        if not os.path.exists(tmp_output_path):
+            logger.error("Not output generated, returning no results")
+            return "fact-tools generated no output"
 
         #try to read nans else return empty frame
         return ft_json_to_df(input_path)
