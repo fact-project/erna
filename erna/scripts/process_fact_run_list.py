@@ -21,7 +21,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
     for num, indices in enumerate(split_indices):
         df = df_mapping[indices.min(): indices.max()]
 
-        job = Job(stream_runner.run, [jar, xml, df, num, db_path],
+        job = Job(stream_runner.run, [jar, xml, df, db_path],
                   queue=queue, walltime=walltime, engine=engine,
                   mem_free='{}mb'.format(vmem))
         jobs.append(job)
