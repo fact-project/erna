@@ -19,9 +19,10 @@ logger = logging.getLogger(__name__)
 def make_jobs(jar, xml, data_paths, drs_paths,
               engine, queue, vmem, num_jobs, walltime, output_path=None):
     jobs = []
-    # create job objects
+
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
+
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
         if output_path:
