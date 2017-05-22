@@ -4,6 +4,7 @@ import logging
 from sqlalchemy import create_engine
 import grp
 import pwd
+import subprocess
 from datetime import date
 
 log = logging.getLogger(__name__)
@@ -62,3 +63,45 @@ def night_int_to_date(night):
 def date_to_night_int(night):
     ''' convert a date or datetime instance to the crazy FACT int '''
     return 10000 * night.year + 100 * night.month + night.day
+
+
+def assamble_facttools_call(jar, xml, input_path, output_path, db_path=None):
+    ''' Assemble the call for fact-tools with the given combinations
+    of jar, xml, input_path and output_path. The db_path is optional
+    for the case where a db_file is needed
+    '''
+    call = [
+            'java',
+            '-XX:MaxHeapSize=1024m',
+            '-XX:InitialHeapSize=512m',
+            '-XX:CompressedClassSpaceSize=64m',
+            '-XX:MaxMetaspaceSize=128m',
+            '-XX:+UseConcMarkSweepGC',
+            '-XX:+UseParNewGC',
+            '-jar',
+            jar,
+            xml,
+            '-Dinput=file:{}'.format(input_path),
+            '-Doutput=file:{}'.format(output_path),
+            '-Ddb=file:{}'.format(db_path),
+    ]
+    return call
+
+
+def check_environment_on_node():
+    ''' Check memory, java executalbe and version'''
+    subprocess.check_call(['which', 'java'])
+    subprocess.check_call(['free', '-m'])
+    subprocess.check_call(['java', '-Xmx512m', '-version'])
+
+
+def generate_paths_on_node(name, num, output_directory):
+    ''' Returns the filenames for the temporary input and outputfiles
+    on the computing node ''
+
+    input_filename = "input_{}_{}.json".format(name, num)
+    output_filename = "output_{}_{}.json".format(name, num)
+
+    input_path = os.path.join(output_directory, input_filename)
+    output_path = os.path.join(output_directory, output_filename)
+    return input_path, output_path

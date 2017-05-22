@@ -5,6 +5,12 @@ import json
 import logging
 import tempfile
 from erna import ft_json_to_df
+from erna.utils import (
+    assamble_facttools_call,
+    check_environment_on_node,
+    generate_paths_on_node
+    )
+
 
 def run(jar, xml, df, num, db_path=None):
     '''
@@ -32,33 +38,12 @@ def run(jar, xml, df, num, db_path=None):
 
     with tempfile.TemporaryDirectory() as output_directory:
         name, _ = os.path.splitext(os.path.basename(xml))
-        input_filename = "input_{}_{}.json".format(name ,num)
-        output_filename = "output_{}_{}.json".format(name, num)
+        input_path, output_path = generate_paths_on_node(name, num, output_directory)
 
-        input_path = os.path.join(output_directory, input_filename)
-        output_path = os.path.join(output_directory, output_filename)
+        df.to_json(input_path, orient='records', date_format='epoch')
+        call = assamble_facttools_call(jar, xml, input_path, output_path, db_path)
 
-        # logger.info("Writing {} entries to json file  {}".format(len(df), filename))
-        df.to_json(input_path, orient='records', date_format='epoch' )
-        call = [
-                'java',
-                '-XX:MaxHeapSize=1024m',
-                '-XX:InitialHeapSize=512m',
-                '-XX:CompressedClassSpaceSize=64m',
-                '-XX:MaxMetaspaceSize=128m',
-                '-XX:+UseConcMarkSweepGC',
-                '-XX:+UseParNewGC',
-                '-jar',
-                jar,
-                xml,
-                '-Dinput=file:{}'.format(input_path),
-                '-Doutput=file:{}'.format(output_path),
-                '-Ddb=file:{}'.format(db_path),
-        ]
-
-        subprocess.check_call(['which', 'java'])
-        subprocess.check_call(['free', '-m'])
-        subprocess.check_call(['java', '-Xmx512m', '-version'])
+        check_environment_on_node()
 
         logger.info("Calling fact-tools with call: {}".format(call))
         try:
