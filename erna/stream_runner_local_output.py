@@ -12,7 +12,7 @@ from erna.utils import (
     )
 
 
-def run(jar, xml, df, num, output_dest, db_path=None):
+def run(jar, xml, input_files_df, output_path, db_path=None):
     '''
     This is a version of ernas stream runner that will be executed on the cluster,
     but writes its results directly to disk without sending them

@@ -11,7 +11,7 @@ from erna.utils import (
     )
 
 
-def run(jar, xml, df, num, db_path=None):
+def run(jar, xml, input_files_df, db_path=None):
     '''
     This is what will be executed on the cluster
     '''
