@@ -93,15 +93,3 @@ def check_environment_on_node():
     subprocess.check_call(['which', 'java'])
     subprocess.check_call(['free', '-m'])
     subprocess.check_call(['java', '-Xmx512m', '-version'])
-
-
-def generate_paths_on_node(name, num, output_directory):
-    ''' Returns the filenames for the temporary input and outputfiles
-    on the computing node ''
-
-    input_filename = "input_{}_{}.json".format(name, num)
-    output_filename = "output_{}_{}.json".format(name, num)
-
-    input_path = os.path.join(output_directory, input_filename)
-    output_path = os.path.join(output_directory, output_filename)
-    return input_path, output_path
