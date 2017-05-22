@@ -65,7 +65,7 @@ def date_to_night_int(night):
     return 10000 * night.year + 100 * night.month + night.day
 
 
-def assamble_facttools_call(jar, xml, input_path, output_path, db_path=None):
+def assemble_facttools_call(jar, xml, input_path, output_path, db_path=None):
     ''' Assemble the call for fact-tools with the given combinations
     of jar, xml, input_path and output_path. The db_path is optional
     for the case where a db_file is needed
