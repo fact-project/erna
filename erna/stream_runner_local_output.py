@@ -43,5 +43,11 @@ def run(jar, xml, df, num, output_dest, db_path=None):
             logger.error("Not output generated, returning no results")
             return "fact-tools generated no output"
 
-        #try to read nans else return empty frame
-        return ft_json_to_df(input_path)
+        output_path = os.path.join(
+                            output_dest,
+                            os.path.basename(tmp_output_path)
+                            )
+        copyfile(tmp_output_path, output_path)
+        df['output_path'] = output_path
+
+        return df
