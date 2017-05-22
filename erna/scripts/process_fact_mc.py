@@ -5,7 +5,7 @@ import pandas as pd
 from os import path
 
 import erna
-from erna import stream_runner
+from erna import stream_runner as stream_runner_std
 from erna import stream_runner_local_output as stream_runner_local
 
 import gridmap
@@ -30,8 +30,11 @@ def make_jobs(jar, xml, data_paths, drs_paths,
             file_name += "_{}.json".format(num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
+            stream_runner = stream_runner_local
         else:
             run = [jar, xml, df]
+            stream_runner = stream_runner_std
+
         jobs.append(
             Job(stream_runner.run,
                 run,
