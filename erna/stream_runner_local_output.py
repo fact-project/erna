@@ -7,9 +7,8 @@ import tempfile
 from shutil import copyfile
 from erna import ft_json_to_df
 from erna.utils import (
-    assamble_facttools_call,
-    check_environment_on_node,
-    generate_paths_on_node
+    assemble_facttools_call,
+    check_environment_on_node
     )
 
 
@@ -23,8 +22,8 @@ def run(jar, xml, df, num, output_dest, db_path=None):
     logger.info("stream runner has been started.")
 
     with tempfile.TemporaryDirectory() as output_directory:
-        name, _ = os.path.splitext(os.path.basename(xml))
-        input_path, tmp_output_path = generate_paths_on_node(name, num, output_directory)
+        input_path = os.path.join(output_directory, "input.json")
+        tmp_output_path = os.path.join(output_directory, "output.json")
 
         df.to_json(input_path, orient='records', date_format='epoch')
         call = assamble_facttools_call(jar, xml, input_path, tmp_output_path, db_path)
