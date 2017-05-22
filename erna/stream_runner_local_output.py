@@ -42,11 +42,7 @@ def run(jar, xml, input_files_df, output_path, db_path=None):
             logger.error("Not output generated, returning no results")
             return "fact-tools generated no output"
 
-        output_path = os.path.join(
-                            output_dest,
-                            os.path.basename(tmp_output_path)
-                            )
         copyfile(tmp_output_path, output_path)
-        df['output_path'] = output_path
+        input_files_df['output_path'] = output_path
 
-        return df
+        return input_files_df
