@@ -22,8 +22,8 @@ def run(jar, xml, input_files_df, db_path=None):
         input_path = os.path.join(output_directory, "input.json")
         output_path = os.path.join(output_directory, "output.json")
 
-        df.to_json(input_path, orient='records', date_format='epoch')
-        call = assamble_facttools_call(jar, xml, input_path, output_path, db_path)
+        input_files_df.to_json(input_path, orient='records', date_format='epoch')
+        call = assemble_facttools_call(jar, xml, input_path, output_path, db_path)
 
         check_environment_on_node()
 
