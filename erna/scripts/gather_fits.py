@@ -28,8 +28,9 @@ from ..datacheck_conditions import conditions as datacheck_conditions
 @click.option('--end', '-e', help='Last night to get data from')
 @click.option('--source', default='Crab')
 @click.option('--datacheck', help='The name of a condition set for the datacheck')
+@click.option('--runlist', help='A csv file with columns night, run_id, the runs to get')
 @click.option('-r', '--run-type', default='data', help='The runtype to consider')
-def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck, run_type):
+def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck, runlist, run_type):
     '''
     Gather the fits outputfiles of the erna automatic processing into a hdf5 file.
     The hdf5 file is written using h5py and contains the level 2 features in the
@@ -46,23 +47,40 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     database.init(**config['processing_database'])
     database.connect()
 
-    if datacheck is not None and datacheck not in datacheck_conditions:
-        print('Conditions must be any of: ')
-        for key in datacheck_conditions:
-            print(key)
+    if datacheck and runlist:
+        print('Only one of datacheck or runlist allowed')
         sys.exit(1)
+
+    if datacheck is not None:
+        if not (datacheck in datacheck_conditions or os.path.isfile(datacheck)):
+            print('Conditions must be a file or any of: ')
+            for key in datacheck_conditions:
+                print(key)
+            sys.exit(1)
 
     processing_db = create_mysql_engine(**config['processing_database'])
     fact_db = create_mysql_engine(**config['fact_database'])
 
-    jar = (
-        Jar
-        .select(Jar.id, Jar.version)
-        .where(Jar.version == ft_version)
-        .get()
-    )
+    try:
+        jar = (
+            Jar
+            .select(Jar.id, Jar.version)
+            .where(Jar.version == ft_version)
+            .get()
+        )
+    except Jar.DoesNotExist:
+        print('FACT-Tools version not found, avaliable jars are')
+        for jar in Jar.select(Jar.version):
+            print(jar.version)
+        sys.exit(1)
 
-    xml = XML.get(jar=jar, name=xml_name)
+    try:
+        xml = XML.get(jar=jar, name=xml_name)
+    except XML.DoesNotExist:
+        print('XML not found, avaliable xmls are:')
+        for xml in XML.select(XML.name).join(Jar).where(Jar.version == ft_version):
+            print(xml.name)
+        sys.exit(1)
 
     job_query = (
         Job
@@ -89,23 +107,52 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     sql, params = job_query.sql()
 
     jobs = pd.read_sql_query(sql, processing_db, params=params)
-    conditions = [
-        'fNight <= {}'.format(jobs.night.max()),
-        'fNight >= {}'.format(jobs.night.min()),
-        'fSourceName = "{}"'.format(source),
-    ]
+    if runlist is None:
+        conditions = [
+            'fNight <= {}'.format(jobs.night.max()),
+            'fNight >= {}'.format(jobs.night.min()),
+            'fSourceName = "{}"'.format(source),
+        ]
+    else:
+        wanted_runs = pd.read_csv(runlist)
+        conditions = [
+            'fNight <= {}'.format(wanted_runs.night.max()),
+            'fNight >= {}'.format(wanted_runs.night.min()),
+        ]
+
     if datacheck is not None:
-        conditions.extend(datacheck_conditions[datacheck])
+        if os.path.isfile(datacheck):
+            with open(datacheck, 'r') as f:
+                conditions.extend(f.read().splitlines())
+        else:
+            conditions.extend(datacheck_conditions[datacheck])
 
     runs = get_runs(fact_db, conditions=conditions).set_index(['night', 'run_id'])
     jobs = jobs.join(runs, on=['night', 'run_id'], how='inner')
-    successful_jobs = jobs.query('status == "success"')
 
+    if runlist is not None:
+        jobs = wanted_runs.join(
+            jobs.set_index(['night', 'run_id']),
+            on=['night', 'run_id'],
+            how='inner',
+        )
+
+    successful_jobs = jobs.query('status == "success"')
     total = len(jobs)
     successful = len(successful_jobs)
+
+    if runlist is not None:
+        if len(wanted_runs) != successful:
+            click.confirm(
+                'Only {} of {} runs available, continue?:'.format(
+                    total, len(wanted_runs)
+                ),
+                abort=True,
+            )
+
     if total != successful:
         click.confirm(
-            'Only {} of {} jobs finished, continue? [y, N] :'.format(successful, total),
+            'Only {} of {} jobs finished, continue?'.format(successful, total),
             abort=True,
         )
 
