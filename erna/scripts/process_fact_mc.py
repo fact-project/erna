@@ -6,6 +6,7 @@ from os import path
 
 import erna
 from erna import stream_runner
+from erna import stream_runner_local_output as stream_runner_local
 
 import gridmap
 from gridmap import Job
@@ -15,15 +16,30 @@ import glob
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, walltime):
+def make_jobs(jar, xml, data_paths, drs_paths,
+              engine, queue, vmem, num_jobs, walltime, output_path=None):
     jobs = []
     # create job objects
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
-        df = pd.DataFrame({'data_path':data, 'drs_path':drs})
-        job = Job(stream_runner.run, [jar, xml, df, num], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
-        jobs.append(job)
+        df = pd.DataFrame({'data_path': data, 'drs_path': drs})
+        if output_path:
+            file_name, _ = path.splitext(path.basename(output_path))
+            file_name += "_{}.json".format(num)
+            out_path = path.dirname(output_path)
+            run = [jar, xml, df, path.join(out_path, file_name)]
+        else:
+            run = [jar, xml, df]
+        jobs.append(
+            Job(stream_runner.run,
+                run,
+                queue=queue,
+                walltime=walltime,
+                engine=engine,
+                mem_free='{}mb'.format(vmem)
+                )
+            )
 
     avg_num_files = np.mean([len(part) for part in data_partitions])
     logger.info("Created {} jobs with {} files each.".format(len(jobs), avg_num_files))
@@ -44,7 +60,14 @@ def make_jobs(jar, xml, data_paths, drs_paths,  engine, queue, vmem, num_jobs, w
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.',show_default=True)
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
+@click.option('--local_output', default=False,is_flag=True,
+              help='Flag indicating whether jobs write their output localy'
+              + 'to disk without gathering everything in the mother'
+              + 'process. In this case the output file only contains a'
+              + 'summary oth the processed jobs. The data ouput will be'
+              + 'inseparate files',
+              show_default=True)
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -59,7 +82,12 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
+    if local_output:
+        name, _ = path.splitext(path.basename(out))
+        local_output_dir = path.join(path.dirname(out), name)
+        erna.ensure_output(local_output_dir)
     erna.ensure_output(out)
+
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
     drspath = erna.mc_drs_file()
@@ -87,7 +115,18 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     mc_paths_array = np.array(files)
     drs_paths_array = np.repeat(np.array(drspath), len(mc_paths_array))
 
-    job_list = make_jobs(jarpath, xmlpath, mc_paths_array, drs_paths_array,  engine, queue, vmem, num_jobs, walltime)
+    if local_output:
+        job_list = make_jobs(
+                        jarpath, xmlpath, mc_paths_array,
+                        drs_paths_array,  engine, queue,
+                        vmem, num_jobs, walltime, output_path=local_output_dir
+                        )
+    else:
+        job_list = make_jobs(
+                        jarpath, xmlpath, mc_paths_array,
+                        drs_paths_array,  engine, queue,
+                        vmem, num_jobs, walltime
+                        )
 
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out)
