@@ -22,6 +22,10 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
+    if output_path:
+        logger.info("Using stream runner für local output")
+    else:
+        logger.debug("Using std stream runner gathering output from all nodes")
 
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
