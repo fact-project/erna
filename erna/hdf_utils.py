@@ -65,13 +65,20 @@ def write_fits_to_hdf5(
                 array.dtype.names = rename_columns(array.dtype.names)
 
                 # add columns with theta in degrees
+                arrays = []
+                names = []
                 for in_col, out_col in zip(theta_columns, theta_deg_columns):
                     if in_col in array.dtype.names:
-                        recfunctions.append_fields(
-                            array,
-                            out_col,
-                            camera_distance_mm_to_deg(array[in_col])
-                        )
+                        arrays.append(camera_distance_mm_to_deg(array[in_col]))
+                        names.append(out_col)
+
+                if len(names) > 0:
+                    array = recfunctions.append_fields(
+                        array,
+                        names=names,
+                        data=arrays,
+                        usemask=False,
+                    )
 
                 if not initialized:
                     initialize_h5py(
