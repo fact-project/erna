@@ -10,19 +10,24 @@ from gridmap import Job
 
 import erna
 from erna import stream_runner
+from erna import stream_runner_local_output
+
 import erna.datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_runs_per_bunch, walltime):
+def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, vmem, num_runs_per_bunch, walltime, local=False):
     jobs = []
     # create job objects
     df_mapping["bunch_index"]= np.arange(len(df_mapping)) // num_runs_per_bunch
     for num, df in df_mapping.groupby("bunch_index"):
         df=df.copy()
         df["bunch_index"] = num
-        job = Job(stream_runner.run, [jar, xml, df, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
+        if local:
+            job = Job(stream_runner_local_output.run, [jar, xml, df, output_directory, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
+        else:
+            job = Job(stream_runner.run, [jar, xml, df, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         jobs.append(job)
 
     return jobs
@@ -47,8 +52,15 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='std')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
+@click.option('--local_output', default=False,is_flag=True,
+              help='Flag indicating whether jobs write their output localy'
+              + 'to disk without gathering everything in the mother'
+              + 'process. In this case the output file only contains a'
+              + 'summary oth the processed jobs. The data ouput will be'
+              + 'inseparate files',
+              show_default=True)
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -77,7 +89,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-    job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime)
+    job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime, local_output)
     job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
     erna.collect_output(job_outputs, out, df_runs)
 
