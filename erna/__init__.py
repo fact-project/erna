@@ -21,6 +21,18 @@ def build_path(row, path_to_data, extension):
     return os.path.join(path_to_data, year, month, day, row.filename + extension)
 
 
+def build_path_data(row, path_to_data):
+    night = str(row.NIGHT)
+    year = night[0:4]
+    month = night[4:6]
+    day = night[6:8]
+    res_path = os.path.join(path_to_data, year, month, day, row.filename + "fits.fz")
+    if not os.path.exists(res_path):
+        res_path = os.path.join(path_to_data, year, month, day, row.filename + "fits.gz")
+        if not os.path.exists(res_path):
+            raise FileNotFoundError("The given datafile was not fount")
+    return res_path
+
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
 
@@ -165,8 +177,8 @@ def load(
     data["filename"] = build_filename(data.NIGHT, data.RUNID)
     drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
 
-    # write path TODO: file ending? is everything in fz?
-    data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
+    # write path TODO: file ending? is everything in fz? #TODO in work mbulinski
+    data["path"] = data.apply(build_path_data, axis=1, path_to_data=path_to_data)
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
     # reindex the drs table using the index of the data table.
