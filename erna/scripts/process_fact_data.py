@@ -24,8 +24,9 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
     for num, df in df_mapping.groupby("bunch_index"):
         df=df.copy()
         df["bunch_index"] = num
+        file = output_directory+"/output"+str(num)+".bin"
         if local:
-            job = Job(stream_runner_local_output.run, [jar, xml, df, output_directory, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
+            job = Job(stream_runner_local_output.run, [jar, xml, df, file, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         else:
             job = Job(stream_runner.run, [jar, xml, df, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         jobs.append(job)
@@ -49,7 +50,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.option('--log_level', type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
-@click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='std')
+@click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='standard')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.option('--local_output', default=False,is_flag=True,
