@@ -30,7 +30,7 @@ def build_path_data(row, path_to_data):
     if not os.path.exists(res_path):
         res_path = os.path.join(path_to_data, year, month, day, row.filename + "fits.gz")
         if not os.path.exists(res_path):
-            raise FileNotFoundError("The given datafile was not fount")
+            raise FileNotFoundError("The given datafile was not found: "+res_path)
     return res_path
 
 def build_filename(night, run_id):
