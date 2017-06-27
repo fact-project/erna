@@ -60,7 +60,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
               + 'summary oth the processed jobs. The data ouput will be'
               + 'inseparate files',
               show_default=True)
-@click.password_option(help='password to read from the always awesome RunDB')
+@click.password_option(help='password to read from the always awesome RunDB', confirmation_prompt=False)
 def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, password):
 
     level=logging.INFO
@@ -80,7 +80,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     erna.ensure_output(out)
     db_path = os.path.abspath(db)
     output_directory = os.path.dirname(outpath)
-    #create dir if it doesnt exist
+    #create dir if it doesnt exist #TODO check: should already been done by enra.ensure_output
     os.makedirs(output_directory, exist_ok=True)
     logger.info("Writing output data  to {}".format(out))
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
@@ -92,7 +92,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
 
     job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime, local_output)
     job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
-    erna.collect_output(job_outputs, out, df_runs)
+    if not local_output:
+        erna.collect_output(job_outputs, out, df_runs)
 
 if __name__ == "__main__":
     main()
