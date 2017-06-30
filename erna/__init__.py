@@ -26,9 +26,9 @@ def build_path_data(row, path_to_data):
     year = night[0:4]
     month = night[4:6]
     day = night[6:8]
-    res_path = os.path.join(path_to_data, year, month, day, row.filename + "fits.fz")
+    res_path = os.path.join(path_to_data, year, month, day, row.filename + ".fits.fz")
     if not os.path.exists(res_path):
-        res_path = os.path.join(path_to_data, year, month, day, row.filename + "fits.gz")
+        res_path = os.path.join(path_to_data, year, month, day, row.filename + ".fits.gz")
         if not os.path.exists(res_path):
             raise FileNotFoundError("The given datafile was not found: "+res_path)
     return res_path
