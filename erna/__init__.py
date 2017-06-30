@@ -18,7 +18,10 @@ def build_path(row, path_to_data, extension):
     year = night[0:4]
     month = night[4:6]
     day = night[6:8]
-    return os.path.join(path_to_data, year, month, day, row.filename + extension)
+    res = os.path.join(path_to_data, year, month, day, row.filename + extension)
+    if not os.path.exists(res_path):
+        return np.nan
+    return res
 
 
 def build_path_data(row, path_to_data):
