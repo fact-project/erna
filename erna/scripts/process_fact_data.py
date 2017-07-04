@@ -40,7 +40,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.argument('data_dir', type=click.Path(exists=True, dir_okay=True, file_okay=False, readable=True) )
 @click.argument('jar', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('db', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
+@click.argument('db', type=click.Path(exists=True, dir_okay=True, file_okay=True, readable=True) )
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True) )
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')

@@ -19,7 +19,7 @@ def build_path(row, path_to_data, extension):
     month = night[4:6]
     day = night[6:8]
     res = os.path.join(path_to_data, year, month, day, row.filename + extension)
-    if not os.path.exists(res_path):
+    if not os.path.exists(res):
         return np.nan
     return res
 
@@ -33,7 +33,7 @@ def build_path_data(row, path_to_data):
     if not os.path.exists(res_path):
         res_path = os.path.join(path_to_data, year, month, day, row.filename + ".fits.gz")
         if not os.path.exists(res_path):
-            return numpy.nan
+            return np.nan
             #raise FileNotFoundError("The given datafile was not found: "+res_path)
     return res_path
 
