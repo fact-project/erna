@@ -15,11 +15,26 @@ Dates are given in the usual FACT convention: YYYYMMDD.
 
 Install my fork of pygridmap
 
-    pip install git+https://github.com/mackaiver/gridmap
+    pip install https://github.com/mackaiver/gridmap/archive/master.tar.gz
 
 Then install this via
 
-    pip install git+https://github.com/fact-project/erna
+    pip install https://github.com/fact-project/erna/archive/master.tar.gz
+
+## Config for using gridmap on PhiDo
+
+You need to put this into your `.bashrc`, so erna is configured correctly
+
+```bash
+export ERROR_MAIL_RECIPIENT=<your email address>
+export DRMAA_LIBRARY_PATH="/sl6/sw/projects/fact/pbs-drmaa-1.0.19/pbs_drmaa/libs/libdrmaa.so"
+export DEFAULT_TEMP_DIR="/local/$USER/$PBS_JOBID"
+export USE_MEM_FREE=TRUE
+export SMTP_SERVER="unimail.tu-dortmund.de"
+export ERROR_MAIL_RECIPIENT="your.email@address.com"
+export ERROR_MAIL_SENDER="torque@hpc-main3.phido.physik.tu-dortmund.de"
+export SEND_ERROR_MAIL=TRUE
+```
 
 
 ## execute_data_processing.py
