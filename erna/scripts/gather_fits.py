@@ -170,6 +170,8 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
         'run_id',
         'source',
         'ontime',
+        'right_ascension',
+        'declination',
         'zenith',
         'azimuth',
         'run_start',
