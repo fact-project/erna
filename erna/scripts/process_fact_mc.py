@@ -127,7 +127,6 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     if mcdrs:
         drspath = mcdrs
 
-    #drspath = "/home/mbulinski/mc2.drs.fits.gz"
     logger.info('Using drs file at {}'.format(drspath))
 
     #get data files

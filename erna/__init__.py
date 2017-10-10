@@ -185,13 +185,11 @@ def load(
     data["filename"] = build_filename(data.NIGHT, data.RUNID)
     drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
 
-    # write path TODO: file ending? is everything in fz? #TODO in work mbulinski
+    # write path TODO automaticly figures the out weather it is a gz or fz file
     data["path"] = data.apply(build_path_data, axis=1, path_to_data=path_to_data)
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
     drs_data = drs_data.dropna(subset=["path"])
-    #data.to_csv("data.csv")
-    #drs_data.to_csv("drs.csv")
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
