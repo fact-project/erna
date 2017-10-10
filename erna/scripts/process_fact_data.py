@@ -24,7 +24,8 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
     for num, df in df_mapping.groupby("bunch_index"):
         df=df.copy()
         df["bunch_index"] = num
-        file = output_directory+"/output"+str(num)+".bin"
+        file = output_directory+"/"+df.filenameData[0]+".fits"
+        #print(file, num)
         if local:
             job = Job(stream_runner_local_output.run, [jar, xml, df, file, db_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
         else:
@@ -87,10 +88,11 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     data_conditions=dcc.conditions[conditions]
     df_runs = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
 
-    logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
-    click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime, local_output)
+    logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
+    click.confirm('Do you want to continue processing and start jobs?', abort=True)
+    
     job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
     if not local_output:
         erna.collect_output(job_outputs, out, df_runs)

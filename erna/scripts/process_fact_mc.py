@@ -15,7 +15,22 @@ import glob
 
 logger = logging.getLogger(__name__)
 
-
+import re
+# given a string
+def createFilenameFromFormat(format, basename, num):
+	m = re.search('\%[0-9]?n', '%b_%4n.json')
+	if not m:
+		raise "Missing number placement in format string"
+	numstr = ""
+	if len(m.group(0))==3:
+		numstr = ("%0"+m.group(0)[1]+"i") % num
+	else:
+		numstr = "%i" % num
+	stemp = format.replace(m.group(0), numstr)
+	stemp = format.replace("%b", basename)
+	return stemp
+	
+	
 def make_jobs(jar, xml, data_paths, drs_paths,
               engine, queue, vmem, num_jobs, walltime, output_path=None):
     jobs = []
@@ -31,6 +46,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
         if output_path:
             file_name, _ = path.splitext(path.basename(output_path))
+            #file_name = createFilenameFromFormat("%b_%n.json", file_name, num)
             file_name += "_{}.json".format(num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
@@ -68,14 +84,16 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.',show_default=True)
-@click.option('--local_output', default=False,is_flag=True,
+@click.option('--local_output', default=False, is_flag=True,
               help='Flag indicating whether jobs write their output localy'
               + 'to disk without gathering everything in the mother'
               + 'process. In this case the output file only contains a'
               + 'summary oth the processed jobs. The data ouput will be'
-              + 'inseparate files',
+              + 'in separate files',
               show_default=True)
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output):
+@click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
+@click.option('--mcwildcard', help="Gives the wildward for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -99,13 +117,17 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
     drspath = erna.mc_drs_file()
+    if mcdrs:
+        drspath = mcdrs
+
+    #drspath = "/home/mbulinski/mc2.drs.fits.gz"
     logger.info('Using drs file at {}'.format(drspath))
 
     #get data files
     files=[]
     for folder in tqdm(mc_path):
         # print("Entering folder {}".format(folder))
-        pattern = path.join(folder, '**/*_Events.fit*')
+        pattern = path.join(folder, mcwildcard)
         f = glob.glob(pattern, recursive=True)
         files = files + f
 

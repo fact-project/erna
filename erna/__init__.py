@@ -81,6 +81,10 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     df_returned_data = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
 
+    if len(df_returned_data)==0:
+        logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
+        return
+
     if df_started_runs is not None:
         df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
         total_on_time_in_seconds = df_merged.on_time.sum()
@@ -185,12 +189,18 @@ def load(
     data["path"] = data.apply(build_path_data, axis=1, path_to_data=path_to_data)
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
+    drs_data = drs_data.dropna(subset=["path"])
+    #data.to_csv("data.csv")
+    #drs_data.to_csv("drs.csv")
+
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
     # hence missing rows have to be filled either forward or backwards
     earlier_drs_entries = drs_data.reindex(data.index, method="ffill")
+    earlier_drs_entries = earlier_drs_entries.fillna(axis="index", method="ffill")
     later_drs_entries = drs_data.reindex(data.index, method="backfill")
-
+    later_drs_entries = later_drs_entries.fillna(axis="index", method="ffill")
+    
     # when backfilling the drs obeservations the last rows might be invalid and contain nans.
     # We cannot drop them becasue the tables have to have the same length.
     # in that case simply fill them up.
@@ -209,7 +219,8 @@ def load(
         closest_drs_entries.deltaT,
         data.fOnTime, data.fEffectiveOn,
         data.NIGHT,
-        data.RUNID
+        data.RUNID,
+        data.filename
     ], axis=1, keys=[
         "filename",
         "drs_path",
@@ -219,8 +230,9 @@ def load(
         "effective_on",
         "NIGHT",
         "RUNID",
+        "filenameData"
     ])
-
+    
     mapping = mapping.dropna(how='any')
 
     logger.info("Fetched {} data runs and approx {} drs entries from database where time delta is less than {} minutes".format(len(mapping), mapping['drs_path'].nunique(), timedelta_in_minutes))
