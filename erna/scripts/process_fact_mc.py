@@ -16,9 +16,10 @@ import glob
 logger = logging.getLogger(__name__)
 
 import re
-# given a string
+
+# given a string create a filename
 def createFilenameFromFormat(format, basename, num):
-	m = re.search('\%[0-9]?n', '%b_%4n.json')
+	m = re.search('\%[0-9]?n', format)
 	if not m:
 		raise "Missing number placement in format string"
 	numstr = ""
@@ -32,7 +33,7 @@ def createFilenameFromFormat(format, basename, num):
 	
 	
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, format=None):
     jobs = []
 
     data_partitions = np.array_split(data_paths, num_jobs)
@@ -45,9 +46,12 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
         if output_path:
+            # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
-            #file_name = createFilenameFromFormat("%b_%n.json", file_name, num)
-            file_name += "_{}.json".format(num)
+            if format:
+                file_name = createFilenameFromFormat(format, file_name, num)
+            else:
+                file_name = createFilenameFromFormat("%b_%n.json", file_name, num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
             stream_runner = stream_runner_local
@@ -93,7 +97,10 @@ def make_jobs(jar, xml, data_paths, drs_paths,
               show_default=True)
 @click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.option('--mcwildcard', help="Gives the wildward for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard):
+@click.option('--local_output_format', default=None, help="Give the file format for the local output funktionality."
+              + "%b will replace the out filename and %[1-9]n the given local number."
+              + "Default is: '%b_%n.json'.Only works with option --local_output. ")
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_format):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -149,7 +156,7 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
         job_list = make_jobs(
                         jarpath, xmlpath, mc_paths_array,
                         drs_paths_array,  engine, queue,
-                        vmem, num_jobs, walltime, output_path=local_output_dir
+                        vmem, num_jobs, walltime, output_path=local_output_dir, format=local_output_format
                         )
     else:
         job_list = make_jobs(
