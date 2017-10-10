@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='erna',
-    version='0.4.1',
+    version='0.4.2',
     description='Easy RuN Access. Tools that help to do batch processing of FACT data',
     url='https://github.com/fact-project/erna',
     author='Kai Brügge, Jens Buss, Maximilian Nöthe',
@@ -48,7 +48,6 @@ setup(
             'process_fact_data = erna.scripts.process_fact_data:main',
             'process_fact_data_qsub = erna.scripts.process_fact_data_qsub:main',
             'process_fact_mc = erna.scripts.process_fact_mc:main',
-            'process_fact_mc_local_output = erna.scripts.process_fact_mc_local_output:main',
             'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
             'process_fact_run_list = erna.scripts.process_fact_run_list:main',
             'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
