@@ -44,7 +44,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue, v
 @click.option('--log_level', type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
-@click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='std')
+@click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g standard', default='standard')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.password_option(help='password to read from the always awesome RunDB')

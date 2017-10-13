@@ -25,7 +25,7 @@ def test_drs_path(df, key):
     numRows = len(df)
     mask = np.ones(numRows);
     for i in range(numRows):
-        drspath = fd[key][i]
+        drspath = df[key][i]
         if not os.path.exists(drspath):
             mask[i] = 0
     return df.groupby(mask)
@@ -34,14 +34,14 @@ def test_path_data(df, key):
     numRows = len(df)
     mask = np.ones(numRows);
     for i in range(numRows):
-        datapath = fd[key][i]
+        datapath = df[key][i]
         if not os.path.exists(datapath):
             #check if maybe the datafile is a gz file and not fz
             datapath = datapath[:-3]+".gz"
             if not os.path.exists(datapath):
                 mask[i] = 0
             else: #fix the datapath
-                fd[key][i] = datapath
+                df[key][i] = datapath
 
     return df.groupby(mask)
 
