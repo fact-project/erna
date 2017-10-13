@@ -194,7 +194,7 @@ def load(
     data["filename"] = build_filename(data.NIGHT, data.RUNID)
     drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
 
-    # write path TODO automaticly figures the out weather it is a gz or fz file
+    # write path
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
