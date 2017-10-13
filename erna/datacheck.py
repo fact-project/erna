@@ -9,6 +9,8 @@ default_columns = (
     'fAzimuthMean AS azimuth',
     'fRunStart AS run_start',
     'fRunStop AS run_stop',
+    'RunInfo.fRightAscension AS right_ascension',
+    'RunInfo.fDeclination AS declination',
 )
 
 
