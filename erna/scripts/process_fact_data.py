@@ -67,12 +67,19 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     erna.ensure_output(out)
     db_path = os.path.abspath(db)
     output_directory = os.path.dirname(outpath)
-    #create dir if it doesnt exist
+    # create dir if it doesnt exist
     os.makedirs(output_directory, exist_ok=True)
     logger.info("Writing output data  to {}".format(out))
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
     data_conditions=dcc.conditions[conditions]
     df_runs = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
+    
+    # check for missing data and fix possible wrong file extension (.fz->.gz)
+    groups = erna.test_data_path(df_runs, "data_path").groups
+    df_runs = groups[1]
+    missing_data_df = groups[0]
+    
+    logger.warn("Missing {} dataruns due to missing datafiles".format(len(missing_data_df)))
 
     logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
     click.confirm('Do you want to continue processing and start jobs?', abort=True)

@@ -33,7 +33,7 @@ def createFilenameFromFormat(format, basename, num):
 	
 	
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None, format=None):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, format="%b_%n.json"):
     jobs = []
 
     data_partitions = np.array_split(data_paths, num_jobs)
@@ -48,10 +48,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
-            if format:
-                file_name = createFilenameFromFormat(format, file_name, num)
-            else:
-                file_name = createFilenameFromFormat("%b_%n.json", file_name, num)
+            file_name = createFilenameFromFormat(format, file_name, num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
             stream_runner = stream_runner_local
@@ -97,7 +94,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
               show_default=True)
 @click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.option('--mcwildcard', help="Gives the wildward for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
-@click.option('--local_output_format', default=None, help="Give the file format for the local output funktionality."
+@click.option('--local_output_format', default="%b_%n.json", help="Give the file format for the local output funktionality."
               + "%b will replace the out filename and %[1-9]n the given local number."
               + "Default is: '%b_%n.json'.Only works with option --local_output. ")
 def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_format):

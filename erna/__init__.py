@@ -19,23 +19,31 @@ def build_path(row, path_to_data, extension):
     month = night[4:6]
     day = night[6:8]
     res = os.path.join(path_to_data, year, month, day, row.filename + extension)
-    if not os.path.exists(res):
-        return np.nan
     return res
 
+def test_drs_path(df, key):
+    numRows = len(df)
+    mask = np.ones(numRows);
+    for i in range(numRows):
+        drspath = fd[key][i]
+        if not os.path.exists(drspath):
+            mask[i] = 0
+    return df.groupby(mask)
+    
+def test_path_data(df, key):
+    numRows = len(df)
+    mask = np.ones(numRows);
+    for i in range(numRows):
+        datapath = fd[key][i]
+        if not os.path.exists(datapath):
+            #check if maybe the datafile is a gz file and not fz
+            datapath = datapath[:-3]+".gz"
+            if not os.path.exists(datapath):
+                mask[i] = 0
+            else: #fix the datapath
+                fd[key][i] = datapath
 
-def build_path_data(row, path_to_data):
-    night = str(row.NIGHT)
-    year = night[0:4]
-    month = night[4:6]
-    day = night[6:8]
-    res_path = os.path.join(path_to_data, year, month, day, row.filename + ".fits.fz")
-    if not os.path.exists(res_path):
-        res_path = os.path.join(path_to_data, year, month, day, row.filename + ".fits.gz")
-        if not os.path.exists(res_path):
-            return np.nan
-            #raise FileNotFoundError("The given datafile was not found: "+res_path)
-    return res_path
+    return df.groupby(mask)
 
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
@@ -186,10 +194,10 @@ def load(
     drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
 
     # write path TODO automaticly figures the out weather it is a gz or fz file
-    data["path"] = data.apply(build_path_data, axis=1, path_to_data=path_to_data)
+    data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
-    drs_data = drs_data.dropna(subset=["path"])
+    drs_data = test_drs_path(drs_data, "path").groups[1]
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
@@ -218,7 +226,6 @@ def load(
         data.fOnTime, data.fEffectiveOn,
         data.NIGHT,
         data.RUNID,
-        data.filename
     ], axis=1, keys=[
         "filename",
         "drs_path",
@@ -228,7 +235,6 @@ def load(
         "effective_on",
         "NIGHT",
         "RUNID",
-        "filenameData"
     ])
     
     mapping = mapping.dropna(how='any')
