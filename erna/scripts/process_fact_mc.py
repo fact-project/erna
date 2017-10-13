@@ -18,22 +18,29 @@ logger = logging.getLogger(__name__)
 import re
 
 # given a string create a filename
-def createFilenameFromFormat(format, basename, num):
-	m = re.search('\%[0-9]?n', format)
-	if not m:
-		raise "Missing number placement in format string"
-	numstr = ""
-	if len(m.group(0))==3:
-		numstr = ("%0"+m.group(0)[1]+"i") % num
-	else:
-		numstr = "%i" % num
-	stemp = format.replace(m.group(0), numstr)
-	stemp = stemp.replace("%b", basename)
-	return stemp
-	
+def create_filename_from_format(filename_format, basename, num):
+    """
+    Given a special format string, create a filename_format with the basename and a given number.
+    %b is replaced with the basename and is optional
+    %[0-9]?n is replaced with the number and must be supplied the number given will pad the given number with zeros
+    
+    Exp: create_filename_from_format("%b_%4n.fits", "test", 45)->"test_0045.fits"
+    """
+    m = re.search('\%[0-9]?n', filename_format)
+    if not m:
+        raise "Missing number placement in format string"
+    numstr = ""
+    if len(m.group(0))==3:
+        numstr = ("%0"+m.group(0)[1]+"i") % num
+    else:
+        numstr = "%i" % num
+    stemp = filename_format.replace(m.group(0), numstr)
+    stemp = stemp.replace("%b", basename)
+    return stemp
+
 	
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None, format="%b_%n.json"):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, filename_format="%b_%n.json"):
     jobs = []
 
     data_partitions = np.array_split(data_paths, num_jobs)
@@ -48,7 +55,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
-            file_name = createFilenameFromFormat(format, file_name, num)
+            file_name = createFilenameFromFormat(filename_format, file_name, num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
             stream_runner = stream_runner_local
@@ -152,7 +159,7 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
         job_list = make_jobs(
                         jarpath, xmlpath, mc_paths_array,
                         drs_paths_array,  engine, queue,
-                        vmem, num_jobs, walltime, output_path=local_output_dir, format=local_output_format
+                        vmem, num_jobs, walltime, output_path=local_output_dir, filename_format=local_output_format
                         )
     else:
         job_list = make_jobs(

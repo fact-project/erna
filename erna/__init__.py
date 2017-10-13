@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 def build_path(row, path_to_data, extension):
+    """
+    builds a path to the fact data given the night, extension and filename
+    """
     night = str(row.NIGHT)
     year = night[0:4]
     month = night[4:6]
@@ -22,28 +25,26 @@ def build_path(row, path_to_data, extension):
     return res
 
 def test_drs_path(df, key):
-    numRows = len(df)
-    mask = np.ones(numRows);
-    for i in range(numRows):
-        drspath = df[key][i]
-        if not os.path.exists(drspath):
-            mask[i] = 0
-    return df.groupby(mask)
+    """
+    Test if the given drs paths in the key are present
+    """
+    mask = df[key].apply(os.path.exists)
+    df['drs_file_exists'] = mask
     
-def test_path_data(df, key):
-    numRows = len(df)
-    mask = np.ones(numRows);
-    for i in range(numRows):
-        datapath = df[key][i]
-        if not os.path.exists(datapath):
-            #check if maybe the datafile is a gz file and not fz
-            datapath = datapath[:-3]+".gz"
-            if not os.path.exists(datapath):
-                mask[i] = 0
-            else: #fix the datapath
-                df.iloc[i, df.columns.get_loc(key)] = datapath
+    return df
 
-    return df.groupby(mask)
+
+def test_data_path(df, key):
+    """
+    Test the given data paths in key if they exists. It tests for
+    both possible fileextensions [.fz, .gz] and corrects if necessary.
+    """
+    mask = df[key].apply(os.path.exists)
+    df['data_file_exists'] = mask
+    df.loc[mask, key] = df.loc[mask, key].str.replace('.fz', '.gz')
+    df.loc[mask, 'file_exists'] = df.loc[mask, key].apply(os.path.exists)
+
+    return df
 
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
@@ -197,7 +198,9 @@ def load(
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
-    drs_data = test_drs_path(drs_data, "path").get_group(1)
+    #remove all none existing drs files
+    drs_data = test_drs_path(drs_data, "path")
+    drs_data = drs_data[drs_data['drs_data_exists']]
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.

@@ -76,10 +76,10 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     
     # check for missing data and fix possible wrong file extension (.fz->.gz)
     df = erna.test_path_data(df_runs, "data_path")
-    df_runs = df.get_group(1)
-    missing_data_df = df.get_group(0)
+    df_runs = df[df['data_runs_exists']]
+    df_runs_missing = df[~df['data_runs_exists']]
     
-    logger.warn("Missing {} dataruns due to missing datafiles".format(len(missing_data_df)))
+    logger.warn("Missing {} dataruns due to missing datafiles".format(len(df_runs_missing)))
 
     logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
