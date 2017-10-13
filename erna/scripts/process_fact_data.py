@@ -75,9 +75,9 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     df_runs = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
     
     # check for missing data and fix possible wrong file extension (.fz->.gz)
-    groups = erna.test_data_path(df_runs, "data_path").groups
-    df_runs = groups[1]
-    missing_data_df = groups[0]
+    df = erna.test_data_path(df_runs, "data_path")
+    df_runs = df.get_group(1)
+    missing_data_df = df.get_group(0)
     
     logger.warn("Missing {} dataruns due to missing datafiles".format(len(missing_data_df)))
 

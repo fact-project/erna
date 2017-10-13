@@ -197,7 +197,7 @@ def load(
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
 
-    drs_data = test_drs_path(drs_data, "path").groups[1]
+    drs_data = test_drs_path(drs_data, "path").get_group(1)
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
