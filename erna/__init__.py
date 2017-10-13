@@ -41,7 +41,7 @@ def test_path_data(df, key):
             if not os.path.exists(datapath):
                 mask[i] = 0
             else: #fix the datapath
-                df[key][i] = datapath
+                df.iloc[i, df.columns.get_loc(key)] = datapath
 
     return df.groupby(mask)
 

@@ -75,7 +75,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, wallt
     df_runs = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
     
     # check for missing data and fix possible wrong file extension (.fz->.gz)
-    df = erna.test_data_path(df_runs, "data_path")
+    df = erna.test_path_data(df_runs, "data_path")
     df_runs = df.get_group(1)
     missing_data_df = df.get_group(0)
     
