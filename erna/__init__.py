@@ -200,7 +200,7 @@ def load(
 
     #remove all none existing drs files
     drs_data = test_drs_path(drs_data, "path")
-    drs_data = drs_data[drs_data['drs_data_exists']]
+    drs_data = drs_data[drs_data['drs_file_exists']]
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
