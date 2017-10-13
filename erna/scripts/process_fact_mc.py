@@ -28,7 +28,7 @@ def createFilenameFromFormat(format, basename, num):
 	else:
 		numstr = "%i" % num
 	stemp = format.replace(m.group(0), numstr)
-	stemp = format.replace("%b", basename)
+	stemp = stemp.replace("%b", basename)
 	return stemp
 	
 	
