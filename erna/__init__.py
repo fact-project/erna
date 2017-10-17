@@ -41,8 +41,8 @@ def test_data_path(df, key):
     """
     mask = df[key].apply(os.path.exists)
     df['data_file_exists'] = mask
-    df.loc[mask, key] = df.loc[mask, key].str.replace('.fz', '.gz')
-    df.loc[mask, 'file_exists'] = df.loc[mask, key].apply(os.path.exists)
+    df.loc[~mask, key] = df.loc[~mask, key].str.replace('.fz', '.gz')
+    df.loc[~mask, 'data_file_exists'] = df.loc[~mask, key].apply(os.path.exists)
 
     return df
 
