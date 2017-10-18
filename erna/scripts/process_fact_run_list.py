@@ -13,7 +13,7 @@ from gridmap import Job
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
+def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, queue,
               vmem, num_jobs, walltime):
     jobs = []
     # create job objects
@@ -21,7 +21,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
     for num, indices in enumerate(split_indices):
         df = df_mapping[indices.min(): indices.max()]
 
-        job = Job(stream_runner.run, [jar, xml, df, db_path],
+        job = Job(stream_runner.run, [jar, xml, df, aux_source_path],
                   queue=queue, walltime=walltime, engine=engine,
                   mem_free='{}mb'.format(vmem))
         jobs.append(job)
@@ -35,7 +35,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
 @click.argument('file_list', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
 @click.argument('jar', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
-@click.argument('db', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True) )
+@click.argument('aux_source', type=click.Path(exists=True, dir_okay=True, file_okay=True, readable=True) )
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True) )
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
@@ -45,7 +45,7 @@ def make_jobs(jar, xml, db_path, output_directory, df_mapping,  engine, queue,
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
-def main(file_list, jar, xml, db, out, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
+def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
     '''
     Specify the path to a .json file as created by the fetch_runs.py script via the FILE_LIST argument.
     num_jobs will be created and executed on the cluster.
@@ -67,7 +67,7 @@ def main(file_list, jar, xml, db, out, queue, walltime, engine, num_jobs, vmem, 
     #get data files
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
-    db_path = path.abspath(db)
+    aux_source_path = path.abspath(aux_source)
     outpath = path.abspath(out)
     output_directory = path.dirname(outpath)
     #create dir if it doesnt exist
@@ -75,7 +75,7 @@ def main(file_list, jar, xml, db, out, queue, walltime, engine, num_jobs, vmem, 
     logger.info("Writing output and temporary data  to {}".format(output_directory))
 
 
-    job_list = make_jobs(jarpath, xmlpath, db_path, output_directory, df,  engine, queue, vmem, num_jobs, walltime)
+    job_list = make_jobs(jarpath, xmlpath, aux_source_path, output_directory, df,  engine, queue, vmem, num_jobs, walltime)
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out, df)
 

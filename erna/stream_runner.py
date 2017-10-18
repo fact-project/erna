@@ -11,7 +11,7 @@ from erna.utils import (
     )
 
 
-def run(jar, xml, input_files_df, db_path=None):
+def run(jar, xml, input_files_df, aux_source_path=None):
     '''
     This is what will be executed on the cluster
     '''
@@ -23,7 +23,7 @@ def run(jar, xml, input_files_df, db_path=None):
         output_path = os.path.join(output_directory, "output.json")
 
         input_files_df.to_json(input_path, orient='records', date_format='epoch')
-        call = assemble_facttools_call(jar, xml, input_path, output_path, db_path)
+        call = assemble_facttools_call(jar, xml, input_path, output_path, aux_source_path)
 
         check_environment_on_node()
 

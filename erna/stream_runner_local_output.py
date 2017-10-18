@@ -12,7 +12,7 @@ from erna.utils import (
     )
 
 
-def run(jar, xml, input_files_df, output_path, db_path=None):
+def run(jar, xml, input_files_df, output_path, aux_source_path=None):
     '''
     This is a version of ernas stream runner that will be executed on the cluster,
     but writes its results directly to disk without sending them
@@ -26,7 +26,7 @@ def run(jar, xml, input_files_df, output_path, db_path=None):
         tmp_output_path = os.path.join(output_directory, "output.json")
 
         input_files_df.to_json(input_path, orient='records', date_format='epoch')
-        call = assemble_facttools_call(jar, xml, input_path, tmp_output_path, db_path)
+        call = assemble_facttools_call(jar, xml, input_path, tmp_output_path, aux_source_path)
 
         check_environment_on_node()
 
