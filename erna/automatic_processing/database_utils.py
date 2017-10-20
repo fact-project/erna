@@ -3,7 +3,7 @@ import logging
 import os
 from tqdm import tqdm
 
-from .database import(
+from .database import (
     RawDataFile, DrsFile, Job,
     ProcessingState, Jar, XML,
     requires_database_connection
@@ -34,7 +34,6 @@ def fill_data_runs(df, database):
         },
         inplace=True,
     )
-    df.drop('fDrsStep', axis=1, inplace=True)
     with database.atomic():
         query = (
             RawDataFile
