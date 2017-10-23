@@ -26,7 +26,7 @@ setup(
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
-        'pyfact>=0.10.5',
+        'pyfact>=0.14.0',
         'astropy',
         'h5py',
         # 'hdf5',
