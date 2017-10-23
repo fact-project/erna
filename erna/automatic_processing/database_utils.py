@@ -181,11 +181,18 @@ def insert_new_job(
 @requires_database_connection
 def insert_new_jobs(raw_data_files, jar, xml, queue, progress=True, **kwargs):
 
+    failed_files = []
     for f in tqdm(raw_data_files, total=raw_data_files.count(), disable=not progress):
         try:
             insert_new_job(f, jar=jar, xml=xml, queue=queue, **kwargs)
         except peewee.IntegrityError:
-            log.warning('Job already submitted: {} {}'.format(f.night, f.run_id))
+            log.warning('Job already submitted: {}_{:03d}'.format(f.night, f.run_id))
+        except ValueError as e:
+            log.warning('Could not submit {}_{:03d}: {}'.format(
+                f.night, f.run_id, e,
+            ))
+            failed_files.append(f)
+    return failed_files
 
 
 @requires_database_connection
