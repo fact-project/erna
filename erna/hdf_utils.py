@@ -83,7 +83,7 @@ def write_fits_to_hdf5(
                 if not initialized:
                     initialize_h5py(
                         hdf_file,
-                        array.dtype,
+                        array,
                         key=key,
                         compression=compression,
                     )
