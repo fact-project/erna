@@ -42,7 +42,7 @@ conditions['moderate_moonlight'] = [
     'fCurrentsMedMeanBeg <= 48',
 ]
 
-conditions=['strong_moonlight'] = [
+conditions['strong_moonlight'] = [
     'fTriggerRateMedian < 85',
     'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
