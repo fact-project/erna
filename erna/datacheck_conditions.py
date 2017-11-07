@@ -15,6 +15,7 @@ conditions['darknight'] = [
 
 
 conditions['no_moonlight'] = [
+    'fRunTypeName = "data"',
     'fCurrentsMedMeanBeg < 8',
     'fZenithDistanceMax < 30',
     'fMoonZenithDistance > 100',
@@ -26,6 +27,7 @@ conditions['no_moonlight'] = [
 ]
 
 conditions['low_moonlight'] = [
+    'fRunTypeName = "data"',
     'fTriggerRateMedian < 85',
     'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
@@ -35,6 +37,7 @@ conditions['low_moonlight'] = [
 
 
 conditions['moderate_moonlight'] = [
+    'fRunTypeName = "data"',
     'fTriggerRateMedian < 85',
     'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
@@ -43,6 +46,7 @@ conditions['moderate_moonlight'] = [
 ]
 
 conditions['strong_moonlight'] = [
+    'fRunTypeName = "data"',
     'fTriggerRateMedian < 85',
     'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
