@@ -1,17 +1,18 @@
 conditions = dict()
 
-def create_condition_set(conditions=['standard']):
+def create_condition_set(conditionset=['standard']):
     """
     given a list of conditions create a condition set
     
     If a given condition start with '@NAME', process NAME as a set of conditions defined in the variabel conditions.
     """
-    data_conditons = ['fRunTypeName = "data"']
-    if condition.startswith('@'):
-            data_conditions = data_condition+dcc.conditions[condition[1:]]
+    data_conditions = ['fRunTypeName = "data"']
+    for condition in conditionset:
+        if condition.startswith('@'):
+            data_conditions = data_conditions+conditions[condition[1:]]
         else:
             data_conditions.append(condition)
-    return data_conditons
+    return data_conditions
     
 conditions['standard'] = [
     'fZenithDistanceMean < 30',
