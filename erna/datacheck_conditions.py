@@ -1,6 +1,6 @@
 conditions = dict()
 
-def create_condition_set(conditions=['standard']):
+def create_condition_set(conditions=['@standard']):
     """
     given a list of conditions create a condition set
     
