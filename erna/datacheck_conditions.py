@@ -1,7 +1,19 @@
 conditions = dict()
 
+def create_condition_set(conditions=['standard']):
+    """
+    given a list of conditions create a condition set
+    
+    If a given condition start with '@NAME', process NAME as a set of conditions defined in the variabel conditions.
+    """
+    data_conditons = ['fRunTypeName = "data"']
+    if condition.startswith('@'):
+            data_conditions = data_condition+dcc.conditions[condition[1:]]
+        else:
+            data_conditions.append(condition)
+    return data_conditons
+    
 conditions['standard'] = [
-    'fRunTypeName = "data"',
     'fZenithDistanceMean < 30',
     'fTriggerRateMedian > 40',
     'fTriggerRateMedian < 85',
@@ -14,10 +26,12 @@ conditions['darknight'] = [
 ] + conditions['standard']
 
 
-conditions['no_moonlight'] = [
-    'fRunTypeName = "data"',
-    'fCurrentsMedMeanBeg < 8',
+conditions['low_zenith'] = [
     'fZenithDistanceMax < 30',
+]
+
+conditions['no_moonlight'] = [
+    'fCurrentsMedMeanBeg < 8',
     'fMoonZenithDistance > 100',
     'fThresholdMinSet < 350',
     'fEffectiveOn > 0.95',
@@ -27,7 +41,6 @@ conditions['no_moonlight'] = [
 ]
 
 conditions['low_moonlight'] = [
-    'fRunTypeName = "data"',
     'fTriggerRateMedian < 85',
     'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
@@ -37,18 +50,14 @@ conditions['low_moonlight'] = [
 
 
 conditions['moderate_moonlight'] = [
-    'fRunTypeName = "data"',
     'fTriggerRateMedian < 85',
-    'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
     'fCurrentsMedMeanBeg > 32',
     'fCurrentsMedMeanBeg <= 48',
 ]
 
-conditions=['strong_moonlight'] = [
-    'fRunTypeName = "data"',
+conditions['strong_moonlight'] = [
     'fTriggerRateMedian < 85',
-    'fZenithDistanceMax < 30',
     'fThresholdMinSet < (14 * fCurrentsMedMeanBeg + 265)',
     'fCurrentsMedMeanBeg > 64',
     'fCurrentsMedMeanBeg <= 96',
