@@ -15,9 +15,22 @@ import glob
 
 logger = logging.getLogger(__name__)
 
+import re
 
+def create_filename_from_format(filename_format, basename, num):
+    """
+    Given a special format string, create a filename_format with the basename and a given number.
+    There are two named variables that can be used, one is basename which inserts the basename
+    and the second one is num which is mandatory.
+    """
+    m = re.search('\{num', filename_format)
+    if not m:
+        raise ValueError("Missing named placeholder 'num' in format string")
+    return filename_format.format({"basename":basename, "num":num})
+
+	
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, filename_format="{basename}_{num}.json"):
     jobs = []
 
     data_partitions = np.array_split(data_paths, num_jobs)
@@ -30,8 +43,9 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
         if output_path:
+            # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
-            file_name += "_{}.json".format(num)
+            file_name = create_filename_from_format(filename_format, file_name, num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
             stream_runner = stream_runner_local
@@ -68,14 +82,19 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.',show_default=True)
-@click.option('--local_output', default=False,is_flag=True,
+@click.option('--local_output', default=False, is_flag=True,
               help='Flag indicating whether jobs write their output localy'
               + 'to disk without gathering everything in the mother'
               + 'process. In this case the output file only contains a'
               + 'summary oth the processed jobs. The data ouput will be'
-              + 'inseparate files',
+              + 'in separate files',
               show_default=True)
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output):
+@click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
+@click.option('--mcwildcard', help="Gives the wildcard for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
+@click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
+              + "%b will replace the out filename and %[1-9]n the given local number."
+              + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_format):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -99,13 +118,16 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
     drspath = erna.mc_drs_file()
+    if mcdrs:
+        drspath = mcdrs
+
     logger.info('Using drs file at {}'.format(drspath))
 
     #get data files
     files=[]
     for folder in tqdm(mc_path):
         # print("Entering folder {}".format(folder))
-        pattern = path.join(folder, '**/*_Events.fit*')
+        pattern = path.join(folder, mcwildcard)
         f = glob.glob(pattern, recursive=True)
         files = files + f
 
@@ -127,7 +149,7 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
         job_list = make_jobs(
                         jarpath, xmlpath, mc_paths_array,
                         drs_paths_array,  engine, queue,
-                        vmem, num_jobs, walltime, output_path=local_output_dir
+                        vmem, num_jobs, walltime, output_path=local_output_dir, filename_format=local_output_format
                         )
     else:
         job_list = make_jobs(

@@ -198,5 +198,5 @@ MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState, Queue]
 
 @wrapt.decorator
 def requires_database_connection(wrapped, instance, args, kwargs):
-    database.connect()
+    database.get_conn()
     return wrapped(*args, **kwargs)

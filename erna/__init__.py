@@ -14,12 +14,37 @@ logger = logging.getLogger(__name__)
 
 
 def build_path(row, path_to_data, extension):
+    """
+    builds a path to the fact data given the night, extension and filename
+    """
     night = str(row.NIGHT)
     year = night[0:4]
     month = night[4:6]
     day = night[6:8]
-    return os.path.join(path_to_data, year, month, day, row.filename + extension)
+    res = os.path.join(path_to_data, year, month, day, row.filename + extension)
+    return res
 
+def test_drs_path(df, key):
+    """
+    Test if the given drs paths in the key are present
+    """
+    mask = df[key].apply(os.path.exists)
+    df['drs_file_exists'] = mask
+    
+    return df
+
+
+def test_data_path(df, key):
+    """
+    Test the given data paths in key if they exists. It tests for
+    both possible fileextensions [.fz, .gz] and corrects if necessary.
+    """
+    mask = df[key].apply(os.path.exists)
+    df['data_file_exists'] = mask
+    df.loc[~mask, key] = df.loc[~mask, key].str.replace('.fz', '.gz')
+    df.loc[~mask, 'data_file_exists'] = df.loc[~mask, key].apply(os.path.exists)
+
+    return df
 
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
@@ -64,6 +89,10 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
     df_returned_data = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
+
+    if len(df_returned_data)==0:
+        logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
+        return
 
     if df_started_runs is not None:
         df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
@@ -165,16 +194,22 @@ def load(
     data["filename"] = build_filename(data.NIGHT, data.RUNID)
     drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
 
-    # write path TODO: file ending? is everything in fz?
+    # write path
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
+
+    #remove all none existing drs files
+    drs_data = test_drs_path(drs_data, "path")
+    drs_data = drs_data[drs_data['drs_file_exists']]
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
     # hence missing rows have to be filled either forward or backwards
     earlier_drs_entries = drs_data.reindex(data.index, method="ffill")
+    earlier_drs_entries = earlier_drs_entries.fillna(axis="index", method="ffill")
     later_drs_entries = drs_data.reindex(data.index, method="backfill")
-
+    later_drs_entries = later_drs_entries.fillna(axis="index", method="ffill")
+    
     # when backfilling the drs obeservations the last rows might be invalid and contain nans.
     # We cannot drop them becasue the tables have to have the same length.
     # in that case simply fill them up.
@@ -193,7 +228,7 @@ def load(
         closest_drs_entries.deltaT,
         data.fOnTime, data.fEffectiveOn,
         data.NIGHT,
-        data.RUNID
+        data.RUNID,
     ], axis=1, keys=[
         "filename",
         "drs_path",
@@ -204,7 +239,7 @@ def load(
         "NIGHT",
         "RUNID",
     ])
-
+    
     mapping = mapping.dropna(how='any')
 
     logger.info("Fetched {} data runs and approx {} drs entries from database where time delta is less than {} minutes".format(len(mapping), mapping['drs_path'].nunique(), timedelta_in_minutes))
