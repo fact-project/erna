@@ -10,21 +10,22 @@ from ..hdf_utils import write_fits_to_hdf5
     'inputfiles', nargs=-1,
     type=click.Path(exists=True, dir_okay=False)
 )
-def main(outputfile, inputfiles):
+@click.option(
+    '-k', '--key', default='events', show_default=True,
+    help='Output group in the hdf5 file',
+)
+def main(outputfile, inputfiles, key):
     '''
-    Gather the fits outputfiles of the erna automatic processing into a hdf5 file.
-    The hdf5 file is written using h5py and contains the level 2 features in the
-    `events` group and some metadata for each run in the `runs` group.
+    Merge several fits files into HDF5 files using h5py.
 
-    It is possible to only gather files that pass a given datacheck with the --datacheck
-    option. The possible conditions are implemented in erna.datacheck_conditions/
-
-    XML_NAME: name of the xml for which you want to gather output
-    FT_VERSION: FACT Tools version for which you want to gather output
     OUTPUTFILE: the outputfile
+    INPUTFILE...: input fits files
     '''
 
     if os.path.isfile(outputfile):
-        click.confirm('Outputfile exists, overwrite?', abort=True)
+        click.confirm(
+            'Outputfile {} exists, overwrite?'.format(outputfile),
+            abort=True,
+        )
 
-    write_fits_to_hdf5(outputfile, inputfiles, mode='w')
+    write_fits_to_hdf5(outputfile, inputfiles, mode='w', key=key)
