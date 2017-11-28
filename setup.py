@@ -60,6 +60,7 @@ setup(
             'erna_automatic_processing_executor = erna.automatic_processing.executor:main',
             'erna_automatic_processing = erna.automatic_processing.__main__:main',
             'erna_gather_fits = erna.scripts.gather_fits:main',
+            'erna_merge_fits2hdf5 = erna.scripts.merge_fits2hdf5:main',
         ],
     },
     setup_requires=['pytest-runner'],
