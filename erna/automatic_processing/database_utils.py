@@ -181,8 +181,13 @@ def insert_new_job(
 @requires_database_connection
 def insert_new_jobs(raw_data_files, jar, xml, queue, progress=True, **kwargs):
 
+    if isinstance(raw_data_files, list):
+        total = len(raw_data_files)
+    else:
+        total = raw_data_files.count()
+
     failed_files = []
-    for f in tqdm(raw_data_files, total=raw_data_files.count(), disable=not progress):
+    for f in tqdm(raw_data_files, total=total, disable=not progress):
         try:
             insert_new_job(f, jar=jar, xml=xml, queue=queue, **kwargs)
         except peewee.IntegrityError:
