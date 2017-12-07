@@ -70,7 +70,11 @@ It sets up the necessary port forwarding and proxy to speak to the non-isdc worl
 
 ## Submit runs:
 
-Fire up erna_console and enter: 
+We provide a script `erna_submit_runlist` to submit a csv runlist into the
+automatic processing.
+
+
+Alternatively, you can use the erna_console and enter: 
 
 ```python
 files = (
