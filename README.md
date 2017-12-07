@@ -82,9 +82,9 @@ files = (
 print("files.count():", files.count())
 
 # We only select Jar.id and Jar.version to not download the 20 MB binary blob
-jar = Jar.select(Jar.id, Jar.version).where(jar.version == '0.17.2').get()
+jar = Jar.select(Jar.id, Jar.version).where(Jar.version == '0.17.2').get()
 xml = XML.get(name='std_analysis', jar=jar)
 queue = Queue.get(name='fact_short')
 
-insert_jobs(files, xml=xml, jar=jar, queue=queue)
+insert_new_jobs(files, xml=xml, jar=jar, queue=queue)
 ```
