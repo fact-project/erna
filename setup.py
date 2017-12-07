@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='erna',
-    version='0.5.1',
+    version='0.6.0',
     description='Easy RuN Access. Tools that help to do batch processing of FACT data',
     url='https://github.com/fact-project/erna',
     author='Kai Brügge, Jens Buss, Maximilian Nöthe',
