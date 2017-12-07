@@ -48,8 +48,8 @@ def get_runs(engine, conditions=None, columns=default_columns):
         columns=','.join(columns),
         conditions=conditions
     )
-
-    return pd.read_sql_query(query, engine)
+    with engine.connect() as conn:
+        return pd.read_sql_query(query, conn)
 
 
 def get_drs_runs(engine, conditions, columns=('fNight', 'fRunID')):
@@ -63,4 +63,5 @@ def get_drs_runs(engine, conditions, columns=('fNight', 'fRunID')):
         conditions=conditions
     )
 
-    return pd.read_sql_query(query, engine)
+    with engine.connect() as conn:
+        return pd.read_sql_query(query, conn)

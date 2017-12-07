@@ -106,7 +106,8 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
 
     sql, params = job_query.sql()
 
-    jobs = pd.read_sql_query(sql, processing_db, params=params)
+    with processing_db.connect() as conn:
+        jobs = pd.read_sql_query(sql, conn, params=params)
     if runlist is None:
         conditions = [
             'fNight <= {}'.format(jobs.night.max()),

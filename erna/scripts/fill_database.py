@@ -41,18 +41,20 @@ def main(start, end, config):
     database.connect()
     setup_database(database, drop=False)
 
-    runs = pd.read_sql_query(
-        query.format(
-            columns=', '.join([
-                'fNight', 'fRunID', 'fDrsStep', 'fROI',
-                'RunInfo.fRunTypeKey AS fRunTypeKey',
-                'fRunTypeName'
-            ]),
-            start=start,
-            end=end,
-        ),
-        create_mysql_engine(**config['fact_database']),
-    )
+    factdb = create_mysql_engine(**config['fact_database'])
+    with factdb.connect() as conn:
+        runs = pd.read_sql_query(
+            query.format(
+                columns=', '.join([
+                    'fNight', 'fRunID', 'fDrsStep', 'fROI',
+                    'RunInfo.fRunTypeKey AS fRunTypeKey',
+                    'fRunTypeName'
+                ]),
+                start=start,
+                end=end,
+            ),
+            conn,
+        )
     runs['fNight'] = pd.to_datetime(runs.fNight.astype(str), format='%Y%m%d')
 
     # fill all non drs runs into raw_data_files

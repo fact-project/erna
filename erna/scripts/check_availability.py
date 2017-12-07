@@ -94,7 +94,8 @@ def main(config, verbose, start, end):
     basedir = '/fact/raw'
 
     fact_db = create_engine(db_specification.format(**config['fact_database']))
-    runs = pd.read_sql_query(run_query.format(start=start, end=end), fact_db)
+    with fact_db.connect() as conn:
+        runs = pd.read_sql_query(run_query.format(start=start, end=end), conn)
     runs['night'] = runs['night'].apply(night_int_to_date)
 
     log.info('basedir is: {}'.format(basedir))
