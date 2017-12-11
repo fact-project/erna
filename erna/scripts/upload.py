@@ -61,6 +61,9 @@ def xml(config, fact_tools_version, name, comment, xml_file):
         log.error(
             'No database entry for FACT Tools version {}'.format(fact_tools_version)
         )
+        log.error('Available jars are')
+        for jar in Jar.select(Jar.version):
+            log.error(jar.version)
         sys.exit(1)
 
     database.close()
