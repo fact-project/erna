@@ -17,6 +17,9 @@ log.addHandler(logging.StreamHandler())
 
 @click.group()
 def main():
+    '''
+    Upload jar and xml files into the automatic processing database
+    '''
     pass
 
 
@@ -25,8 +28,17 @@ def main():
 @click.option('--fact-tools-version', '-f', help='The FACT-Tools version, the xml is meant for', prompt=True)
 @click.option('--name', '-n', help='The name for the xml', prompt=True)
 @click.option('--comment', '-c', help='A comment to describe the xml')
-@click.argument('xml-file')
+@click.argument('xml-file', type=click.Path(exists=True, dir_okay=False))
 def xml(config, fact_tools_version, name, comment, xml_file):
+    '''
+    Upload a xml into the automatic processing database
+
+    If you do not provide name and fact-tools version on the commandline,
+    you will be promptet for it.
+
+    ARGUMENTS:
+        XML_FILE path to the xml file you want to upload
+    '''
 
     config = load_config(config)
 
@@ -77,6 +89,15 @@ def xml(config, fact_tools_version, name, comment, xml_file):
 @click.option('--version', help='Set the version, if not the jar is executed to obtain it')
 @click.argument('jar-file')
 def jar(config, version, jar_file):
+    '''
+    Upload a FACT-Tools jar into the automatic processing database
+
+    For FACT-Tools versions prior to 0.19.0, you should provide a version
+    string on the commandline using the `--version` option
+
+    ARGUMENTS:
+        JAR_FILE path to the JAR file you want to upload
+    '''
 
     config = load_config(config)
 
