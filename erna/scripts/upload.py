@@ -91,7 +91,13 @@ def jar(config, version, jar_file):
             k, value = line.split(':')
             version_info[k.strip()] = value.strip()
 
-        version = version_info['git description']
+        try:
+            version = version_info['git description']
+        except KeyError:
+            click.echo(
+                'Jar did not report version, please use the `--version` option'
+            )
+            raise click.Abort()
         log.info('Found FACT Tools version "{}"'.format(version))
     else:
         log.info('Using version from the command line: "{}"'.format(version))
