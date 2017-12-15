@@ -8,11 +8,22 @@ import pkg_resources
 from datetime import timedelta
 
 from fact.io import to_h5py
+from fact.instrument import camera_distance_mm_to_deg
 
 from . import datacheck_conditions as dcc
 from .datacheck import get_runs, get_drs_runs
+from .hdf_utils import rename_columns
 
 logger = logging.getLogger(__name__)
+
+
+def add_theta_deg_columns(df):
+    for i in range(6):
+        incol = 'theta' if i == 0 else 'theta_off_{}'.format(i)
+        outcol = 'theta_deg' if i == 0 else 'theta_deg_off_{}'.format(i)
+        if incol in df.columns:
+            df[outcol] = camera_distance_mm_to_deg(df[incol])
+
 
 
 def build_path(row, path_to_data, extension):
@@ -32,7 +43,7 @@ def test_drs_path(df, key):
     """
     mask = df[key].apply(os.path.exists)
     df['drs_file_exists'] = mask
-    
+
     return df
 
 
@@ -105,6 +116,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
         df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
         df_returned_data.failed_jobs=difference
+
+    df_returned_data.columns = rename_columns(df_returned_data.columns)
+    add_theta_deg_columns(df_returned_data)
 
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
@@ -211,7 +225,7 @@ def load(
     earlier_drs_entries = earlier_drs_entries.fillna(axis="index", method="ffill")
     later_drs_entries = drs_data.reindex(data.index, method="backfill")
     later_drs_entries = later_drs_entries.fillna(axis="index", method="ffill")
-    
+
     # when backfilling the drs obeservations the last rows might be invalid and contain nans.
     # We cannot drop them becasue the tables have to have the same length.
     # in that case simply fill them up.
@@ -241,7 +255,7 @@ def load(
         "NIGHT",
         "RUNID",
     ])
-    
+
     mapping = mapping.dropna(how='any')
 
     logger.info("Fetched {} data runs and approx {} drs entries from database where time delta is less than {} minutes".format(len(mapping), mapping['drs_path'].nunique(), timedelta_in_minutes))
