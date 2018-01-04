@@ -15,6 +15,9 @@
   <stream id="fact" class="fact.io.hdureader.FITSStream" url="${infile}"/>
 
   <process id="2" input="fact">
+    <fact.extraction.SaturatedSlicesPercentage />
+    <Skip condition="%{data.saturatedSlicesPercentage} &gt; 0.2" />
+
     <!-- prevEventAndSkip: -->
     <!-- PreviousEventInfo, Skip(no Data Trigger) -->
     <include url="classpath:/default/data/prevEventAndSkip.xml" />
@@ -46,7 +49,7 @@
     <!-- Parameter calculation (only source independent) -->
     <!-- ArrayMean(photoncharge,arrivalTime), ArrayStatistics(photoncharge,arrivalTime,maxSlopes,
     arrivalTimePos,maxSlopesPos,maxAmplitudePosition,photonchargeSaturated,arrivalTimeTOT),
-    Size, DistributionFromShower, M3Long, Length, Width, NumberOfIslands, TimeGraident,
+    HillasParameters, NumberOfIslands, TimeGraident,
     Concentration, ConcentrationCore, ConcentrationAtCenterOfGravity, Leakage, TimeSpread,
     ShowerSlope, Disp -->
     <include url="classpath:/default/data/parameterCalc.xml" />
@@ -57,7 +60,6 @@
     Distance(for 6 Sources), CosDeltaAlpha(for 6 Sources), Theta(for 6 Sources) -->
     <include url="classpath:/default/data/sourceParameter.xml" />
     <!-- Output: source dependent parameters -->
-
     <fact.io.FITSWriter url="file:facttools_output/${output_basename}_level2.fits" keys="${keysForOutput}" />
   </process>
 </container>
