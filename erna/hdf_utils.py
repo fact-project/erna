@@ -52,10 +52,21 @@ def write_fits_to_hdf5(
 
     initialized = False
 
+    version = None
     with h5py.File(outputfile, mode) as hdf_file:
 
         for inputfile in tqdm(inputfiles, disable=not progress):
             with fits.open(inputfile) as f:
+
+                if version is None:
+                    version = f[0].header['VERSION']
+                    hdf_file.attrs['fact_tools_version'] = version
+                else:
+                    if version != f[0].header['VERSION']:
+                        raise ValueError(
+                            'Merging output of different FACT-Tools versions not allowed'
+                        )
+
                 if len(f) < 2:
                     continue
 
