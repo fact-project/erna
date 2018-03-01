@@ -47,8 +47,7 @@ def write_fits_to_hdf5(
         mode='a',
         compression='gzip',
         progress=True,
-        key='events',
-        ):
+        key='events'):
 
     initialized = False
 
@@ -101,3 +100,6 @@ def write_fits_to_hdf5(
                     initialized = True
 
                 append_to_h5py(hdf_file, array, key=key)
+
+            if 'timestamp' in array.dtype.names:
+                hdf_file[key]['timestamp'].attrs['timeformat'] = 'iso'
