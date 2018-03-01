@@ -5,11 +5,11 @@
   <property name="drsfile" value="file:src/main/resources/testDrsFile.drs.fits.gz" />
   <property name="aux_dir" value="file:src/main/resources/aux/" />
 
-  <property name="integralGainFile" value="classpath:/default/gain_sorted_20131127.csv" />
   <property name="pixelDelayFile" value="classpath:/default/delays_lightpulser_20150217.csv" />
 
   <property name="output_basename" value="output" />
 
+  <service id="gainService" class="fact.gainservice.GainService" />
   <service id="auxService" class="fact.auxservice.AuxFileService" auxFolder="${aux_dir}" />
   <service id="calibService" class="fact.calibrationservice.ConstantCalibService" />
 
