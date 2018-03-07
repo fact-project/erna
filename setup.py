@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='erna',
-    version='0.7.0',
+    version='0.8.0',
     description='Easy RuN Access. Tools that help to do batch processing of FACT data',
     url='https://github.com/fact-project/erna',
     author='Kai Brügge, Jens Buss, Maximilian Nöthe',
@@ -26,7 +26,7 @@ setup(
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
-        'pyfact>=0.14.0',
+        'pyfact>=0.17.0',
         'astropy',
         'h5py',
         # 'hdf5',
