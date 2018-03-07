@@ -129,7 +129,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        to_h5py(output_path, df_returned_data, key='events', mode='w', **kwargs)
+        to_h5py(df_returned_data, output_path, key='events', mode='w', **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
         df_returned_data.to_csv(output_path, **kwargs)
