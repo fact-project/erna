@@ -106,7 +106,8 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
 
     sql, params = job_query.sql()
 
-    jobs = pd.read_sql_query(sql, processing_db, params=params)
+    with processing_db.connect() as conn:
+        jobs = pd.read_sql_query(sql, conn, params=params)
     if runlist is None:
         conditions = [
             'fNight <= {}'.format(jobs.night.max()),
@@ -177,7 +178,7 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
         'run_start',
         'run_stop',
     ]
-    to_h5py(outputfile, successful_jobs[columns], key='runs', mode='w')
+    to_h5py(successful_jobs[columns], outputfile, key='runs', mode='w')
 
     with h5py.File(outputfile, 'a') as f:
         f['runs'].attrs['datacheck'] = ' AND '.join(conditions)

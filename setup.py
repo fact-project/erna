@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='erna',
-    version='0.5.1',
+    version='0.8.0',
     description='Easy RuN Access. Tools that help to do batch processing of FACT data',
     url='https://github.com/fact-project/erna',
     author='Kai Brügge, Jens Buss, Maximilian Nöthe',
@@ -26,7 +26,7 @@ setup(
         'PyMySQL',          # in anaconda
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
-        'pyfact>=0.14.0',
+        'pyfact>=0.17.0',
         'astropy',
         'h5py',
         # 'hdf5',
@@ -60,6 +60,7 @@ setup(
             'erna_automatic_processing_executor = erna.automatic_processing.executor:main',
             'erna_automatic_processing = erna.automatic_processing.__main__:main',
             'erna_gather_fits = erna.scripts.gather_fits:main',
+            'erna_submit_runlist = erna.scripts.submit_runlist:main',
         ],
     },
     setup_requires=['pytest-runner'],
