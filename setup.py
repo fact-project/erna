@@ -41,6 +41,7 @@ setup(
         'xmltodict',
         'wrapt',
         # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
+        'fact_condition',
     ],
     zip_safe=False,
     entry_points={
