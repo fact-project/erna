@@ -46,7 +46,7 @@ def read_outputs_to_list(job_output_paths):
 
 
 
-
+from fact_conditions import create_condition_set
 
 @click.command()
 @click.argument('earliest_night')
@@ -99,7 +99,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
     
     # create the set of conditions we want to use
-    data_conditions = dcc.create_condition_set(conditions)
+    data_conditions = create_condition_set(conditions)
     
     df_loaded = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
     df_loaded.to_hdf(out+".tmp", "loaded", mode="a")

@@ -10,6 +10,7 @@ import erna.datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
+from fact_conditions import create_condition_set
 
 @click.command()
 @click.argument('earliest_night')
@@ -33,7 +34,7 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, pa
     factdb = create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
 
     # create the set of conditions we want to use
-    data_conditions = dcc.create_condition_set(conditions)
+    data_conditions = create_condition_set(conditions)
     
     mapping = erna.load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
     if mapping.empty:
