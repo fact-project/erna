@@ -36,6 +36,10 @@ export ERROR_MAIL_SENDER="torque@hpc-main3.phido.physik.tu-dortmund.de"
 export SEND_ERROR_MAIL=TRUE
 ```
 
+## How to for using gridmap on LiDo2
+A brief example of how to setup LiDo2 for erna can be found at:
+https://github.com/fact-project/erna/wiki/How-to-setup-Lido2-for-erna
+
 
 ## execute_data_processing.py
 
