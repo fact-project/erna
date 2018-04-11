@@ -1,6 +1,4 @@
-from .utils import load_config
 import pandas as pd
-
 
 default_columns = (
     'fNight AS night',
@@ -8,6 +6,11 @@ default_columns = (
     'fSourceName AS source',
     'TIMESTAMPDIFF(SECOND, fRunStart, fRunStop) * fEffectiveOn AS ontime',
     'fZenithDistanceMean AS zenith',
+    'fAzimuthMean AS azimuth',
+    'fRunStart AS run_start',
+    'fRunStop AS run_stop',
+    'RunInfo.fRightAscension AS right_ascension',
+    'RunInfo.fDeclination AS declination',
 )
 
 
@@ -45,8 +48,8 @@ def get_runs(engine, conditions=None, columns=default_columns):
         columns=','.join(columns),
         conditions=conditions
     )
-
-    return pd.read_sql_query(query, engine)
+    with engine.connect() as conn:
+        return pd.read_sql_query(query, conn)
 
 
 def get_drs_runs(engine, conditions, columns=('fNight', 'fRunID')):
@@ -60,4 +63,5 @@ def get_drs_runs(engine, conditions, columns=('fNight', 'fRunID')):
         conditions=conditions
     )
 
-    return pd.read_sql_query(query, engine)
+    with engine.connect() as conn:
+        return pd.read_sql_query(query, conn)

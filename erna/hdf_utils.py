@@ -3,84 +3,42 @@ import h5py
 from astropy.io import fits
 from tqdm import tqdm
 import sys
+from fact.io import append_to_h5py, initialize_h5py
+from fact.instrument import camera_distance_mm_to_deg
+import re
+from numpy.lib import recfunctions
+import numpy as np
 
 log = logging.getLogger(__name__)
 
 native_byteorder = {'little': '<', 'big': '>'}[sys.byteorder]
 
 
-def initialize_hdf5(f, dtypes, groupname='events', **kwargs):
-    '''
-    Create a group with name `groupname` and empty datasets for each
-    entry in dtypes.
+theta_columns = tuple(
+    ['theta'] + ['theta_off_{}'.format(i) for i in range(1, 6)]
+)
 
-    Parameters
-    ----------
-    f: h5py.File
-        the hdf5 file, opened either in write or append mode
-    dtypes: numpy.dtype
-        the numpy dtype object of a record or structured array describing
-        the columns
-    groupname: str
-        the name for the hdf5 group to hold all datasets, default: data
-    '''
-    group = f.create_group(groupname)
+theta_deg_columns = tuple(
+    ['theta_deg'] + ['theta_deg_off_{}'.format(i) for i in range(1, 6)]
+)
 
-    for name in dtypes.names:
-        dtype = dtypes[name]
-        maxshape = [None] + list(dtype.shape)
-        shape = [0] + list(dtype.shape)
-
-        group.create_dataset(
-            name,
-            shape=tuple(shape),
-            maxshape=tuple(maxshape),
-            dtype=dtype.base,
-            **kwargs
-        )
-
-    return group
+snake_re_1 = re.compile('(.)([A-Z][a-z]+)')
+snake_re_2 = re.compile('([a-z0-9])([A-Z])')
 
 
-def append_to_hdf5(f, array, groupname='events'):
-    '''
-    Append a numpy record or structured array to the given hdf5 file
-    The file should have been previously initialized with initialize_hdf5
+renames = {'RUNID': 'run_id', 'COGx': 'cog_x', 'COGy': 'cog_y'}
 
-    Parameters
-    ----------
-    f: h5py.File
-        the hdf5 file, opened either in write or append mode
-    array: numpy.array or numpy.recarray
-        the numpy array to append
-    groupname: str
-        the name for the hdf5 group with the corresponding data sets
-    '''
 
-    group = f.get(groupname)
+def camel2snake(key):
+    ''' see http://stackoverflow.com/a/1176023/3838691 '''
+    s1 = snake_re_1.sub(r'\1_\2', key)
+    s2 = snake_re_2.sub(r'\1_\2', s1).lower().replace('__', '_')
+    s3 = re.sub('^m_', '', s2)
+    return s3.replace('.f_', '_')
 
-    for key in array.dtype.names:
-        dataset = group.get(key)
 
-        n_existing_rows = dataset.shape[0]
-        n_new_rows = array[key].shape[0]
-
-        dataset.resize(n_existing_rows + n_new_rows, axis=0)
-
-        # swap byteorder if not native
-        if array[key].dtype.byteorder not in ('=', native_byteorder):
-            data = array[key].newbyteorder().byteswap()
-        else:
-            data = array[key]
-
-        if data.ndim == 1:
-            dataset[n_existing_rows:] = data
-
-        elif data.ndim == 2:
-            dataset[n_existing_rows:, :] = data
-
-        else:
-            raise NotImplementedError('Only 1d and 2d arrays are supported at this point')
+def rename_columns(columns):
+    return [camel2snake(renames.get(col, col)) for col in columns]
 
 
 def write_fits_to_hdf5(
@@ -89,26 +47,59 @@ def write_fits_to_hdf5(
         mode='a',
         compression='gzip',
         progress=True,
-        groupname='events',
-        ):
+        key='events'):
 
     initialized = False
 
+    version = None
     with h5py.File(outputfile, mode) as hdf_file:
 
         for inputfile in tqdm(inputfiles, disable=not progress):
             with fits.open(inputfile) as f:
+
+                if version is None:
+                    version = f[0].header['VERSION']
+                    hdf_file.attrs['fact_tools_version'] = version
+                else:
+                    if version != f[0].header['VERSION']:
+                        raise ValueError(
+                            'Merging output of different FACT-Tools versions not allowed'
+                        )
+
                 if len(f) < 2:
                     continue
 
+                array = np.array(f[1].data[:])
+
+                # convert all names to snake case
+                array.dtype.names = rename_columns(array.dtype.names)
+
+                # add columns with theta in degrees
+                arrays = []
+                names = []
+                for in_col, out_col in zip(theta_columns, theta_deg_columns):
+                    if in_col in array.dtype.names:
+                        arrays.append(camera_distance_mm_to_deg(array[in_col]))
+                        names.append(out_col)
+
+                if len(names) > 0:
+                    array = recfunctions.append_fields(
+                        array,
+                        names=names,
+                        data=arrays,
+                        usemask=False,
+                    )
+
                 if not initialized:
-                    initialize_hdf5(
+                    initialize_h5py(
                         hdf_file,
-                        f[1].data.dtype,
-                        groupname=groupname,
+                        array,
+                        key=key,
                         compression=compression,
                     )
                     initialized = True
 
+                append_to_h5py(hdf_file, array, key=key)
 
-                append_to_hdf5(hdf_file, f[1].data, groupname=groupname)
+            if 'timestamp' in array.dtype.names:
+                hdf_file[key]['timestamp'].attrs['timeformat'] = 'iso'

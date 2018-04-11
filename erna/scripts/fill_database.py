@@ -41,25 +41,40 @@ def main(start, end, config):
     database.connect()
     setup_database(database, drop=False)
 
-    runs = pd.read_sql_query(
-        query.format(
-            columns=', '.join([
-                'fNight', 'fRunID', 'fDrsStep', 'fROI',
-                'RunInfo.fRunTypeKey AS fRunTypeKey',
-                'fRunTypeName'
-            ]),
-            start=start,
-            end=end,
-        ),
-        create_mysql_engine(**config['fact_database']),
-    )
+    factdb = create_mysql_engine(**config['fact_database'])
+    with factdb.connect() as conn:
+        runs = pd.read_sql_query(
+            query.format(
+                columns=', '.join([
+                    'fNight', 'fRunID', 'fDrsStep', 'fROI',
+                    'RunInfo.fRunTypeKey AS fRunTypeKey',
+                    'fRunTypeName'
+                ]),
+                start=start,
+                end=end,
+            ),
+            conn,
+        )
     runs['fNight'] = pd.to_datetime(runs.fNight.astype(str), format='%Y%m%d')
 
-
     # fill all non drs runs into raw_data_files
-    fill_data_runs(runs.query('fDrsStep != 2'), database=database)
+    data_runs = runs.query('fDrsStep != 2').drop('fDrsStep', axis=1)
+    nan_entries = data_runs.isnull().any(axis=1)
+    if len(data_runs[nan_entries]) != 0:
+        print('Found invalid entries, skipping:')
+        print(data_runs[nan_entries])
+        data_runs.dropna(inplace=True)
+
+    fill_data_runs(data_runs, database=database)
+
     # fill all drs runs into drs_files
-    fill_drs_runs(runs.query('(fRunTypeKey == 2) & (fDrsStep == 2)'), database=database)
+    drs_runs = runs.query('(fRunTypeKey == 2) & (fDrsStep == 2)')
+    nan_entries = drs_runs.isnull().any(axis=1)
+    if len(drs_runs[nan_entries]) != 0:
+        print('Found invalid entries, skipping:')
+        print(drs_runs[nan_entries])
+        drs_runs.dropna(inplace=True)
+    fill_drs_runs(drs_runs, database=database)
 
     database.close()
 

@@ -20,10 +20,10 @@ def main(config):
     database.connect()
 
     engine = create_mysql_engine(**config['fact_database'])
-
-    df = pd.read_sql_table('RunInfo', engine, columns=[
-        'fNight', 'fRunID', 'fDrsStep', 'fROI'
-    ])
+    with engine.connect() as conn:
+        df = pd.read_sql_table('RunInfo', conn, columns=[
+            'fNight', 'fRunID', 'fDrsStep', 'fROI'
+        ])
 
     df.set_index(['fNight', 'fRunID'], inplace=True)
 

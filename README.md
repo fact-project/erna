@@ -8,18 +8,37 @@ In the main you can choose the parameters for your search (at the moment: the be
 The parameter *timedelta_in_minutes* determines the maximum allowed time lag between the timestamp of the data-file and the timestamp of the appropriate drs-file. The default value is 30 minutes. Which works fine in my experience.
 Dates are given in the usual FACT convention: YYYYMMDD.
 
-##Requirements
+## Requirements
   - FACT-Tools
   - Java 1.8+
   - Python 3.5+ (srsly. 3.5 please)
 
 Install my fork of pygridmap
 
-    pip install git+https://github.com/mackaiver/gridmap
+    pip install https://github.com/mackaiver/gridmap/archive/master.tar.gz
 
 Then install this via
 
-    pip install git+https://github.com/fact-project/erna
+    pip install https://github.com/fact-project/erna/archive/master.tar.gz
+
+## Config for using gridmap on PhiDo
+
+You need to put this into your `.bashrc`, so erna is configured correctly
+
+```bash
+export ERROR_MAIL_RECIPIENT=<your email address>
+export DRMAA_LIBRARY_PATH="/sl6/sw/projects/fact/pbs-drmaa-1.0.19/pbs_drmaa/libs/libdrmaa.so"
+export DEFAULT_TEMP_DIR="/local/$USER/$PBS_JOBID"
+export USE_MEM_FREE=TRUE
+export SMTP_SERVER="unimail.tu-dortmund.de"
+export ERROR_MAIL_RECIPIENT="your.email@address.com"
+export ERROR_MAIL_SENDER="torque@hpc-main3.phido.physik.tu-dortmund.de"
+export SEND_ERROR_MAIL=TRUE
+```
+
+## How to for using gridmap on LiDo2
+A brief example of how to setup LiDo2 for erna can be found at:
+https://github.com/fact-project/erna/wiki/How-to-setup-Lido2-for-erna
 
 
 ## execute_data_processing.py
@@ -41,10 +60,25 @@ The script creates a json-file (*earliest_run_latest_run_source_name.json*), whi
 The created file can be used in conjunction with `execute_list.py` to start jobs with the files contained in the .json file.
 This is useful if you don't have internet access on the machine where you submit your jobs from. *coughISDCcough*
 
+# Automatic processing with erna at isdc
+
+The erna job submitter should be running as `fact_tools` user on
+isdc-in04.
+
+To run it, start the screen session with the screenrc coming in this repo:
+```
+$ screen -c screenrc_erna
+```
+
+It sets up the necessary port forwarding and proxy to speak to the non-isdc world and starts the erna submitter processing.
 
 ## Submit runs:
 
-Fire up erna_console and enter: 
+We provide a script `erna_submit_runlist` to submit a csv runlist into the
+automatic processing.
+
+
+Alternatively, you can use the erna_console and enter: 
 
 ```python
 files = (
@@ -56,9 +90,9 @@ files = (
 print("files.count():", files.count())
 
 # We only select Jar.id and Jar.version to not download the 20 MB binary blob
-jar = Jar.select(Jar.id, Jar.version).where(jar.version == '0.17.2').get()
+jar = Jar.select(Jar.id, Jar.version).where(Jar.version == '0.17.2').get()
 xml = XML.get(name='std_analysis', jar=jar)
 queue = Queue.get(name='fact_short')
 
-insert_jobs(files, xml=xml, jar=jar, queue=queue)
+insert_new_jobs(files, xml=xml, jar=jar, queue=queue)
 ```

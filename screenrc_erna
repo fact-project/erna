@@ -1,0 +1,19 @@
+sessionname erna
+
+term screen-256color
+
+caption always "%{= bb}%{+b w}%h %=%{=b rw} %l %{= db} ${USER}@%H %{= dg}%c"
+hardstatus alwayslastline "%-Lw%{= BW}%50>%n%f* %t%{-}%+Lw%<"
+
+
+
+screen -t erna_port_forwarding
+stuff "ssh -N -L 3306:localhost:3306 isdc-nx00^M"
+
+screen -t erna_proxy
+stuff "ssh isdc-nx00^M"
+sleep 5
+stuff "/swdev_nfs/socat-2.0.0-b9/socat TCP-LISTEN:3306,fork TCP:fact-mysql.app.tu-dortmund.de:3306^M"
+
+screen -t erna_submitter
+stuff "/swdev_nfs/anaconda3/bin/erna_automatic_processing -v^M"

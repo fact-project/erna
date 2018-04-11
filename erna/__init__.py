@@ -7,19 +7,57 @@ import json
 import pkg_resources
 from datetime import timedelta
 
+from fact.io import to_h5py
+from fact.instrument import camera_distance_mm_to_deg
+
 from . import datacheck_conditions as dcc
 from .datacheck import get_runs, get_drs_runs
+from .hdf_utils import rename_columns
 
 logger = logging.getLogger(__name__)
 
 
+def add_theta_deg_columns(df):
+    for i in range(6):
+        incol = 'theta' if i == 0 else 'theta_off_{}'.format(i)
+        outcol = 'theta_deg' if i == 0 else 'theta_deg_off_{}'.format(i)
+        if incol in df.columns:
+            df[outcol] = camera_distance_mm_to_deg(df[incol])
+
+
+
 def build_path(row, path_to_data, extension):
+    """
+    builds a path to the fact data given the night, extension and filename
+    """
     night = str(row.NIGHT)
     year = night[0:4]
     month = night[4:6]
     day = night[6:8]
-    return os.path.join(path_to_data, year, month, day, row.filename + extension)
+    res = os.path.join(path_to_data, year, month, day, row.filename + extension)
+    return res
 
+def test_drs_path(df, key):
+    """
+    Test if the given drs paths in the key are present
+    """
+    mask = df[key].apply(os.path.exists)
+    df['drs_file_exists'] = mask
+
+    return df
+
+
+def test_data_path(df, key):
+    """
+    Test the given data paths in key if they exists. It tests for
+    both possible fileextensions [.fz, .gz] and corrects if necessary.
+    """
+    mask = df[key].apply(os.path.exists)
+    df['data_file_exists'] = mask
+    df.loc[~mask, key] = df.loc[~mask, key].str.replace('.fz', '.gz')
+    df.loc[~mask, 'data_file_exists'] = df.loc[~mask, key].apply(os.path.exists)
+
+    return df
 
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
@@ -65,6 +103,10 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     df_returned_data = pd.concat(frames, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
 
+    if len(df_returned_data)==0:
+        logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
+        return
+
     if df_started_runs is not None:
         df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
         total_on_time_in_seconds = df_merged.on_time.sum()
@@ -75,6 +117,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
         df_returned_data.failed_jobs=difference
 
+    df_returned_data.columns = rename_columns(df_returned_data.columns)
+    add_theta_deg_columns(df_returned_data)
+
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
@@ -84,7 +129,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        df_returned_data.to_hdf(output_path, 'data', mode='w', **kwargs)
+        to_h5py(df_returned_data, output_path, key='events', mode='w', **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
         df_returned_data.to_csv(output_path, **kwargs)
@@ -165,15 +210,21 @@ def load(
     data["filename"] = build_filename(data.NIGHT, data.RUNID)
     drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
 
-    # write path TODO: file ending? is everything in fz?
+    # write path
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
     drs_data["path"] = drs_data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.drs.fits.gz')
+
+    #remove all none existing drs files
+    drs_data = test_drs_path(drs_data, "path")
+    drs_data = drs_data[drs_data['drs_file_exists']]
 
     # reindex the drs table using the index of the data table.
     # There are always more data runs than drs run in the db.
     # hence missing rows have to be filled either forward or backwards
     earlier_drs_entries = drs_data.reindex(data.index, method="ffill")
+    earlier_drs_entries = earlier_drs_entries.fillna(axis="index", method="ffill")
     later_drs_entries = drs_data.reindex(data.index, method="backfill")
+    later_drs_entries = later_drs_entries.fillna(axis="index", method="ffill")
 
     # when backfilling the drs obeservations the last rows might be invalid and contain nans.
     # We cannot drop them becasue the tables have to have the same length.
@@ -193,7 +244,7 @@ def load(
         closest_drs_entries.deltaT,
         data.fOnTime, data.fEffectiveOn,
         data.NIGHT,
-        data.RUNID
+        data.RUNID,
     ], axis=1, keys=[
         "filename",
         "drs_path",

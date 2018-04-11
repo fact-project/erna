@@ -54,7 +54,7 @@ def read_outputs_to_list(job_output_paths):
 @click.argument('data_dir', type=click.Path(exists=True, dir_okay=True, file_okay=False, readable=True))
 @click.argument('jar', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
-@click.argument('db', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
+@click.argument('aux_source', type=click.Path(exists=True, dir_okay=True, file_okay=True, readable=True))
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True))
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short')
 @click.option('--mail', help='qsub mail settings.', default='a')
@@ -70,7 +70,7 @@ def read_outputs_to_list(job_output_paths):
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
+def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, mail,
          walltime, engine, num_runs, qjobs, vmem, log_level, port, source, conditions,
          max_delta_t, local, password):
 
@@ -91,7 +91,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
     erna.ensure_output(out)
     logger.info("Output data will be written to {}".format(out))
 
-    db_path = os.path.abspath(db)
+    aux_source_path = os.path.abspath(aux_source)
     output_directory = os.path.dirname(outpath)
     # create dir if it doesnt exist
     os.makedirs(output_directory, exist_ok=True)
@@ -128,7 +128,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, db, out, queue, mail,
         if ( n_toqueue > 0 ) and ( len(df_runs) > 0):
             df_to_submit = df_runs.head(n_toqueue*num_runs).copy()
             processing_identifier = "{}_{}".format(source, time.strftime('%Y%m%d%H%M'))
-            df_submitted_last = q.submit_qsub_jobs(processing_identifier, jarpath, xmlpath, db_path, df_to_submit,  engine, queue, vmem, num_runs, walltime, db, mail)
+            df_submitted_last = q.submit_qsub_jobs(processing_identifier, jarpath, xmlpath, aux_source_path, df_to_submit,  engine, queue, vmem, num_runs, walltime, aux_source, mail)
             df_submitted = df_submitted.append(df_submitted_last)
 
 
