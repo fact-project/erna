@@ -75,7 +75,8 @@ def make_jobs(jar, xml, data_paths, drs_paths,
               + 'summary oth the processed jobs. The data ouput will be'
               + 'inseparate files',
               show_default=True)
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output):
+@click.option('--yes', default=False,is_flag=True)
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, yes):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -118,7 +119,8 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
         logger.error("You specified more jobs than files. This doesn't make sense.")
         return
 
-    click.confirm('Do you want to continue processing and start jobs?', abort=True)
+    if not yes:
+        click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     mc_paths_array = np.array(files)
     drs_paths_array = np.repeat(np.array(drspath), len(mc_paths_array))
