@@ -73,7 +73,17 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
-def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs, vmem, log_level, port, local):
+@click.option('--local_output', default=False, is_flag=True,
+              help='Flag indicating whether jobs write their output localy'
+              + 'to disk without gathering everything in the mother'
+              + 'process. In this case the output file only contains a'
+              + 'summary oth the processed jobs. The data ouput will be'
+              + 'in separate files',
+              show_default=True)
+click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
+              + "%b will replace the out filename and %[1-9]n the given local number."
+              + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
+def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, local_output_format):
     '''
     Specify the path to a .json file as created by the fetch_runs.py script via the FILE_LIST argument.
     num_jobs will be created and executed on the cluster.

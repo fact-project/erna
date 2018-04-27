@@ -77,8 +77,18 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
 @click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g standard', default='standard')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
+@click.option('--local_output', default=False, is_flag=True,
+              help='Flag indicating whether jobs write their output localy'
+              + 'to disk without gathering everything in the mother'
+              + 'process. In this case the output file only contains a'
+              + 'summary oth the processed jobs. The data ouput will be'
+              + 'in separate files',
+              show_default=True)
+click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
+              + "%b will replace the out filename and %[1-9]n the given local number."
+              + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, password, local_output, local_output_format):
 
     level=logging.INFO
     if log_level is 'DEBUG':
