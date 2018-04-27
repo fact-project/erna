@@ -5,6 +5,7 @@ import pandas as pd
 from os import path
 
 import erna
+from erna.utils import create_filename_from_format
 from erna import stream_runner as stream_runner_std
 from erna import stream_runner_local_output as stream_runner_local
 
@@ -15,20 +16,6 @@ import glob
 
 logger = logging.getLogger(__name__)
 
-import re
-
-def create_filename_from_format(filename_format, basename, num):
-    """
-    Given a special format string, create a filename_format with the basename and a given number.
-    There are two named variables that can be used, one is basename which inserts the basename
-    and the second one is num which is mandatory.
-    """
-    m = re.search('\{num', filename_format)
-    if not m:
-        raise ValueError("Missing named placeholder 'num' in format string")
-    return filename_format.format({"basename":basename, "num":num})
-
-	
 def make_jobs(jar, xml, data_paths, drs_paths,
               engine, queue, vmem, num_jobs, walltime, output_path=None, filename_format="{basename}_{num}.json"):
     jobs = []
@@ -36,12 +23,15 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     if output_path:
-        logger.info("Using stream runner für local output")
+        logger.info("Using stream runner for local output")
     else:
         logger.debug("Using std stream runner gathering output from all nodes")
 
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
+        df=df.copy()
+        df["bunch_index"] = num
+        
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))

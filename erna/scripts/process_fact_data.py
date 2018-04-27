@@ -9,21 +9,51 @@ import gridmap
 from gridmap import Job
 
 import erna
-from erna import stream_runner
+from erna.utils import create_filename_from_format
+from erna import stream_runner as stream_runner_std
+from erna import stream_runner_local_output as stream_runner_local
+
 import erna.datacheck_conditions as dcc
 
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, queue, vmem, num_runs_per_bunch, walltime):
+def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, queue, vmem, num_runs_per_bunch, walltime, output_path=None, filename_format="{basename}_{num}.json"):
     jobs = []
+    
+    if output_path:
+        logger.info("Using stream runner for local output")
+    else:
+        logger.debug("Using std stream runner gathering output from all nodes")
+        
     # create job objects
     df_mapping["bunch_index"]= np.arange(len(df_mapping)) // num_runs_per_bunch
     for num, df in df_mapping.groupby("bunch_index"):
         df=df.copy()
         df["bunch_index"] = num
-        job = Job(stream_runner.run, [jar, xml, df, aux_source_path], queue=queue, walltime=walltime, engine=engine, mem_free='{}mb'.format(vmem))
-        jobs.append(job)
+        
+        if output_path:
+            # create the filenames for each single local run
+            file_name, _ = path.splitext(path.basename(output_path))
+            file_name = create_filename_from_format(filename_format, file_name, num)
+            out_path = path.dirname(output_path)
+            run = [jar, xml, df, path.join(out_path, file_name), aux_source_path]
+            stream_runner = stream_runner_local
+        else:
+            run = [jar, xml, df, aux_source_path]
+            stream_runner = stream_runner_std
+            
+        jobs.append(
+           Job(stream_runner.run, 
+               run,
+               queue=queue, 
+               walltime=walltime, 
+               engine=engine,
+               mem_free='{}mb'.format(vmem)
+               )
+           )
+        avg_num_files = np.mean([len(part) for num, part in df_mapping.groupby("bunch_index")])
+        logger.info("Created {} jobs with {} files each.".format(len(jobs), avg_num_files))
 
     return jobs
 
@@ -83,8 +113,20 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
 
     logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
     click.confirm('Do you want to continue processing and start jobs?', abort=True)
+    
+    if local_output:
+        job_list = make_jobs(jarpath, xmlpath, aux_source_path, 
+                             output_directory, df_runs,  engine, queue, 
+                             vmem, num_jobs, walltime, 
+                             output_path=local_output_dir, 
+                             filename_format=local_output_format
+                             )
+    else:
+        job_list = make_jobs(jarpath, xmlpath, aux_source_path, 
+                             output_directory, df_runs,  engine, queue, 
+                             vmem, num_jobs, walltime
+                             )
 
-    job_list = make_jobs(jarpath, xmlpath, aux_source_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime)
     job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
     erna.collect_output(job_outputs, out, df_runs)
 

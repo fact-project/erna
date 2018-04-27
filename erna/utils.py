@@ -93,3 +93,16 @@ def check_environment_on_node():
     subprocess.check_call(['which', 'java'])
     subprocess.check_call(['free', '-m'])
     subprocess.check_call(['java', '-Xmx512m', '-version'])
+    
+import re
+
+def create_filename_from_format(filename_format, basename, num):
+    """
+    Given a special format string, create a filename_format with the basename and a given number.
+    There are two named variables that can be used, one is basename which inserts the basename
+    and the second one is num which is mandatory.
+    """
+    m = re.search('\{num', filename_format)
+    if not m:
+        raise ValueError("Missing named placeholder 'num' in format string")
+    return filename_format.format({"basename":basename, "num":num})
