@@ -80,7 +80,7 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
               + 'summary oth the processed jobs. The data ouput will be'
               + 'in separate files',
               show_default=True)
-click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
+@click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
               + "%b will replace the out filename and %[1-9]n the given local number."
               + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
 def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, local_output_format):
