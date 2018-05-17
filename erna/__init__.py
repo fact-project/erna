@@ -30,7 +30,7 @@ def build_path(row, path_to_data, extension):
     """
     builds a path to the fact data given the night, extension and filename
     """
-    night = str(row.NIGHT)
+    night = str(row.night)
     year = night[0:4]
     month = night[4:6]
     day = night[6:8]
@@ -108,7 +108,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         return
 
     if df_started_runs is not None:
-        df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
+        df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='inner')
         total_on_time_in_seconds = df_merged.on_time.sum()
         logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
@@ -175,7 +175,7 @@ def load(
         factdb,
         conditions=conditions,
         columns=(
-            'fNight AS NIGHT', 'fRunID AS RUNID',
+            'fNight AS night', 'fRunID AS run_id',
             'fRunStart', 'fRunStop',
             'fOnTime', 'fEffectiveOn',
         ),
@@ -189,7 +189,7 @@ def load(
 
     drs_data = get_drs_runs(
         factdb, conditions=drs_conditions,
-        columns=('fNight AS NIGHT', 'fRunID AS RUNID', 'fRunStart', 'fRunStop'),
+        columns=('fNight AS night', 'fRunID AS run_id', 'fRunStart', 'fRunStop'),
     )
 
     if len(data) == 0 or len(drs_data) == 0:
@@ -207,8 +207,8 @@ def load(
     drs_data = drs_data.sort_index()
 
     # write filenames
-    data["filename"] = build_filename(data.NIGHT, data.RUNID)
-    drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
+    data["filename"] = build_filename(data.night, data.run_id)
+    drs_data["filename"] = build_filename(drs_data.night, drs_data.run_id)
 
     # write path
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
@@ -243,8 +243,8 @@ def load(
         data.path,
         closest_drs_entries.deltaT,
         data.fOnTime, data.fEffectiveOn,
-        data.NIGHT,
-        data.RUNID,
+        data.night,
+        data.run_id,
     ], axis=1, keys=[
         "filename",
         "drs_path",
@@ -252,8 +252,8 @@ def load(
         "delta_t",
         "on_time",
         "effective_on",
-        "NIGHT",
-        "RUNID",
+        "night",
+        "run_id",
     ])
 
     mapping = mapping.dropna(how='any')
