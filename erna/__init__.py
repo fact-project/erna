@@ -114,8 +114,8 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
         difference = pd.Index(df_started_runs).difference(pd.Index(df_returned_data))
 
-        df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
-        df_returned_data.failed_jobs=difference
+        df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
+        df_returned_data["failed_jobs"] = difference
 
     df_returned_data.columns = rename_columns(df_returned_data.columns)
     add_theta_deg_columns(df_returned_data)
