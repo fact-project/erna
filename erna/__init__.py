@@ -108,16 +108,25 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         return
 
     if df_started_runs is not None:
-        df_returned_data = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
-        df_returned_data["failed"] = (df_returned_data["_merge"] != "both")
-        df_returned_data.drop("_merge", axis=1, inplace=True)
+        df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
+        df_merged["failed"] = (df_merged["_merge"] != "both")
+        df_merged.drop("_merge", axis=1, inplace=True)
 
-        df_successfull = df_returned_data.query("failed == False")
+        df_successfull = df_merged.query("failed == False")
+        df_failed = df_merged.query("failed == True")
 
         total_on_time_in_seconds = df_successfull.ontime.sum()
         logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
         df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
+        
+        logger.info("Number of failed runs: {}".format(len(df_failed)))
+        if len(df_failed) > 0:
+            name, extension = os.path.splitext(output_path)
+            failed_file_list_path = name+"_failed_runs.csv"
+            logger.info("Writing list of failed runs to: {}".format(failed_file_list_path))
+            df_failed.to_csv(failed_file_list_path, **kwargs)
+            
 
     df_returned_data.columns = rename_columns(df_returned_data.columns)
     add_theta_deg_columns(df_returned_data)
