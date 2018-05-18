@@ -252,7 +252,7 @@ def load(
         "drs_path",
         "data_path",
         "delta_t",
-        "on_time",
+        "ontime",
         "effective_on",
         "night",
         "run_id",
@@ -261,8 +261,8 @@ def load(
     mapping = mapping.dropna(how='any')
 
     logger.info("Fetched {} data runs and approx {} drs entries from database where time delta is less than {} minutes".format(len(mapping), mapping['drs_path'].nunique(), timedelta_in_minutes))
-    # effective_on_time = (mapping['on_time'] * mapping['effective_on']).sum()
-    # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
+    # effective_ontime = (mapping['ontime'] * mapping['effective_on']).sum()
+    # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_ontime), effective_ontime/3600))
 
     return mapping
 
