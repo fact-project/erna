@@ -47,8 +47,9 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
 @click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g standard', default='standard')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
+@click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, yes, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -82,7 +83,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     logger.warn("Missing {} dataruns due to missing datafiles".format(len(df_runs_missing)))
 
     logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
-    click.confirm('Do you want to continue processing and start jobs?', abort=True)
+    if not yes:
+        click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     job_list = make_jobs(jarpath, xmlpath, aux_source_path, output_directory, df_runs,  engine, queue, vmem, num_runs, walltime)
     job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
