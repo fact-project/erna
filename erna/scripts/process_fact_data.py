@@ -89,7 +89,9 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
               + "%b will replace the out filename and %[1-9]n the given local number."
               + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, local_output_format, password):
+@click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
+@click.password_option(help='password to read from the always awesome RunDB')
+def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -123,7 +125,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
 
     logger.warn("Missing {} dataruns due to missing datafiles".format(len(df_runs_missing)))
     logger.info("Would process {} jobs with {} runs per job".format(len(df_runs)//num_runs, num_runs))
-    click.confirm('Do you want to continue processing and start jobs?', abort=True)
+    if not yes:
+        click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     if local_output:
         job_list = make_jobs(jarpath, xmlpath, aux_source_path,

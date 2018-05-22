@@ -69,10 +69,11 @@ def read_outputs_to_list(job_output_paths):
 @click.option('--conditions',  help='Name of the data conditions as given in datacheck_conditions.py e.g std', default='data')
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
+@click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
 @click.password_option(help='password to read from the always awesome RunDB')
 def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, mail,
          walltime, engine, num_runs, qjobs, vmem, log_level, port, source, conditions,
-         max_delta_t, local, password):
+         max_delta_t, local, yes, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -102,7 +103,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     df_loaded.to_hdf(out+".tmp", "loaded", mode="a")
 
     logger.info("Processing {} jobs with {} runs per job.".format(int(len(df_loaded)/num_runs), num_runs))
-    click.confirm('Do you want to continue processing and start jobs?', abort=True)
+    if not yes:
+        click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     #ensure that the max number of queuable jobs is smaller than the total number of jobs
     if qjobs > len(df_loaded):
