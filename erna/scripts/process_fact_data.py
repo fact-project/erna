@@ -77,7 +77,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     # check for missing data and fix possible wrong file extension (.fz->.gz)
     df = erna.test_data_path(df_runs, "data_path")
     df_runs = df[df['data_file_exists']]
-    df_runs_missing = df[~df['data_file_exists']]
+    df_runs_missing = df[np.logical_not(df['data_file_exists'])]
     
     logger.warn("Missing {} dataruns due to missing datafiles".format(len(df_runs_missing)))
 

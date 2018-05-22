@@ -30,7 +30,7 @@ def build_path(row, path_to_data, extension):
     """
     builds a path to the fact data given the night, extension and filename
     """
-    night = str(row.NIGHT)
+    night = str(row.night)
     year = night[0:4]
     month = night[4:6]
     day = night[6:8]
@@ -108,14 +108,25 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         return
 
     if df_started_runs is not None:
-        df_merged = pd.merge(df_started_runs, df_returned_data, on=['NIGHT','RUNID'], how='inner')
-        total_on_time_in_seconds = df_merged.on_time.sum()
+        df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
+        df_merged["failed"] = (df_merged["_merge"] != "both")
+        df_merged.drop("_merge", axis=1, inplace=True)
+
+        df_successfull = df_merged.query("failed == False")
+        df_failed = df_merged.query("failed == True")
+
+        total_on_time_in_seconds = df_successfull.ontime.sum()
         logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
-        difference = pd.Index(df_started_runs).difference(pd.Index(df_returned_data))
-
-        df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
-        df_returned_data.failed_jobs=difference
+        df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
+        
+        logger.info("Number of failed runs: {}".format(len(df_failed)))
+        if len(df_failed) > 0:
+            name, extension = os.path.splitext(output_path)
+            failed_file_list_path = name+"_failed_runs.csv"
+            logger.info("Writing list of failed runs to: {}".format(failed_file_list_path))
+            df_failed.to_csv(failed_file_list_path, **kwargs)
+            
 
     df_returned_data.columns = rename_columns(df_returned_data.columns)
     add_theta_deg_columns(df_returned_data)
@@ -175,7 +186,7 @@ def load(
         factdb,
         conditions=conditions,
         columns=(
-            'fNight AS NIGHT', 'fRunID AS RUNID',
+            'fNight AS night', 'fRunID AS run_id',
             'fRunStart', 'fRunStop',
             'fOnTime', 'fEffectiveOn',
         ),
@@ -189,7 +200,7 @@ def load(
 
     drs_data = get_drs_runs(
         factdb, conditions=drs_conditions,
-        columns=('fNight AS NIGHT', 'fRunID AS RUNID', 'fRunStart', 'fRunStop'),
+        columns=('fNight AS night', 'fRunID AS run_id', 'fRunStart', 'fRunStop'),
     )
 
     if len(data) == 0 or len(drs_data) == 0:
@@ -207,8 +218,8 @@ def load(
     drs_data = drs_data.sort_index()
 
     # write filenames
-    data["filename"] = build_filename(data.NIGHT, data.RUNID)
-    drs_data["filename"] = build_filename(drs_data.NIGHT, drs_data.RUNID)
+    data["filename"] = build_filename(data.night, data.run_id)
+    drs_data["filename"] = build_filename(drs_data.night, drs_data.run_id)
 
     # write path
     data["path"] = data.apply(build_path, axis=1, path_to_data=path_to_data, extension='.fits.fz')
@@ -243,24 +254,24 @@ def load(
         data.path,
         closest_drs_entries.deltaT,
         data.fOnTime, data.fEffectiveOn,
-        data.NIGHT,
-        data.RUNID,
+        data.night,
+        data.run_id,
     ], axis=1, keys=[
         "filename",
         "drs_path",
         "data_path",
         "delta_t",
-        "on_time",
+        "ontime",
         "effective_on",
-        "NIGHT",
-        "RUNID",
+        "night",
+        "run_id",
     ])
 
     mapping = mapping.dropna(how='any')
 
     logger.info("Fetched {} data runs and approx {} drs entries from database where time delta is less than {} minutes".format(len(mapping), mapping['drs_path'].nunique(), timedelta_in_minutes))
-    # effective_on_time = (mapping['on_time'] * mapping['effective_on']).sum()
-    # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_on_time), effective_on_time/3600))
+    # effective_ontime = (mapping['ontime'] * mapping['effective_on']).sum()
+    # logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=effective_ontime), effective_ontime/3600))
 
     return mapping
 
