@@ -5,6 +5,7 @@ import pandas as pd
 from os import path
 
 import erna
+from erna.utils import create_filename_from_format
 from erna import stream_runner as stream_runner_std
 from erna import stream_runner_local_output as stream_runner_local
 
@@ -14,7 +15,7 @@ from tqdm import tqdm
 import glob
 
 logger = logging.getLogger(__name__)
-	
+
 def make_jobs(jar, xml, data_paths, drs_paths,
               engine, queue, vmem, num_jobs, walltime, output_path=None, local_output_extension="json"):
     jobs = []
@@ -22,12 +23,15 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     if output_path:
-        logger.info("Using stream runner für local output")
+        logger.info("Using stream runner for local output")
     else:
         logger.debug("Using std stream runner gathering output from all nodes")
 
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
+        df=df.copy()
+        df["bunch_index"] = num
+        
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
