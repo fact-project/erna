@@ -1,2 +1,2 @@
-git+https://github.com/fact-project/fact_conditions#egg=fact_conditions
-git+https://github.com/mackaiver/gridmap#egg=gridmap
+git+https://github.com/fact-project/fact_conditions@v0.1#egg=fact_conditions
+git+https://github.com/mackaiver/gridmap@a38271b35a96adbda0c0f3e62f3751b3c8c3982a#egg=gridmap
