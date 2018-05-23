@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='erna',
-    version='0.8.2',
+    version='0.8.3',
     description='Easy RuN Access. Tools that help to do batch processing of FACT data',
     url='https://github.com/fact-project/erna',
     author='Kai Brügge, Jens Buss, Maximilian Nöthe',
@@ -41,6 +41,7 @@ setup(
         'xmltodict',
         'wrapt',
         # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
+        # 'fact_condition', install from https://github.com/fact-project/fact_conditions
     ],
     zip_safe=False,
     entry_points={

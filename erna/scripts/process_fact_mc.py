@@ -17,7 +17,7 @@ import glob
 logger = logging.getLogger(__name__)
 
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None, filename_format="{basename}_{num}.json"):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, local_output_extension="json"):
     jobs = []
 
     data_partitions = np.array_split(data_paths, num_jobs)
@@ -35,7 +35,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
-            file_name = create_filename_from_format(filename_format, file_name, num)
+            file_name = "{}_{}.{}".format(file_name, num, local_output_extension)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name)]
             stream_runner = stream_runner_local
@@ -81,12 +81,8 @@ def make_jobs(jar, xml, data_paths, drs_paths,
               show_default=True)
 @click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.option('--mcwildcard', help="Gives the wildcard for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
-@click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
-              + "%b will replace the out filename and %[1-9]n the given local number."
-              + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
-@click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_format, yes):
-
+@click.option('--local_output_extension', default="json", help="Give the file format for the local output funktionality.")
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_extension):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -142,7 +138,7 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
         job_list = make_jobs(
                         jarpath, xmlpath, mc_paths_array,
                         drs_paths_array,  engine, queue,
-                        vmem, num_jobs, walltime, output_path=local_output_dir, filename_format=local_output_format
+                        vmem, num_jobs, walltime, output_path=local_output_dir, local_output_extension=local_output_extension
                         )
     else:
         job_list = make_jobs(
