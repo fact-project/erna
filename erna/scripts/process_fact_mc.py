@@ -36,7 +36,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     if output_path:
-        logger.info("Using stream runner für local output")
+        logger.info("Using stream runner for local output")
     else:
         logger.debug("Using std stream runner gathering output from all nodes")
 
@@ -50,7 +50,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
             run = [jar, xml, df, path.join(out_path, file_name), None, '{}mb'.format(0.9*vmem)]
             stream_runner = stream_runner_local
         else:
-            run = [jar, xml, df, None, '{mb}'.format(0.9*vmem)]
+            run = [jar, xml, df, None, '{}mb'.format(0.9*vmem)]
             stream_runner = stream_runner_std
 
         jobs.append(
