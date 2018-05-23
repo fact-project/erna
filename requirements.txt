@@ -1,2 +1,2 @@
 https://github.com/fact-project/fact_conditions/archive/v0.1.tar.gz#egg=fact_conditions
-git+https://github.com/mackaiver/gridmap@a38271b35a96adbda0c0f3e62f3751b3c8c3982a#egg=gridmap
+https://github.com/mackaiver/gridmap@a38271b35a96adbda0c0f3e62f3751b3c8c3982a#egg=gridmap
