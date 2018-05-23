@@ -1,0 +1,2 @@
+git+https://github.com/fact-project/fact_conditions#egg=fact_conditions
+git+https://github.com/mackaiver/gridmap#egg=gridmap
