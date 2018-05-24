@@ -124,8 +124,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         if len(df_failed) > 0:
             name, extension = os.path.splitext(output_path)
             failed_file_list_path = name+"_failed_runs.csv"
+
             logger.info("Writing list of failed runs to: {}".format(failed_file_list_path))
-            df_failed.to_csv(failed_file_list_path, **kwargs)
+            df_failed.to_csv(failed_file_list_path, columns=df_started_runs.columns, **kwargs)
             
 
     df_returned_data.columns = rename_columns(df_returned_data.columns)
