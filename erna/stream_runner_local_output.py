@@ -4,6 +4,7 @@ import os
 import json
 import logging
 import tempfile
+import gzip
 from shutil import copyfile
 from erna import ft_json_to_df
 from erna.utils import (
@@ -41,8 +42,21 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
         if not os.path.exists(tmp_output_path):
             logger.error("Not output generated, returning no results")
             return "fact-tools generated no output"
+            
+        filename, file_extension = os.path.splitext(output_path)
+        
+        if "gz" in file_extension:
+            logger.info("Zipping {}".format(filename))
+            outputpath = filename
+            f_in = open(tmp_output_path, 'rb')
+            f_out = gzip.open(tmp_output_path+'.gz', 'wb')
+            f_out.writelines(f_in)
+            f_out.close()
+            f_in.close()
+            tmp_output_path += '.gz'
 
         copyfile(tmp_output_path, output_path)
+        
         input_files_df['output_path'] = output_path
 
         return input_files_df
