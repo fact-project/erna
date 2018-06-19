@@ -107,18 +107,28 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
         return
 
+    logger.info("Number of started runs {}".format(len(df_started_runs)))
+
     if df_started_runs is not None:
-        df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
+        if (set(['night','run_id']).issubset(df_started_runs.columns) and set(['night','run_id']).issubset(df_returned_data.columns)):
+            df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
+        elif (set(['data_path','bunch_index']).issubset(df_started_runs.columns) and set(['data_path','bunch_index']).issubset(df_returned_data.columns)):
+            df_merged = pd.merge(df_started_runs, df_returned_data, on=['data_path','bunch_index'], how='outer', indicator=True)
+        else:
+            df_merged = df_started_runs
+            df_merged["_merge"] = "both"
+
         df_merged["failed"] = (df_merged["_merge"] != "both")
         df_merged.drop("_merge", axis=1, inplace=True)
 
         df_successfull = df_merged.query("failed == False")
         df_failed = df_merged.query("failed == True")
 
-        total_on_time_in_seconds = df_successfull.ontime.sum()
-        logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
+        if (set(['ontime']).issubset(df_successfull.columns)):
+            total_on_time_in_seconds = df_successfull.ontime.sum()
+            logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
-        df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
+            df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
         
         logger.info("Number of failed runs: {}".format(len(df_failed)))
         if len(df_failed) > 0:

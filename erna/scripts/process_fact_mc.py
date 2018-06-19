@@ -27,11 +27,14 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     else:
         logger.debug("Using std stream runner gathering output from all nodes")
 
+    df_runs = pd.DataFrame()
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
         df=df.copy()
         df["bunch_index"] = num
-        
+
+        df_runs = df_runs.append(df)
+
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
@@ -55,7 +58,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 
     avg_num_files = np.mean([len(part) for part in data_partitions])
     logger.info("Created {} jobs with {} files each.".format(len(jobs), avg_num_files))
-    return jobs
+    return jobs, df_runs
 
 
 
@@ -135,20 +138,18 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     drs_paths_array = np.repeat(np.array(drspath), len(mc_paths_array))
 
     if local_output:
-        job_list = make_jobs(
-                        jarpath, xmlpath, mc_paths_array,
-                        drs_paths_array,  engine, queue,
-                        vmem, num_jobs, walltime, output_path=local_output_dir, local_output_extension=local_output_extension
-                        )
+        output_path=local_output_dir
     else:
-        job_list = make_jobs(
-                        jarpath, xmlpath, mc_paths_array,
-                        drs_paths_array,  engine, queue,
-                        vmem, num_jobs, walltime
-                        )
+        output_path=None
+        
+    job_list, df_runs = make_jobs(
+                    jarpath, xmlpath, mc_paths_array,
+                    drs_paths_array,  engine, queue,
+                    vmem, num_jobs, walltime, output_path=output_path, local_output_extension=local_output_extension
+                    )
 
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
-    erna.collect_output(job_outputs, out)
+    erna.collect_output(job_outputs, out, df_runs)
 
 if __name__ == "__main__":
     main()
