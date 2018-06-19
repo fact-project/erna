@@ -27,11 +27,14 @@ def make_jobs(jar, xml, data_paths, drs_paths,
     else:
         logger.debug("Using std stream runner gathering output from all nodes")
 
+    df_runs = pd.DataFrame()
     for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
         df = pd.DataFrame({'data_path': data, 'drs_path': drs})
         df=df.copy()
         df["bunch_index"] = num
-        
+
+        df_runs = df_runs.append(df)
+
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
@@ -55,7 +58,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 
     avg_num_files = np.mean([len(part) for part in data_partitions])
     logger.info("Created {} jobs with {} files each.".format(len(jobs), avg_num_files))
-    return jobs, df
+    return jobs, df_runs
 
 
 
