@@ -4,7 +4,6 @@ import os
 import json
 import logging
 import tempfile
-import gzip
 from shutil import copyfile
 from erna import ft_json_to_df
 from erna.utils import (
@@ -44,11 +43,12 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
             return "fact-tools generated no output"
                     
         if output_path.endswith("gz"):
-            f_in = open(tmp_output_path, 'rb')
-            f_out = gzip.open(tmp_output_path+'.gz', 'wb')
-            f_out.writelines(f_in)
-            f_out.close()
-            f_in.close()
+            try:
+                subprocess.check_call(["gzip", tmp_output_path])
+            except subprocess.CalledProcessError as e:
+                logger.error("Unable to zipp: {}".format(tmp_output_path))
+                logger.error(e)
+
             tmp_output_path += '.gz'
             logger.info("Copying zipped output file {}".format(tmp_output_path))
 
