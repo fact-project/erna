@@ -46,8 +46,7 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
             try:
                 subprocess.check_call(["gzip", tmp_output_path])
             except subprocess.CalledProcessError as e:
-                logger.error("Unable to zipp: {}".format(tmp_output_path))
-                logger.error(e)
+                logger.exception("Unable to zip: {}".format(tmp_output_path))
 
             tmp_output_path += '.gz'
             logger.info("Copying zipped output file {}".format(tmp_output_path))
