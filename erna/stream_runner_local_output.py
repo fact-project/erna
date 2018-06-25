@@ -41,8 +41,18 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
         if not os.path.exists(tmp_output_path):
             logger.error("Not output generated, returning no results")
             return "fact-tools generated no output"
+                    
+        if output_path.endswith("gz"):
+            try:
+                subprocess.check_call(["gzip", tmp_output_path])
+            except subprocess.CalledProcessError as e:
+                logger.exception("Unable to zip: {}".format(tmp_output_path))
+
+            tmp_output_path += '.gz'
+            logger.info("Copying zipped output file {}".format(tmp_output_path))
 
         copyfile(tmp_output_path, output_path)
+        
         input_files_df['output_path'] = output_path
 
         return input_files_df
