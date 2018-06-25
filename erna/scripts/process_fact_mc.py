@@ -82,7 +82,8 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.option('--mcwildcard', help="Gives the wildcard for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
 @click.option('--local_output_extension', default="json", help="Give the file format for the local output funktionality.")
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_extension):
+@click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
+def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_extension, yes):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''

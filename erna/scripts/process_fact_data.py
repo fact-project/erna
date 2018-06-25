@@ -89,7 +89,6 @@ from fact_conditions import create_condition_set
 @click.option('--local_output_format', default="{basename}_{num}.json", help="Give the file format for the local output funktionality."
               + "%b will replace the out filename and %[1-9]n the given local number."
               + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
-@click.password_option(help='password to read from the always awesome RunDB')
 @click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
 @click.password_option(help='password to read from the always awesome RunDB')
 def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password):
