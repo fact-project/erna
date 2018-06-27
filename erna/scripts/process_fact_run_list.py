@@ -99,8 +99,19 @@ def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
-    df = pd.read_json(file_list)
-    logger.info("Read {} runs from .json file".format(len(df)))
+    name, extension = os.path.splitext(file_list)
+
+    if extension not in ['.json', '.csv']:
+        logger.error("Did not recognize file extension {}.".format(extension))
+        exit(0)
+    elif extension == '.json':
+        logger.info("Reading JSON from {}".format(file_list))
+        df = pd.read_json(file_list)
+    elif extension == '.csv':
+        logger.info("Reading CSV from {}".format(file_list))
+        df_returned_data.read_csv(file_list)
+
+    logger.info("Read {} runs".format(len(df)))
 
     #get data files
     jarpath = path.abspath(jar)
