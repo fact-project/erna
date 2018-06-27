@@ -124,7 +124,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         df_successfull = df_merged.query("failed == False")
         df_failed = df_merged.query("failed == True")
 
-        if (set(['ontime']).issubset(df_successfull.columns)):
+        if 'ontime' in df_successfull.columns:
             total_on_time_in_seconds = df_successfull.ontime.sum()
             logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
