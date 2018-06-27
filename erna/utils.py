@@ -72,7 +72,7 @@ def assemble_facttools_call(jar, xml, input_path, output_path, aux_source_path=N
     '''
     call = [
             'java',
-            '-XX:MaxHeapSize=1024m',
+            '-XX:MaxHeapSize=4096m',
             '-XX:InitialHeapSize=512m',
             '-XX:CompressedClassSpaceSize=64m',
             '-XX:MaxMetaspaceSize=128m',
