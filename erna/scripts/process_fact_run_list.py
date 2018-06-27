@@ -41,7 +41,7 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00')
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE')
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT)
-@click.option('--vmem', help='Amount of memory to use per node in MB.', default='400', type=click.INT)
+@click.option('--vmem', help='Amount of memory to use per node in MB.', default='400', type=click.IntRange(2000, 1000000))
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy .')
