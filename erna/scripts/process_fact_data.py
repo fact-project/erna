@@ -139,19 +139,28 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
         click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
     if local_output:
-        job_list = make_jobs(jarpath, xmlpath, aux_source_path,
-                             output_directory, df_runs, engine, queue,
-                             vmem, num_runs,  walltime,
-                             output_path=local_output_dir,
-                             filename_format=local_output_format
-                             )
+        output_path=local_output_dir
     else:
-        job_list = make_jobs(jarpath, xmlpath, aux_source_path,
-                             output_directory, df_runs, engine, queue,
-                             vmem, num_runs,  walltime
-                             )
+        output_path=None
 
-    job_outputs = gridmap.process_jobs(job_list, max_processes=len(job_list), local=local)
+    job_list = make_jobs(jarpath, xmlpath, aux_source_path,
+                         output_directory, df_runs, engine, queue,
+                         vmem, num_runs,  walltime,
+                         output_path=output_path,
+                         filename_format=local_output_format
+                         )
+
+    job_arguments = dict(
+        jobs=job_list,
+        max_processes=len(job_list),
+        local=local,
+    )
+
+    if port:
+        job_arguments["port"] = port
+
+
+    job_outputs = gridmap.process_jobs(**job_arguments)
     erna.collect_output(job_outputs, out, df_runs)
 
 if __name__ == "__main__":
