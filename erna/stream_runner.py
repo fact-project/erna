@@ -4,6 +4,7 @@ import os
 import json
 import logging
 import tempfile
+import atexit
 from erna import ft_json_to_df
 from erna.utils import (
     assemble_facttools_call,
@@ -17,10 +18,27 @@ def run(jar, xml, input_files_df, aux_source_path=None):
     '''
     logger = logging.getLogger(__name__)
     logger.info("stream runner has been started.")
-
-    with tempfile.TemporaryDirectory() as output_directory:
+    
+    tempdir = os.getenv("LOCAL_TEMP_DIR", default=None)
+    
+    if tempdir:
+        os.makedirs(tempdir, exist_ok=True)
+        
+    with tempfile.TemporaryDirectory(dir=tempdir) as output_directory:
+        logger.info("Writing temporarily to {}".format(output_directory))
+        
+        @atexit.register
+        def exit_handler():
+            logger.info("removing tempdir")
+            try:
+                os.removedirs(output_directory)
+            except FileNotFoundError:
+                logger.debug("tempdir has allready been deleted")
+            
         input_path = os.path.join(output_directory, "input.json")
         output_path = os.path.join(output_directory, "output.json")
+        
+        logger.info("Input files: {}".format(", ".join(input_files_df["data_path"])))
 
         input_files_df.to_json(input_path, orient='records', date_format='epoch')
         call = assemble_facttools_call(jar, xml, input_path, output_path, aux_source_path)
