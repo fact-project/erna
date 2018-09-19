@@ -144,6 +144,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
     df_returned_data.columns = rename_columns(df_returned_data.columns)
     add_theta_deg_columns(df_returned_data)
+    if "delta_t" in list(df_returned_data.keys()):
+        df_returned_data["delta_t_seconds"] = df_returned_data.delta_t.apply(lambda x: x.total_seconds())
+        df_returned_data = df_returned_data.drop("delta_t", axis=1)
 
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
