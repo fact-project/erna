@@ -83,8 +83,9 @@ def assemble_facttools_call(jar, xml, input_path, output_path, aux_source_path=N
             xml,
             '-Dinput=file:{}'.format(input_path),
             '-Doutput=file:{}'.format(output_path),
-            '-Daux_source=file:{}'.format(aux_source_path),
     ]
+    if aux_source_path:
+        call.append('-Daux_source=file:{}'.format(aux_source_path))
     return call
 
 
