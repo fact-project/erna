@@ -53,8 +53,9 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
                mem_free='{}mb'.format(vmem)
                )
            )
-        avg_num_files = np.mean([len(part) for num, part in df_mapping.groupby("bunch_index")])
-        logger.info("Created {} jobs with {} files each.".format(len(jobs), avg_num_files))
+        
+    avg_num_files = np.mean([len(part) for num, part in df_mapping.groupby("bunch_index")])
+    logger.info("Created {} jobs with on average {} files each.".format(len(jobs), avg_num_files))
 
     return jobs
 
