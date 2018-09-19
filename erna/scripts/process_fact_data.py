@@ -105,6 +105,12 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     logging.captureWarnings(True)
     logging.basicConfig(format=('%(asctime)s - %(name)s - %(levelname)s - ' +  '%(message)s'), level=level)
 
+    if local_output:
+        name, _ = os.path.splitext(os.path.basename(out))
+        local_output_dir = os.path.join(os.path.dirname(out), name)
+        erna.ensure_output(local_output_dir)
+    erna.ensure_output(out)
+
     jarpath = os.path.abspath(jar)
     xmlpath =os. path.abspath(xml)
     outpath = os.path.abspath(out)
