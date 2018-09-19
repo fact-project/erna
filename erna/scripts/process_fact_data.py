@@ -4,6 +4,7 @@ import click
 import numpy as np
 import sqlalchemy
 import os
+import os.path as path
 
 import gridmap
 from gridmap import Job
@@ -75,7 +76,8 @@ from fact_conditions import create_condition_set
 @click.option('--num_runs', help='Number of num runs per bunch to start on the cluster.', default='4', type=click.INT)
 @click.option('--vmem', help='Amount of memory to use per node in MB.', default='10000', type=click.INT)
 @click.option('--log_level', type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
-@click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
+@click.option("--log_dir", type=click.Path(exists=False, dir_okay=True, file_okay=False, readable=True), help='Directory to store output from m gridmap jobs', default=None)
+@click.option('--port', help='The port through which to communicate with the JobMonitor', default=None, type=int)
 @click.option('--source',  help='Name of the source to analyze. e.g Crab', default='Crab')
 @click.option('--conditions', '-c', help='Name of the data conditions as given in datacheck_conditions.py e.g @standard or "fParameter < 42 "', default=['@standard'], multiple=True)
 @click.option('--max_delta_t', default=30,  help='Maximum time difference (minutes) allowed between drs and data files.', type=click.INT)
@@ -92,7 +94,7 @@ from fact_conditions import create_condition_set
               + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
 @click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, log_dir, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -159,6 +161,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     if port:
         job_arguments["port"] = port
 
+    if log_dir:
+        job_arguments["temp_dir"] = log_dir
 
     job_outputs = gridmap.process_jobs(**job_arguments)
     erna.collect_output(job_outputs, out, df_runs)

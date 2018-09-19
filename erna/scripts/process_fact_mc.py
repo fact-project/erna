@@ -75,6 +75,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT, show_default=True)
 @click.option('--vmem', help='Amount of memory to use per node in MB.', default='1000', type=click.INT, show_default=True)
 @click.option("--log_level", type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='increase output verbosity', default='INFO')
+@click.option("--log_dir", type=click.Path(exists=False, dir_okay=True, file_okay=False, readable=True), help='Directory to store output from m gridmap jobs', default=None)
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
 @click.option('--local', default=False,is_flag=True,   help='Flag indicating whether jobs should be executed localy.',show_default=True)
 @click.option('--local_output', default=False, is_flag=True,
@@ -117,6 +118,9 @@ def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, 
 
     logger.info('Using drs file at {}'.format(drspath))
 
+    log_dir = log_dir if log_dir else os.getenv('DEFAULT_TEMP_DIR')
+    logger.info("Writing gridmap logs to: {}".format(log_dir))
+
     #get data files
     files=[]
     for folder in tqdm(mc_path):
@@ -124,7 +128,6 @@ def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, 
         pattern = path.join(folder, mcwildcard)
         f = glob.glob(pattern, recursive=True)
         files = files + f
-
     num_files = len(files)
     logger.info("Found {} files.".format(num_files))
     if num_files == 1:
@@ -144,7 +147,7 @@ def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, 
         output_path=local_output_dir
     else:
         output_path=None
-        
+
     job_list, df_runs = make_jobs(
                     jarpath, xmlpath, mc_paths_array,
                     drs_paths_array,  engine, queue,
@@ -159,6 +162,8 @@ def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, 
         local=local,
     )
     
+    if log_dir:
+        job_arguments["temp_dir"] = log_dir
 
     job_outputs = gridmap.process_jobs(**job_arguments)
     erna.collect_output(job_outputs, out, df_runs)
