@@ -2,6 +2,7 @@ import logging
 import click
 import numpy as np
 import pandas as pd
+import os
 from os import path
 
 import erna
@@ -17,7 +18,7 @@ import glob
 logger = logging.getLogger(__name__)
 
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None, local_output_extension="json"):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, local_output_extension="json", aux_source_path=None):
     jobs = []
 
     data_partitions = np.array_split(data_paths, num_jobs)
@@ -40,10 +41,10 @@ def make_jobs(jar, xml, data_paths, drs_paths,
             file_name, _ = path.splitext(path.basename(output_path))
             file_name = "{}_{}.{}".format(file_name, num, local_output_extension)
             out_path = path.dirname(output_path)
-            run = [jar, xml, df, path.join(out_path, file_name)]
+            run = [jar, xml, df, path.join(out_path, file_name), aux_source_path]
             stream_runner = stream_runner_local
         else:
-            run = [jar, xml, df]
+            run = [jar, xml, df, aux_source_path]
             stream_runner = stream_runner_std
 
         jobs.append(
@@ -67,7 +68,8 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.argument('xml', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True, readable=True))
 @click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True))
-@click.option('--queue', help='Name of the queue you want to send jobs to.', default='short', show_default=True)
+@click.option('--aux', help='Path to the root folder with auxfiles', default=None, show_default=True)
+@click.option('--queue', help='Name of the queue you want to send jobs to.', type=click.STRING, default='short', show_default=True)
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00', show_default=True)
 @click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE',]), default='SGE', show_default=True)
 @click.option('--num_jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT, show_default=True)
@@ -86,7 +88,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.option('--mcwildcard', help="Gives the wildcard for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
 @click.option('--local_output_extension', default="json", help="Give the file format for the local output funktionality.")
 @click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
-def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_extension, yes):
+def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, log_level, log_dir, port, local, local_output, mcdrs, mcwildcard, local_output_extension, yes):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -146,7 +148,9 @@ def main( jar, xml, out, mc_path, queue, walltime, engine, num_jobs, vmem, log_l
     job_list, df_runs = make_jobs(
                     jarpath, xmlpath, mc_paths_array,
                     drs_paths_array,  engine, queue,
-                    vmem, num_jobs, walltime, output_path=output_path, local_output_extension=local_output_extension
+                    vmem, num_jobs, walltime, output_path=output_path,
+                    local_output_extension=local_output_extension,
+                    aux_source_path = aux
                     )
 
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
