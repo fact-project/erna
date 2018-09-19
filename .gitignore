@@ -1,4 +1,5 @@
 *.swp
+*.ropeproject*
 config.yaml
 erna.yaml
 
