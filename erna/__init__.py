@@ -136,8 +136,11 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
             failed_file_list_path = name+"_failed_runs.csv"
 
             logger.info("Writing list of failed runs to: {}".format(failed_file_list_path))
-            df_failed.to_csv(failed_file_list_path, columns=df_started_runs.columns, **kwargs)
-            
+            key_list = list(df_started_runs.columns)
+            if "PBS_JOBID" in df_failed.columns:
+                key_list.append("PBS_JOBID")
+            df_failed.to_csv(failed_file_list_path, columns=key_list, **kwargs)
+
 
     df_returned_data.columns = rename_columns(df_returned_data.columns)
     add_theta_deg_columns(df_returned_data)
@@ -293,6 +296,10 @@ def ft_json_to_df(json_path):
             logger.info("Reading fact-tools output.")
             y=json.loads(text.read())
             df_out=pd.DataFrame(y)
+            try:
+                df_out["PBS_JOBID"]=os.environ['PBS_JOBID']
+            except:
+                logger.info("PBS_JOBID not in env")
             logger.info("Returning data frame with {} entries".format(len(df_out)))
             return df_out
         except ValueError:
