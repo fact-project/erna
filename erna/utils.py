@@ -91,10 +91,13 @@ def assemble_facttools_call(jar, xml, input_path, output_path, aux_source_path=N
 
 def check_environment_on_node():
     ''' Check memory, java executalbe and version'''
+    log.info("Running on {} as user {}".format(os.environ['HOSTNAME'], os.environ['USER']))
     subprocess.check_call(['which', 'java'])
     subprocess.check_call(['free', '-m'])
     subprocess.check_call(['java', '-Xmx512m', '-version'])
+    subprocess.check_call(['df', '-h'])
     
+
 import re
 
 def create_filename_from_format(filename_format, basename, num):
