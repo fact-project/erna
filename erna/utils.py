@@ -109,4 +109,4 @@ def create_filename_from_format(filename_format, basename, num):
     m = re.search('\{num', filename_format)
     if not m:
         raise ValueError("Missing named placeholder 'num' in format string")
-    return filename_format.format({"basename":basename, "num":num})
+    return filename_format.format(basename=basename, num=num)
