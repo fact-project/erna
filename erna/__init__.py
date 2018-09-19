@@ -224,7 +224,7 @@ def load(
         logger.error('No data or drs files found that adhere to the specified query.')
         return None
 
-    logger.info("Got {} data runs and {} runs".format(len(data), len(drs_data)))
+    logger.info("Got {} data runs and {} drs runs".format(len(data), len(drs_data)))
 
     # the timestamp should be unique for each observation.
     # No two observations start at the same time
