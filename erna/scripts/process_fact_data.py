@@ -114,7 +114,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     erna.ensure_output(out)
 
     jarpath = os.path.abspath(jar)
-    xmlpath =os. path.abspath(xml)
+    xmlpath = os.path.abspath(xml)
     outpath = os.path.abspath(out)
     erna.ensure_output(out)
     aux_source_path = os.path.abspath(aux_source)
