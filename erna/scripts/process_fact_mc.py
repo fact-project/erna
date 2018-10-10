@@ -20,7 +20,12 @@ logger = logging.getLogger(__name__)
 def make_jobs(jar, xml, data_paths, drs_paths,
               engine, queue, vmem, num_jobs, walltime, output_path=None, local_output_extension="json", aux_source_path=None):
     jobs = []
-
+    
+    if num_jobs <= -1:
+        num_jobs = len(data_paths)//np.abs(num_jobs)
+        if num_jobs == 0:
+            num_jobs = 1
+        
     data_partitions = np.array_split(data_paths, num_jobs)
     drs_partitions = np.array_split(drs_paths, num_jobs)
     if output_path:
