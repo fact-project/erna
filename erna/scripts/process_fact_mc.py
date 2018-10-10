@@ -18,7 +18,9 @@ import glob
 logger = logging.getLogger(__name__)
 
 def make_jobs(jar, xml, data_paths, drs_paths,
-              engine, queue, vmem, num_jobs, walltime, output_path=None, local_output_extension="json", aux_source_path=None):
+              engine, queue, vmem, num_jobs, walltime, output_path=None, 
+              local_output_extension="json", aux_source_path=None,
+              process_name="process_fact_mc"):
     jobs = []
     
     if num_jobs <= -1:
@@ -58,6 +60,7 @@ def make_jobs(jar, xml, data_paths, drs_paths,
                 queue=queue,
                 walltime=walltime,
                 engine=engine,
+                name="{}_{}".format(num, process_name),
                 mem_free='{}mb'.format(vmem)
                 )
             )
@@ -94,7 +97,8 @@ def make_jobs(jar, xml, data_paths, drs_paths,
 @click.option('--mcwildcard', help="Gives the wildcard for searching the folder for files.", type=click.STRING, default='**/*_Events.fit*')
 @click.option('--local_output_extension', default="json", help="Give the file format for the local output funktionality.")
 @click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
-def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, log_level, log_dir, port, local, local_output, mcdrs, mcwildcard, local_output_extension, yes):
+@click.option('--process_name',  help='Name of the jobs on the cluster', default='process_fact_mc')
+def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, log_level, log_dir, port, local, local_output, mcdrs, mcwildcard, local_output_extension, yes, process_name):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
@@ -158,7 +162,8 @@ def main( jar, xml, out, mc_path, aux, queue, walltime, engine, num_jobs, vmem, 
                     drs_paths_array,  engine, queue,
                     vmem, num_jobs, walltime, output_path=output_path,
                     local_output_extension=local_output_extension,
-                    aux_source_path = aux
+                    aux_source_path = aux,
+                    process_name=process_name,
                     )
 
     job_arguments = dict(

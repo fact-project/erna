@@ -19,7 +19,11 @@ import erna.datacheck_conditions as dcc
 logger = logging.getLogger(__name__)
 
 
-def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, queue, vmem, num_runs_per_bunch, walltime, output_path=None, filename_format="{basename}_{num}.json"):
+def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  
+                engine, queue, vmem, num_runs_per_bunch, walltime, 
+                output_path=None, filename_format="{basename}_{num}.json",
+                process_name="process_fact_data"
+                ):
     jobs = []
 
     if output_path:
@@ -51,6 +55,7 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
                queue=queue,
                walltime=walltime,
                engine=engine,
+               name="{}_{}".format(num, process_name),
                mem_free='{}mb'.format(vmem)
                )
            )
@@ -93,8 +98,9 @@ from fact_conditions import create_condition_set
               + "%b will replace the out filename and %[1-9]n the given local number."
               + "Default is: '{basename}_{num}.json'.Only works with option --local_output. ")
 @click.option('--yes', help="Assume 'yes'if your asked to continue processing and start jobs", default=False, is_flag=True)
+@click.option('--process_name',  help='Name of the jobs on the cluster', default='process_fact_data')
 @click.password_option(help='password to read from the always awesome RunDB')
-def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, log_dir, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password):
+def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, log_dir, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password, process_name):
 
     level=logging.INFO
     if log_level is 'DEBUG':
@@ -149,7 +155,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
                          output_directory, df_runs, engine, queue,
                          vmem, num_runs,  walltime,
                          output_path=output_path,
-                         filename_format=local_output_format
+                         filename_format=local_output_format,
+                         process_name=process_name,
                          )
 
     job_arguments = dict(
