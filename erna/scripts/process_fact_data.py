@@ -40,7 +40,7 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,
 
         if output_path:
             # create the filenames for each single local run
-            file_name, _ = path.splitext(path.basename(output_path))
+            file_name = path.basename(output_path)
             file_name = create_filename_from_format(filename_format, file_name, num)
             out_path = path.dirname(output_path)
             run = [jar, xml, df, path.join(out_path, file_name), aux_source_path]
