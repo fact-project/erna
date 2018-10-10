@@ -6,6 +6,7 @@ import logging
 import tempfile
 from shutil import copyfile
 import atexit
+from fact.io import write_data
 from erna import ft_json_to_df
 from erna.utils import (
     assemble_facttools_call,
@@ -59,15 +60,22 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
         if not os.path.exists(tmp_output_path):
             logger.error("Not output generated, returning no results")
             return "fact-tools generated no output"
-                    
-        if output_path.endswith("gz"):
+        
+        pre, out_ext = os.path.splitext(output_path)
+        
+        if out_ext == ".gz":
             try:
                 subprocess.check_call(["gzip", tmp_output_path])
             except subprocess.CalledProcessError as e:
                 logger.exception("Unable to zip: {}".format(tmp_output_path))
 
-            tmp_output_path += '.gz'
+            tmp_output_path += out_ext
             logger.info("Copying zipped output file {}".format(tmp_output_path))
+        elif (out_ext == ".hdf5") or (out_ext == ".hdf") or (out_ext == ".h5"):
+            df = ft_json_to_df(tmp_output_path)
+            pre, ext = os.path.splitext(tmp_output_path)
+            tmp_output_path = pre + out_ext
+            write_data(df, tmp_output_path, key="erna")
 
         copyfile(tmp_output_path, output_path)
         
