@@ -13,16 +13,16 @@ log = logging.getLogger(__name__)
 class JobSubmitter(Thread):
 
     def __init__(
-            self,
-            interval,
-            max_queued_jobs,
-            data_directory,
-            host,
-            port,
-            group,
-            mail_address=None,
-            mail_settings='a',
-            ):
+        self,
+        interval,
+        max_queued_jobs,
+        data_directory,
+        host,
+        port,
+        group,
+        mail_address=None,
+        mail_settings='a',
+    ):
         '''
         Parametrs
         ----------
@@ -61,7 +61,7 @@ class JobSubmitter(Thread):
                 self.process_pending_jobs()
             except peewee.OperationalError:
                 log.warning('Lost database connection')
-            except:
+            except Exception as e:
                 log.exception('Error during submission')
             self.event.wait(self.interval)
 

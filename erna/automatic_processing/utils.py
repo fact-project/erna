@@ -19,10 +19,7 @@ def parse_path(path):
     return date(year, month, day), run_id
 
 
-def get_aux_dir(night):
-
-    basepath = '/fact/aux'
-
+def get_aux_dir(night, basepath='/fact/aux'):
     return os.path.join(
         basepath,
         '{:04d}'.format(night.year),
