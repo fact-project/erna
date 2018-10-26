@@ -1,23 +1,25 @@
 processing_database:
-  host: fact-mysql.app.tu-dortmund.de
-  user: <user>
-  password: <password>
-  database: erna
+  host: login01.astro.unige.ch
+  user: 
+  password: 
+  database: erna_slurm
 
 fact_database:
   database: factdata
-  host: 129.194.168.95
-  user: <user>
-  password: <password>
+  host: lp-fact
+  password:
+  user: 
 
 submitter:
   interval: 15
-  data_directory: /gpfs1/scratch/fact/erna
+  raw_dir: /hpcstorage/lyard/fact/fact-archive/rev_1/raw
+  aux_dir: /hpcstorage/lyard/fact/fact-archive/rev_1/aux
+  erna_dir: /hpcstorage/fact_tools/erna
+  logfile: /hpcstorage/fact_tools/erna/erna_submitter.log
   max_queued_jobs: 200
-  logfile: /gpfs1/scratch/fact/erna/erna_submitter.log
-  location: isdc
-  mail_address: <mail_address>
-  mail_settings: a
-  port: 12700
-  host: isdc-in04
+  mail_address: maximilian.noethe@tu-dortmund.de,neised@phys.ethz.ch,jens.buss@tu-dortmund.de
+  mail_settings: FAIL
+  port: 12800
+  host: lesta02
   group: fact
+  script: /home/projects/fact_tools/erna.sh
