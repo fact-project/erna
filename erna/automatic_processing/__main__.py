@@ -59,6 +59,7 @@ def main(config, verbose):
         job_submitter.terminate()
         job_submitter.join()
         log.info('Clean up running jobs')
+
         database.connect()
 
         queued = ProcessingState.get(description='queued')
@@ -69,3 +70,4 @@ def main(config, verbose):
             sp.run(['scancel', '--jobname=erna_{}'.format(job.id)])
             job.status = inserted
             job.save()
+        database.close()

@@ -19,7 +19,7 @@ class JobSubmitter(Thread):
         raw_dir,
         aux_dir,
         erna_dir,
-	script,
+        script,
         host,
         port,
         group,
@@ -98,7 +98,7 @@ class JobSubmitter(Thread):
                 try:
                     submit_job(
                         job,
-			script=self.script,
+                        script=self.script,
                         output_base_dir=os.path.join(self.erna_dir, 'fact-tools'),
                         raw_dir=self.raw_dir,
                         aux_dir=self.aux_dir,

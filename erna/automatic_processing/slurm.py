@@ -123,7 +123,7 @@ def submit_job(
         'JARFILE': jar_file,
         'XMLFILE': xml_file,
         'OUTPUTDIR': output_dir,
-        'WALLTIME': str(job.walltime),
+        'WALLTIME': str(job.walltime * 60),
         'SUBMITTER_HOST': submitter_host,
         'SUBMITTER_PORT': str(submitter_port),
         'facttools_infile': 'file:' + job.raw_data_file.get_path(basepath=raw_dir),
