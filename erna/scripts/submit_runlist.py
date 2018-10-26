@@ -10,7 +10,6 @@ from ..automatic_processing.database import (
     RawDataFile,
     Jar,
     XML,
-    Queue,
     Job,
 )
 
@@ -24,8 +23,8 @@ from ..automatic_processing.database import (
     help='Priority of the jobs, lower value means more important'
 )
 @click.option(
-    '-q', '--queue', default='fact_short',
-    help='Name of the queue to use'
+    '-w', '--walltime', default=60,
+    help='Walltime for the jobs'
 )
 @click.option('--config', '-c', help='Path to the yaml config file')
 def main(runlist, jar, xml, priority, queue, config):
@@ -46,7 +45,6 @@ def main(runlist, jar, xml, priority, queue, config):
 
     jar = Jar.select(Jar.id, Jar.version).where(Jar.version == jar).get()
     xml = XML.get(name=xml, jar=jar)
-    queue = Queue.get(name=queue)
 
     runs = pd.read_csv(runlist)
     runs['year'] = runs['night'] // 10000
@@ -58,7 +56,7 @@ def main(runlist, jar, xml, priority, queue, config):
         for row in runs.itertuples()
     ]
 
-    insert_new_jobs(files, xml=xml, jar=jar, queue=queue)
+    insert_new_jobs(files, xml=xml, jar=jar, walltime=walltime)
 
 
 if __name__ == '__main__':

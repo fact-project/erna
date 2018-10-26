@@ -5,7 +5,7 @@ import os
 
 from .database import ProcessingState, requires_database_connection
 from .database_utils import count_jobs, get_pending_jobs
-from .qsub import submit_job, get_current_jobs
+from .slurm import submit_job, get_current_jobs
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +16,10 @@ class JobSubmitter(Thread):
         self,
         interval,
         max_queued_jobs,
-        data_directory,
+        raw_dir,
+        aux_dir,
+        erna_dir,
+	script,
         host,
         port,
         group,
@@ -32,7 +35,7 @@ class JobSubmitter(Thread):
             Maximum number of jobs in the queue of the grid engine
             No new jobs are submitted if the number of jobs in the queue is
             higher than this value
-        data_directory: str
+        erna_directory: str
             patch to the basic structure for erna. Logfiles, jars, xmls and
             analysis output are stored in subdirectories to this directory.
         host: str
@@ -48,12 +51,15 @@ class JobSubmitter(Thread):
         self.event = Event()
         self.interval = interval
         self.max_queued_jobs = max_queued_jobs
-        self.data_directory = data_directory
+        self.erna_dir = erna_dir
+        self.aux_dir = aux_dir
+        self.raw_dir = raw_dir
         self.host = host
         self.port = port
         self.group = group
         self.mail_settings = mail_settings
         self.mail_address = mail_address
+        self.script = script
 
     def run(self):
         while not self.event.is_set():
@@ -62,7 +68,7 @@ class JobSubmitter(Thread):
             except peewee.OperationalError:
                 log.warning('Lost database connection')
             except Exception as e:
-                log.exception('Error during submission')
+                log.exception('Error during submission: {}'.format(e))
             self.event.wait(self.interval)
 
     def terminate(self):
@@ -92,8 +98,11 @@ class JobSubmitter(Thread):
                 try:
                     submit_job(
                         job,
-                        output_base_dir=os.path.join(self.data_directory, 'fact-tools'),
-                        data_dir=self.data_directory,
+			script=self.script,
+                        output_base_dir=os.path.join(self.erna_dir, 'fact-tools'),
+                        raw_dir=self.raw_dir,
+                        aux_dir=self.aux_dir,
+                        erna_dir=self.erna_dir,
                         mail_address=self.mail_address,
                         mail_settings=self.mail_settings,
                         submitter_host=self.host,
@@ -103,5 +112,5 @@ class JobSubmitter(Thread):
                     log.info('New job with id {} queued'.format(job.id))
                 except:
                     log.exception('Could not submit job')
-                    job.status = ProcessingState.get(description='error')
+                    job.status = ProcessingState.get(description='failed')
                     job.save()

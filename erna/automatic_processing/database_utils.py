@@ -99,7 +99,6 @@ def find_drs_file(raw_data_file, closest=True):
     '''
     query = DrsFile.select()
     query = query.where(DrsFile.night == raw_data_file.night)
-    query = query.where(DrsFile.available)
 
     if raw_data_file.roi == 300:
         query = query.where((DrsFile.drs_step == 2) & (DrsFile.roi == 300))
@@ -129,7 +128,7 @@ def insert_new_job(
         raw_data_file,
         jar,
         xml,
-        queue,
+        walltime,
         priority=5,
         closest_drs_file=True,
         ):
@@ -144,8 +143,8 @@ def insert_new_job(
         the fact-tools jar to use
     xml: XML
         the xml to use
-    queue: Queue
-        the queue to use
+    walltime: walltime
+        the walltime to use
     priority: int
         Priority for the Job. Lower numbers mean more important.
     closest_drs_file: bool
@@ -169,7 +168,7 @@ def insert_new_job(
         raw_data_file=raw_data_file,
         drs_file=drs_file,
         jar=jar,
-        queue=queue,
+        walltime=walltime,
         status=ProcessingState.get(description='inserted'),
         priority=priority,
         xml=xml,
@@ -179,7 +178,7 @@ def insert_new_job(
 
 
 @requires_database_connection
-def insert_new_jobs(raw_data_files, jar, xml, queue, progress=True, **kwargs):
+def insert_new_jobs(raw_data_files, jar, xml, walltime, progress=True, **kwargs):
 
     if isinstance(raw_data_files, list):
         total = len(raw_data_files)
@@ -189,7 +188,7 @@ def insert_new_jobs(raw_data_files, jar, xml, queue, progress=True, **kwargs):
     failed_files = []
     for f in tqdm(raw_data_files, total=total, disable=not progress):
         try:
-            insert_new_job(f, jar=jar, xml=xml, queue=queue, **kwargs)
+            insert_new_job(f, jar=jar, xml=xml, walltime=walltime, **kwargs)
         except peewee.IntegrityError:
             log.warning('Job already submitted: {}_{:03d}'.format(f.night, f.run_id))
         except ValueError as e:
@@ -281,17 +280,12 @@ def build_output_base_name(job):
 
 
 @requires_database_connection
-def resubmit_walltime_exceeded(old_queue, new_queue):
+def resubmit_walltime_exceeded(factor=1.5):
     '''
     Resubmit jobs where walltime was exceeded.
-    Change queue from old_queue to new_queue
     '''
-    if old_queue.walltime >= new_queue.walltime:
-        raise ValueError('New queue must have longer walltime for this to make sense')
-
     return (
         Job
-        .update(queue=new_queue, status=ProcessingState.get(description='inserted'))
+        .update(walltime=factor * Job.walltime, status=ProcessingState.get(description='inserted'))
         .where(Job.status == ProcessingState.get(description='walltime_exceeded'))
-        .where(Job.queue == old_queue)
     ).execute()
