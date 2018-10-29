@@ -27,7 +27,7 @@ from ..automatic_processing.database import (
     help='Walltime for the jobs'
 )
 @click.option('--config', '-c', help='Path to the yaml config file')
-def main(runlist, jar, xml, priority, queue, config):
+def main(runlist, jar, xml, priority, walltime, config):
     '''
     Submit automatic processing jobs for a given runlist
 
