@@ -94,7 +94,6 @@ def submit_job(
     raw_dir,
     aux_dir,
     erna_dir,
-    output_base_dir,
     submitter_host,
     submitter_port,
     group,
@@ -104,16 +103,16 @@ def submit_job(
     jar_file = save_jar(job.jar_id, erna_dir)
     xml_file = save_xml(job.xml_id, erna_dir)
 
-    output_dir = build_output_directory_name(job, output_base_dir)
+    output_dir = build_output_directory_name(job, os.path.join(erna_dir, 'fact-tools'))
     output_basename = build_output_base_name(job)
 
-    log_dir = os.path.join(erna_dir, 'logs')
+    log_dir = build_output_directory_name(job, os.path.join(erna_dir, 'logs'))
     os.makedirs(log_dir, exist_ok=True)
 
     cmd = build_sbatch_command(
         script,
         job_name='erna_{}'.format(job.id),
-        stdout=os.path.join(log_dir, 'erna_{:08d}.log'.format(job.id)),
+        stdout=os.path.join(log_dir, output_basename + '.log'),
         walltime=job.walltime,
         **kwargs,
     )
