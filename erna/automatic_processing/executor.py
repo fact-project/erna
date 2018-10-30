@@ -17,8 +17,11 @@ context = zmq.Context()
 socket = context.socket(zmq.REQ)
 
 log = logging.getLogger('erna')
-log.setLevel(logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+log.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+fmt = logging.Formatter(fmt='%(asctime)s [%(levelname)-8s] %(message)s')
+handler.setFormatter(fmt)
+logging.getLogger().addHandler(handler)
 
 
 def main():
@@ -88,7 +91,7 @@ def main():
             sys.exit(1)
         except sp.TimeoutExpired:
             socket.send_pyobj({'job_id': job_id, 'status': 'walltime_exceeded'})
-            log.exception('FACT Tools about to run into wall-time, terminating')
+            log.error('FACT Tools about to run into wall-time, terminating')
             socket.recv()
             sys.exit(1)
 
