@@ -136,6 +136,7 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
             jobs.set_index(['night', 'run_id']),
             on=['night', 'run_id'],
             how='inner',
+            lsuffix='user_input_',
         )
 
     successful_jobs = jobs.query('status == "success"')
