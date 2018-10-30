@@ -164,7 +164,7 @@ class Job(Model):
     result_file = CharField(null=True)
     status = ForeignKeyField(ProcessingState, related_name='status')
     priority = IntegerField(default=5)
-    walltime = IntegerField(default=60)
+    walltime = IntegerField(default=180)
     xml = ForeignKeyField(XML)
     md5hash = FixedCharField(32, null=True)
 

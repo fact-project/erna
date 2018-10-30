@@ -23,7 +23,7 @@ from ..automatic_processing.database import (
     help='Priority of the jobs, lower value means more important'
 )
 @click.option(
-    '-w', '--walltime', default=60,
+    '-w', '--walltime', default=180,
     help='Walltime for the jobs'
 )
 @click.option('--config', '-c', help='Path to the yaml config file')

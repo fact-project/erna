@@ -51,7 +51,6 @@ def fill_drs_runs(df, database):
     if len(df) == 0:
         return
     df = df.copy()
-    print(df.columns)
     df.drop(['fRunTypeKey', 'fRunTypeName'], axis=1, inplace=True)
     df.rename(
         columns={
