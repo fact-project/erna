@@ -29,8 +29,9 @@ def main(config, verbose):
 
     stream_handler = logging.StreamHandler()
     file_handler = logging.FileHandler(config['submitter'].pop('logfile'))
+    file_handler.setLevel(logging.INFO)
     formatter = logging.Formatter(
-        '%(asctime)s|%(levelname)s|%(name)s|%(message)s'
+        '%(asctime)s|%(levelname)s|%(message)s'
     )
 
     for handler in (stream_handler, file_handler):
