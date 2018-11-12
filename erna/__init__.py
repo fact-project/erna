@@ -79,9 +79,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         write_data_to_output_path(df_started_runs, output_path, key='runs', mode='w', **kwargs)
     
     mode = 'a' if df_started_runs is not None else 'w'
-    write_data_to_output_path(df_returned_data, output_path, key='data', mode=mode, **kwargs)
+    write_data_to_output_path(df_returned_data, output_path, key='events', mode=mode, **kwargs)
 
-def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs):
+def write_data_to_output_path(df_returned_data, output_path, key='events', mode='w', **kwargs):
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
