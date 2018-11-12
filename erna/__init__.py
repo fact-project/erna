@@ -75,7 +75,11 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
         df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
         df_returned_data.failed_jobs=difference
-    write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs)
+        
+        write_data_to_output_path(df_started_runs, output_path, key='runs', mode='w', **kwargs)
+    
+    mode = 'a' if df_started_runs is not None else 'w'
+    write_data_to_output_path(df_returned_data, output_path, key='data', mode=mode, **kwargs)
 
 def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs):
     name, extension = os.path.splitext(output_path)
