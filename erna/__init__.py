@@ -6,7 +6,7 @@ import datetime
 import json
 import pkg_resources
 from datetime import timedelta
-from fact.io import write_data
+from fact.io import to_h5py
 
 from . import datacheck_conditions as dcc
 from .datacheck import get_runs, get_drs_runs
@@ -91,7 +91,7 @@ def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w
         df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 to {}".format(output_path))
-        write_data(df_returned_data, output_path, key=key, mode='w', **kwargs)
+        to_h5py(df_returned_data, output_path, key=key, mode='w', **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
         df_returned_data.to_csv(output_path, **kwargs)
