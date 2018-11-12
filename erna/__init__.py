@@ -75,7 +75,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
 
         df_returned_data.total_on_time_in_seconds = total_on_time_in_seconds
         df_returned_data.failed_jobs=difference
+    write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs)
 
+def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs):
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
