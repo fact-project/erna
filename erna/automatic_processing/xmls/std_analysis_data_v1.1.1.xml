@@ -1,0 +1,50 @@
+<container>
+  <properties url="classpath:/default/settings.properties" />
+
+  <property name="infile" value="file:src/main/resources/testDataFile.fits.gz" />
+  <property name="drsfile" value="file:src/main/resources/testDrsFile.drs.fits.gz" />
+  <property name="aux_dir" value="file:src/main/resources/aux/" />
+
+  <property name="pixelDelayFile" value="classpath:/default/delays_lightpulser_20150217.csv" />
+
+  <property name="output_basename" value="output" />
+
+  <service id="auxService" class="fact.auxservice.AuxFileService" auxFolder="${aux_dir}" />
+  <service id="gainService" class="fact.gainservice.GainService" />
+  <service id="calibService" class="fact.calibrationservice.ConstantCalibService" />
+
+  <stream id="fact" class="fact.io.hdureader.FITSStream" url="${infile}"/>
+
+  <process id="2" input="fact">
+    <include url="classpath:/analysis/init.xml" />
+    <!-- This skips events created by our malfunctioning LED light pulser (27s Events) --> 
+    <Skip condition="%{data.saturated_slices_percentage} &gt; 0.2" />
+    <!-- Only analyze physics trigger events -->
+    <Skip condition="%{data.TriggerType} != 4" />
+
+    <include url="classpath:/analysis/calibration.xml" />
+    <include url="classpath:/analysis/extraction.xml" />
+    <include url="classpath:/analysis/cleaning.xml" />
+
+    <!-- Only analyze events with at least 5 pixels after cleaning -->
+    <Skip condition="%{data.num_pixel_in_shower} &lt; 5" />
+
+    <include url="classpath:/analysis/pedestalParameters.xml" />
+    <include url="classpath:/analysis/imageParameters.xml" />
+    <include url="classpath:/analysis/sourcePosition.xml" />
+
+    <fact.utils.SanitizeKeys />
+
+    <SetValue key="NIGHT" value="%{data.night}" />
+    <SetValue key="RUNID" value="%{data.run_id}" />
+    <SetValue key="DRSFILE" value="%{data.drs_file}" />
+    <SetValue key="OBJECT" value="%{data.source_name}" />
+    <SetValue key="RA_OBJ" value="%{data.source_position_ra}" />
+    <SetValue key="DEC_OBJ" value="%{data.source_position_dec}" />
+
+    <fact.io.FITSWriter
+      headerKeys="NIGHT,RUNID,DRSFILE,OBJECT,RA_OBJ,DEC_OBJ"
+      url="file:facttools_output/${output_basename}_level2.fits"
+    />
+  </process>
+</container>
