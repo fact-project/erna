@@ -12,9 +12,8 @@ from fact.io import to_h5py
 from fact.instrument import camera_distance_mm_to_deg
 
 from . import datacheck_conditions as dcc
-from .datacheck import get_runs, get_drs_runs
+from .datacheck import get_runs, get_drs_runs, default_columns
 from .hdf_utils import rename_columns
-
 logger = logging.getLogger(__name__)
 
 
@@ -210,11 +209,7 @@ def load(
     data = get_runs(
         factdb,
         conditions=conditions,
-        columns=(
-            'fNight AS night', 'fRunID AS run_id',
-            'fRunStart', 'fRunStop',
-            'fOnTime', 'fEffectiveOn',
-        ),
+        columns=list(default_columns)+['fEffectiveOn'],
     )
 
     # now lets get all drs runs
@@ -225,7 +220,7 @@ def load(
 
     drs_data = get_drs_runs(
         factdb, conditions=drs_conditions,
-        columns=('fNight AS night', 'fRunID AS run_id', 'fRunStart', 'fRunStop'),
+        columns=('fNight AS night', 'fRunID AS run_id', 'fRunStart AS run_start', 'fRunStop AS run_stop'),
     )
 
     if len(data) == 0 or len(drs_data) == 0:
@@ -236,8 +231,8 @@ def load(
 
     # the timestamp should be unique for each observation.
     # No two observations start at the same time
-    data.set_index("fRunStart", inplace=True)
-    drs_data.set_index("fRunStart", inplace=True)
+    data.set_index("run_start", inplace=True)
+    drs_data.set_index("run_start", inplace=True)
     # sorting data by their timestamp.
     data = data.sort_index()
     drs_data = drs_data.sort_index()
@@ -265,8 +260,8 @@ def load(
     # when backfilling the drs obeservations the last rows might be invalid and contain nans.
     # We cannot drop them becasue the tables have to have the same length.
     # in that case simply fill them up.
-    earlier_drs_entries["deltaT"] = np.abs(earlier_drs_entries.fRunStop - data.fRunStop)
-    later_drs_entries["deltaT"] = np.abs(later_drs_entries.fRunStop - data.fRunStop).fillna(axis='index', method='ffill')
+    earlier_drs_entries["deltaT"] = np.abs(earlier_drs_entries.run_stop - data.run_stop)
+    later_drs_entries["deltaT"] = np.abs(later_drs_entries.run_stop - data.run_stop).fillna(axis='index', method='ffill')
     d_later = later_drs_entries[later_drs_entries.deltaT < earlier_drs_entries.deltaT]
     d_early = earlier_drs_entries[later_drs_entries.deltaT >= earlier_drs_entries.deltaT]
 
@@ -278,9 +273,15 @@ def load(
         closest_drs_entries.path,
         data.path,
         closest_drs_entries.deltaT,
-        data.fOnTime, data.fEffectiveOn,
+        data.ontime, data.fEffectiveOn,
         data.night,
         data.run_id,
+        data.zenith,
+        data.azimuth,
+        data.right_ascension,
+        data.declination,
+        data.run_stop,
+        data.source,
     ], axis=1, keys=[
         "filename",
         "drs_path",
@@ -290,6 +291,12 @@ def load(
         "effective_on",
         "night",
         "run_id",
+        "zenith",
+        "azimuth",
+        "right_ascension",
+        "declination",
+        "run_stop",
+        "source",
     ])
 
     mapping = mapping.dropna(how='any')
