@@ -59,6 +59,7 @@ def test_data_path(df, key):
 
     return df
 
+
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
 
@@ -92,6 +93,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     The datatframe df_started_runs is joined with the job outputs to get the real ontime.
     '''
     logger.info("Concatenating results from each job and writing result to {}".format(output_path))
+
     frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
 
     if len(frames) != len(job_outputs):
@@ -100,23 +102,55 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     if len(frames) == 0:
         return
 
-    df_returned_data = pd.concat(frames, ignore_index=True)
+    df_returned_data = []
+    df_data = []
+
+    for frame in frames:
+        if set(['night', 'run_id']).issubset(frame.columns):
+            df_returned_data.append(frame[['night', 'run_id']].copy())
+        elif set(['data_path', 'bunch_index']).issubset(frame.columns):
+            df_returned_data.append(frame[['data_path', 'bunch_index']].copy())
+        frame.columns = rename_columns(frame.columns)
+        add_theta_deg_columns(frame)
+        if "delta_t" in list(frame.keys()):
+            frame["delta_t_seconds"] = frame.delta_t.apply(lambda x: x.total_seconds())
+            frame = frame.drop("delta_t", axis=1)
+        df_data.append(frame)
+
+    try:
+        write_data_to_output_path(pd.concat(df_data), output_path, key='events', mode='w', index=False, **kwargs)
+    except OSError:
+        from IPython import embed; embed()
+
+
+    df_returned_data = pd.concat(df_returned_data, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
 
-    if len(df_returned_data)==0:
+    if len(df_returned_data) == 0:
         logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
         return
 
+    df_returned_data.drop_duplicates(inplace=True)
+
     logger.info("Number of started runs {}".format(len(df_started_runs)))
 
+    merge_columns_data = ["night", "run_id", "ontime", "delta_t", ]
+
     if df_started_runs is not None:
-        if (set(['night','run_id']).issubset(df_started_runs.columns) and set(['night','run_id']).issubset(df_returned_data.columns)):
-            df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
-        elif (set(['data_path','bunch_index']).issubset(df_started_runs.columns) and set(['data_path','bunch_index']).issubset(df_returned_data.columns)):
-            df_merged = pd.merge(df_started_runs, df_returned_data, on=['data_path','bunch_index'], how='outer', indicator=True)
-        else:
-            df_merged = df_started_runs
-            df_merged["_merge"] = "both"
+        df_started_reduced = df_started_runs
+        try:
+            if (set(['night','run_id']).issubset(df_started_runs.columns)
+                    and set(['night','run_id']).issubset(df_returned_data.columns)):
+                df_started_reduced = df_started_runs[merge_columns_data]
+                df_merged = pd.merge(df_started_reduced, df_returned_data['night','run_id'], on=['night','run_id'], how='outer', indicator=True)
+            elif (set(['data_path','bunch_index']).issubset(df_started_runs.columns)
+                  and set(['data_path','bunch_index']).issubset(df_returned_data.columns)):
+                df_merged = pd.merge(df_started_reduced, df_returned_data['data_path','bunch_index'], on=['data_path','bunch_index'], how='outer', indicator=True)
+            else:
+                df_merged = df_started_runs
+                df_merged["_merge"] = "both"
+        except MemoryError:
+            from IPython import embed; embed()
 
         df_merged["failed"] = (df_merged["_merge"] != "both")
         df_merged.drop("_merge", axis=1, inplace=True)
@@ -129,30 +163,26 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
             logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
 
             df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
-        
+
         logger.info("Number of failed runs: {}".format(len(df_failed)))
         if len(df_failed) > 0:
             name, extension = os.path.splitext(output_path)
             failed_file_list_path = name+"_failed_runs.csv"
 
             logger.info("Writing list of failed runs to: {}".format(failed_file_list_path))
-            key_list = list(df_started_runs.columns)
+            key_list = list(df_started_reduced.columns)
             if "PBS_JOBID" in df_failed.columns:
                 key_list.append("PBS_JOBID")
             df_failed.to_csv(failed_file_list_path, columns=key_list, **kwargs)
-            
-        write_data_to_output_path(df_started_runs, output_path, key='runs', mode='w', **kwargs)
+
+    if (df_started_runs is not None) and (len(df_started_runs) > 0):
+        if "delta_t" in list(df_started_runs.keys()):
+            df_started_runs["delta_t_seconds"] = df_started_runs.delta_t.apply(lambda x: x.total_seconds())
+            df_started_runs = df_started_runs.drop("delta_t", axis=1)
+        write_data_to_output_path(df_started_runs, output_path, key='runs', mode='a', **kwargs)
 
 
-    df_returned_data.columns = rename_columns(df_returned_data.columns)
-    add_theta_deg_columns(df_returned_data)
-    if "delta_t" in list(df_returned_data.keys()):
-        df_returned_data["delta_t_seconds"] = df_returned_data.delta_t.apply(lambda x: x.total_seconds())
-        df_returned_data = df_returned_data.drop("delta_t", axis=1)
-        
 
-    mode = 'a' if df_started_runs is not None else 'w'
-    write_data_to_output_path(df_returned_data, output_path, key='events', mode=mode, **kwargs)
 
 def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs):
     name, extension = os.path.splitext(output_path)
@@ -163,8 +193,8 @@ def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w
         logger.info("Writing JSON to {}".format(output_path))
         df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
-        logger.info("Writing HDF5 to {}".format(output_path))
-        write_data(df_returned_data, output_path, key=key, mode='w', **kwargs)
+        logger.info("Writing HDF5 group {} to {}, mode={}".format(key, output_path, mode))
+        write_data(df_returned_data, output_path, key=key, mode=mode, **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
         df_returned_data.to_csv(output_path, **kwargs)
