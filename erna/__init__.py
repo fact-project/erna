@@ -7,6 +7,7 @@ import json
 import pkg_resources
 from datetime import timedelta
 from fact.io import write_data
+import gc
 
 from fact.io import to_h5py
 from fact.instrument import camera_distance_mm_to_deg
@@ -122,6 +123,9 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     except OSError:
         from IPython import embed; embed()
 
+    del frames
+    del df_data
+    gc.collect()
 
     df_returned_data = pd.concat(df_returned_data, ignore_index=True)
     logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
