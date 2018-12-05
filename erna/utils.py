@@ -94,8 +94,14 @@ def check_environment_on_node():
     log.info("Running on {} as user {}".format(os.environ['HOSTNAME'], os.environ['USER']))
     subprocess.check_call(['which', 'java'])
     subprocess.check_call(['free', '-m'])
-    subprocess.check_call(['java', '-Xmx512m', '-version'])
-    subprocess.check_call(['df', '-h'])
+    try:
+        subprocess.check_call(['java', '-Xmx512m', '-version'])
+    except subprocess.CalledProcessError:
+        log.exception('No java installed on node')
+    try:
+        subprocess.check_call(['df', '-h'])
+    except subprocess.CalledProcessError:
+        log.warning("df -h not possible, check filesystem")
     
 
 import re
