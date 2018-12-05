@@ -70,7 +70,7 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
                 logger.exception("Unable to zip: {}".format(tmp_output_path))
 
             tmp_output_path += out_ext
-            logger.info("Copying zipped output file {}".format(tmp_output_path))
+            logger.info("Copying zipped output file {} to {}".format(tmp_output_path, output_path))
         elif (out_ext == ".hdf5") or (out_ext == ".hdf") or (out_ext == ".h5"):
             df = ft_json_to_df(tmp_output_path)
             pre, ext = os.path.splitext(tmp_output_path)
