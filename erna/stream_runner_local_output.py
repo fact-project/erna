@@ -77,6 +77,14 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
             tmp_output_path = pre + out_ext
             write_data(df, tmp_output_path, key="erna")
 
+        # create subfolder to hold the runs
+        dirname = os.path.dirname(os.path.abspath(output_path))
+        filename = os.path.basename(output_path)
+        subfolder = "_".join(filename.split("_")[:-1])
+        subfolder = os.path.join(dirname, subfolder)
+        os.makedirs(subfolder, exist_ok=True)
+        output_path = os.path.join(subfolder, filename)
+
         copyfile(tmp_output_path, output_path)
         
         input_files_df['output_path'] = output_path
