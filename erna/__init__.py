@@ -98,7 +98,7 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
 
     if len(frames) != len(job_outputs):
-        logger.warn("Only {} jobs returned a proper DataFrame.".format(len(frames)))
+        logger.warning("Only {} jobs returned a proper DataFrame.".format(len(frames)))
 
     if len(frames) == 0:
         return
