@@ -118,13 +118,13 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
             frame = frame.drop("delta_t", axis=1)
         df_data.append(frame)
 
-    try:
-        write_data_to_output_path(pd.concat(df_data), output_path, key='events', mode='w', index=False, **kwargs)
-    except OSError:
-        from IPython import embed; embed()
+    df_data = pd.concat(df_data)
+    if len(df_data) > 0:
+        write_data_to_output_path(df_data, output_path, key='events', mode='w', index=False, **kwargs)
+
+        del df_data
 
     del frames
-    del df_data
     gc.collect()
 
     df_returned_data = pd.concat(df_returned_data, ignore_index=True)
