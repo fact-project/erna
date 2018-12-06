@@ -186,22 +186,20 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         write_data_to_output_path(df_started_runs, output_path, key='runs', mode='a', **kwargs)
 
 
-
-
-def write_data_to_output_path(df_returned_data, output_path, key='data', mode='w', **kwargs):
+def write_data_to_output_path(df, output_path, key='data', mode='w', **kwargs):
     name, extension = os.path.splitext(output_path)
     if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
         logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
+        df.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension == '.json':
         logger.info("Writing JSON to {}".format(output_path))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
+        df.to_json(output_path, orient='records', date_format='epoch', **kwargs )
     elif extension in ['.h5', '.hdf','.hdf5']:
         logger.info("Writing HDF5 group {} to {}, mode={}".format(key, output_path, mode))
-        write_data(df_returned_data, output_path, key=key, mode=mode, **kwargs)
+        write_data(df, output_path, key=key, mode=mode, **kwargs)
     elif extension == '.csv':
         logger.info("Writing CSV to {}".format(output_path))
-        df_returned_data.to_csv(output_path, **kwargs)
+        df.to_csv(output_path, **kwargs)
 
 
 def load(
