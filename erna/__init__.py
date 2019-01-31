@@ -91,7 +91,7 @@ def ensure_output(output_path):
     Create directorie to new output file if necessary
     '''
     if os.path.exists(output_path):
-        raise FileExistsError('The output file already exists.')
+        raise FileExistsError(f'The output file {output_path} already exists.')
     directory = os.path.dirname(output_path)
     if directory:
         os.makedirs(directory, exist_ok=True)
