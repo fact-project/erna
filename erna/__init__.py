@@ -17,6 +17,16 @@ from .datacheck import get_runs, get_drs_runs, default_columns
 from .hdf_utils import rename_columns
 logger = logging.getLogger(__name__)
 
+mc_id_keys = [
+    'corsika_run_header_run_number',
+    'run_id',
+]
+
+data_id_keys = [
+    'run_id',
+    'night'
+]
+
 
 def add_theta_deg_columns(df):
     for i in range(6):
@@ -104,31 +114,37 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
         return
 
     df_returned_data = []
-    df_data = []
 
+    # from IPython import embed; embed()
+
+    data = []
     for frame in frames:
-        if set(['night', 'run_id']).issubset(frame.columns):
-            df_returned_data.append(frame[['night', 'run_id']].copy())
-        elif set(['data_path', 'bunch_index']).issubset(frame.columns):
-            df_returned_data.append(frame[['data_path', 'bunch_index']].copy())
+        if set(data_id_keys).issubset(frame.columns):
+            df_returned_data.append(frame[data_id_keys+['data_path', 'bunch_index']].copy())
+        elif set(mc_id_keys).issubset(frame.columns):
+            df_returned_data.append(frame[mc_id_keys+['data_path', 'bunch_index']].copy())
         frame.columns = rename_columns(frame.columns)
         add_theta_deg_columns(frame)
         if "delta_t" in list(frame.keys()):
             frame["delta_t_seconds"] = frame.delta_t.apply(lambda x: x.total_seconds())
             frame = frame.drop("delta_t", axis=1)
-        df_data.append(frame)
 
-    df_data = pd.concat(df_data)
-    if len(df_data) > 0:
-        write_data_to_output_path(df_data, output_path, key='events', mode='w', index=False, **kwargs)
+        data.append(frame)
 
-        del df_data
+    data = pd.concat(data)
+
+    if len(data) > 0:
+        logger.debug("There are a total of {} events in the result".format(len(data)))
+        write_data_to_output_path(data, output_path, key='events', mode='w', index=False, **kwargs)
+
+    if len(df_returned_data) > 0:
+        df_returned_data = pd.concat(df_returned_data, ignore_index=True)
+        logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
+    else:
+        logger.info("Nothing to concatenate. There are a total of {} events in the result".format(len(df_returned_data)))
 
     del frames
     gc.collect()
-
-    df_returned_data = pd.concat(df_returned_data, ignore_index=True)
-    logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
 
     if len(df_returned_data) == 0:
         logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
@@ -143,17 +159,26 @@ def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
     if df_started_runs is not None:
         df_started_reduced = df_started_runs
         try:
-            if (set(['night','run_id']).issubset(df_started_runs.columns)
-                    and set(['night','run_id']).issubset(df_returned_data.columns)):
+            if (set(['night', 'run_id']).issubset(df_started_runs.columns)
+                    and set(['night', 'run_id']).issubset(df_returned_data.columns)):
                 df_started_reduced = df_started_runs[merge_columns_data]
-                df_merged = pd.merge(df_started_reduced, df_returned_data['night','run_id'], on=['night','run_id'], how='outer', indicator=True)
-            elif (set(['data_path','bunch_index']).issubset(df_started_runs.columns)
-                  and set(['data_path','bunch_index']).issubset(df_returned_data.columns)):
-                df_merged = pd.merge(df_started_reduced, df_returned_data['data_path','bunch_index'], on=['data_path','bunch_index'], how='outer', indicator=True)
+                df_merged = pd.merge(df_started_reduced, df_returned_data[['night','run_id']], on=['night','run_id'], how='outer', indicator=True)
+            elif (set(['data_path', 'bunch_index']).issubset(df_started_runs.columns)
+                  and set(['data_path', 'bunch_index']).issubset(df_returned_data.columns)):
+                mc_columns = ['data_path', 'bunch_index']
+
+                if 'corsika_run_header_run_number' in df_returned_data.keys():
+                    mc_columns = mc_columns + ['corsika_run_header_run_number']
+                if 'run_id' in df_returned_data.keys():
+                    mc_columns = mc_columns + ['run_id']
+                if 'night' in df_returned_data.keys():
+                    mc_columns = mc_columns + ['night']
+
+                df_merged = pd.merge(df_started_reduced, df_returned_data[mc_columns], on=['data_path','bunch_index'], how='outer', indicator=True)
             else:
                 df_merged = df_started_runs
                 df_merged["_merge"] = "both"
-        except MemoryError:
+        except (ValueError, KeyError, IndexError):
             from IPython import embed; embed()
 
         df_merged["failed"] = (df_merged["_merge"] != "both")
