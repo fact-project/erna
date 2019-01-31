@@ -6,6 +6,9 @@ import grp
 import pwd
 import subprocess
 from datetime import date
+import pandas as pd
+import numpy as np
+from astropy.io import fits
 
 log = logging.getLogger(__name__)
 
@@ -116,3 +119,31 @@ def create_filename_from_format(filename_format, basename, num):
     if not m:
         raise ValueError("Missing named placeholder 'num' in format string")
     return filename_format.format(basename=basename, num=num)
+
+
+def read_ids_from_fits(data_file):
+    keys2read = ['RUNID', 'NIGHT', 'EventNum', 'MCorsikaEvtHeader.fEvtNumber',
+                 'MCorsikaRunHeader.fRunNumber', 'corsika_event_header_event_number',
+                 'corsika_run_header_run_number', 'event_num', 'run_id', 'night']
+
+    renames = dict()
+    renames['RUNID'] = 'run_id'
+    renames['NIGHT'] = 'night'
+    renames['EventNum'] = 'event_num'
+    renames['MCorsikaEvtHeader.fEvtNumber'] = 'corsika_event_header_event_number'
+    renames['MCorsikaRunHeader.fRunNumber'] = 'corsika_run_header_run_number'
+
+    with fits.open(data_file) as hdu:
+        res = dict()
+        res["data_path"] = os.path.realpath(data_file)
+
+        for key in keys2read:
+            keyname = key if not key in renames else renames[key]
+            try:
+                res[keyname] = hdu[1].data[key]
+                log.debug(f"adding {key}")
+            except (IndexError, KeyError):
+                log.debug(f"skipping {key}")
+                continue
+
+    return pd.DataFrame(res)

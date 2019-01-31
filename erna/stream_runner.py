@@ -2,13 +2,18 @@ import subprocess
 import pandas as pd
 import os
 import json
-import logging
+
 import tempfile
 import atexit
+import numpy as np
+from astropy.io import fits
+import logging
+
 from erna import ft_json_to_df
 from erna.utils import (
     assemble_facttools_call,
-    check_environment_on_node
+    check_environment_on_node,
+    read_ids_from_fits
     )
 
 
@@ -56,5 +61,18 @@ def run(jar, xml, input_files_df, aux_source_path=None):
             else:
                 return "fact-tools error"
 
+        event_ids = []
+        for data_path in input_files_df['data_path'].values:
+            event_ids.append(read_ids_from_fits(data_path))
+
+        event_ids = pd.concat(event_ids)
+
+        df_out = ft_json_to_df(output_path)
+
+        id_columns = list(event_ids.keys())
+        id_columns.remove('data_path')
+
+        df_out = pd.merge(df_out, event_ids, how='left', on=id_columns, validate='one_to_one')
+        df_out = df_out.merge(input_files_df, how='left', on='data_path')
         # try to read nans else return empty frame
-        return ft_json_to_df(output_path)
+        return df_out
