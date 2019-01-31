@@ -88,7 +88,10 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
         os.makedirs(subfolder, exist_ok=True)
         output_path = os.path.join(subfolder, filename)
 
-        copyfile(tmp_output_path, output_path)
+        try:
+            copyfile(tmp_output_path, output_path)
+        except FileNotFoundError:
+            logger.error('No output file to copy')
         
         input_files_df['output_path'] = output_path
 
