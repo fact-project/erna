@@ -75,7 +75,10 @@ def run(jar, xml, input_files_df, output_path, aux_source_path=None):
             df = ft_json_to_df(tmp_output_path)
             pre, ext = os.path.splitext(tmp_output_path)
             tmp_output_path = pre + out_ext
-            write_data(df, tmp_output_path, key="erna")
+            if len(df) > 0:
+                write_data(df, tmp_output_path, key="erna")
+            else:
+                logger.error('No events where returned')
 
         # create subfolder to hold the runs
         dirname = os.path.dirname(os.path.abspath(output_path))
