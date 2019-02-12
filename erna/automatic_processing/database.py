@@ -2,10 +2,8 @@ from peewee import (
     Model, CharField, IntegerField, BooleanField,
     ForeignKeyField, FixedCharField, TextField, MySQLDatabase
 )
-from playhouse.shortcuts import RetryOperationalError
 import os
 import logging
-import wrapt
 
 from .utils import parse_path
 from .custom_fields import NightField, LongBlobField
@@ -32,15 +30,7 @@ PROCESSING_STATES = [
 ]
 
 
-class RetryMySQLDatabase(RetryOperationalError, MySQLDatabase):
-    ''' Automatically reconnect when connection went down'''
-    pass
-
-
-database = RetryMySQLDatabase(None, fields={
-    'night': 'INTEGER',
-    'longblob': 'LONGBLOB',
-})
+database = MySQLDatabase(None)
 
 
 def setup_database(database, drop=False):
@@ -177,9 +167,3 @@ class Job(Model):
 
 
 MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState]
-
-
-@wrapt.decorator
-def requires_database_connection(wrapped, instance, args, kwargs):
-    database.get_conn()
-    return wrapped(*args, **kwargs)

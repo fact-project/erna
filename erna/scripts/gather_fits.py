@@ -182,6 +182,9 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     to_h5py(successful_jobs[columns], outputfile, key='runs', mode='w')
 
     with h5py.File(outputfile, 'a') as f:
-        f['runs'].attrs['datacheck'] = ' AND '.join(conditions)
+        if runlist is not None:
+            f['runs'].attrs['datacheck'] = 'RUNLIST'
+        else:
+            f['runs'].attrs['datacheck'] = ' AND '.join(conditions)
 
     write_fits_to_hdf5(outputfile, successful_jobs.result_file, mode='a')

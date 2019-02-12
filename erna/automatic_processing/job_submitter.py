@@ -1,9 +1,8 @@
 from threading import Thread, Event
 import logging
 import peewee
-import os
 
-from .database import ProcessingState, requires_database_connection
+from .database import ProcessingState, database
 from .database_utils import count_jobs, get_pending_jobs
 from .slurm import submit_job, get_current_jobs
 
@@ -24,7 +23,8 @@ class JobSubmitter(Thread):
         port,
         group,
         mail_address=None,
-        mail_settings='a',
+        mail_settings='FAIL',
+        queue=None,
     ):
         '''
         Parametrs
@@ -60,6 +60,7 @@ class JobSubmitter(Thread):
         self.mail_settings = mail_settings
         self.mail_address = mail_address
         self.script = script
+        self.queue = queue
 
     def run(self):
         while not self.event.is_set():
@@ -74,7 +75,7 @@ class JobSubmitter(Thread):
     def terminate(self):
         self.event.set()
 
-    @requires_database_connection
+    @database.connection_context()
     def process_pending_jobs(self):
         '''
         Fetches pending runs from the processing database
@@ -107,6 +108,7 @@ class JobSubmitter(Thread):
                         submitter_host=self.host,
                         submitter_port=self.port,
                         group=self.group,
+                        queue=self.queue,
                     )
                     log.info('New job with id {} queued'.format(job.id))
                 except:

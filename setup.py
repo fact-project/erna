@@ -34,7 +34,7 @@ setup(
         'click',
         'drmaa',
         'pyzmq',
-        'peewee==2.*',
+        'peewee~=3.0',
         'numexpr',
         'pyyaml',
         'pytest',           # also in  conda

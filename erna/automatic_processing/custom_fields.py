@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 
 class NightField(Field):
-    db_field = 'night'
+    db_field = 'integer'
 
     def db_value(self, value):
         return date_to_night_int(value)
