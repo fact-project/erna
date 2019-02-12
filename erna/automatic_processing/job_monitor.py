@@ -4,7 +4,7 @@ import logging
 from retrying import retry
 import peewee
 
-from .database import Job, ProcessingState, requires_database_connection
+from .database import Job, ProcessingState, database
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ class JobMonitor(Thread):
                     self.update_job(status_update)
 
     @retry(retry_on_exception=is_operational_error)
-    @requires_database_connection
+    @database.connection_context()
     def update_job(self, status_update):
         job = Job.get(id=status_update['job_id'])
         status = status_update['status']

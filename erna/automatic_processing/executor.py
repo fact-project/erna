@@ -1,5 +1,5 @@
 import time
-start_time = time.perf_counter()
+start_time = time.monotonic()
 
 import subprocess as sp
 import os
@@ -17,8 +17,11 @@ context = zmq.Context()
 socket = context.socket(zmq.REQ)
 
 log = logging.getLogger('erna')
-log.setLevel(logging.DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+log.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+fmt = logging.Formatter(fmt='%(asctime)s [%(levelname)-8s] %(message)s')
+handler.setFormatter(fmt)
+logging.getLogger().addHandler(handler)
 
 
 def main():
@@ -28,7 +31,7 @@ def main():
     port = os.environ['SUBMITTER_PORT']
     socket.connect('tcp://{}:{}'.format(host, port))
 
-    job_id = int(os.environ['JOB_NAME'].replace('erna_', ''))
+    job_id = int(os.environ['SLURM_JOB_NAME'].replace('erna_', ''))
 
     socket.send_pyobj({'job_id': job_id, 'status': 'running'})
     socket.recv()
@@ -77,8 +80,8 @@ def main():
             sp.run(['free', '-m'], check=True)
             sp.run([java, '-Xmx512m', '-version'], check=True)
 
-            log.info('Calling fact-tools with call: {}'.format(call))
-            timeout = walltime - (time.perf_counter() - start_time) - 300
+            log.info('Calling fact-tools with call: "{}"'.format(' '.join(call)))
+            timeout = walltime - (time.monotonic() - start_time) - 300
             log.info('Setting fact-tools timout to %.0f', timeout)
             sp.run(call, cwd=tmp_dir, check=True, timeout=timeout)
         except sp.CalledProcessError:
@@ -88,7 +91,7 @@ def main():
             sys.exit(1)
         except sp.TimeoutExpired:
             socket.send_pyobj({'job_id': job_id, 'status': 'walltime_exceeded'})
-            log.exception('FACT Tools about to run into wall-time, terminating')
+            log.error('FACT Tools about to run into wall-time, terminating')
             socket.recv()
             sys.exit(1)
 

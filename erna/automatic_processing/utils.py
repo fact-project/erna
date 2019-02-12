@@ -1,6 +1,5 @@
 import re
 from datetime import date
-import os
 
 
 datafile_re = re.compile(r'(?:.*/)?([0-9]{4})([0-9]{2})([0-9]{2})_([0-9]{3})\.fits(?:\.[fg]z)?$')
@@ -17,15 +16,3 @@ def parse_path(path):
     year, month, day, run_id = map(int, match.groups())
 
     return date(year, month, day), run_id
-
-
-def get_aux_dir(night):
-
-    basepath = '/fact/aux'
-
-    return os.path.join(
-        basepath,
-        '{:04d}'.format(night.year),
-        '{:02d}'.format(night.month),
-        '{:02d}'.format(night.day)
-    )

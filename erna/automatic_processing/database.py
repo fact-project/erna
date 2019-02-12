@@ -2,10 +2,8 @@ from peewee import (
     Model, CharField, IntegerField, BooleanField,
     ForeignKeyField, FixedCharField, TextField, MySQLDatabase
 )
-from playhouse.shortcuts import RetryOperationalError
 import os
 import logging
-import wrapt
 
 from .utils import parse_path
 from .custom_fields import NightField, LongBlobField
@@ -14,7 +12,7 @@ from .custom_fields import NightField, LongBlobField
 
 __all__ = [
     'RawDataFile', 'DrsFile',
-    'Jar', 'XML', 'Job', 'Queue',
+    'Jar', 'XML', 'Job',
     'ProcessingState',
     'database', 'setup_database',
 ]
@@ -31,22 +29,8 @@ PROCESSING_STATES = [
     'walltime_exceeded',
 ]
 
-WALLTIMES = {
-    'fact_short': 60 * 60,
-    'fact_medium': 6 * 60 * 60,
-    'fact_long': 7 * 24 * 60 * 60,
-}
 
-
-class RetryMySQLDatabase(RetryOperationalError, MySQLDatabase):
-    ''' Automatically reconnect when connection went down'''
-    pass
-
-
-database = RetryMySQLDatabase(None, fields={
-    'night': 'INTEGER',
-    'longblob': 'LONGBLOB',
-})
+database = MySQLDatabase(None)
 
 
 def setup_database(database, drop=False):
@@ -71,9 +55,6 @@ def setup_database(database, drop=False):
     for description in PROCESSING_STATES:
         ProcessingState.get_or_create(description=description)
 
-    for name, walltime in WALLTIMES.items():
-        Queue.get_or_create(name=name, walltime=walltime)
-
 
 class File(Model):
     night = NightField()
@@ -85,9 +66,9 @@ class File(Model):
         database = database
         indexes = ((('night', 'run_id'), True), )  # unique index
 
-    def get_path(self):
+    def get_path(self, basepath='/fact/raw'):
         return os.path.join(
-            '/fact/raw',
+            basepath,
             str(self.night.year),
             '{:02d}'.format(self.night.month),
             '{:02d}'.format(self.night.day),
@@ -166,15 +147,6 @@ class ProcessingState(Model):
         return '{}'.format(self.description)
 
 
-class Queue(Model):
-    name = CharField(unique=True)
-    walltime = IntegerField()
-
-    class Meta:
-        database = database
-        db_table = 'queues'
-
-
 class Job(Model):
     raw_data_file = ForeignKeyField(RawDataFile, related_name='raw_data_file')
     drs_file = ForeignKeyField(DrsFile, related_name='drs_file')
@@ -182,9 +154,9 @@ class Job(Model):
     result_file = CharField(null=True)
     status = ForeignKeyField(ProcessingState, related_name='status')
     priority = IntegerField(default=5)
+    walltime = IntegerField(default=180)
     xml = ForeignKeyField(XML)
     md5hash = FixedCharField(32, null=True)
-    queue = ForeignKeyField(Queue, related_name='queue')
 
     class Meta:
         database = database
@@ -193,10 +165,5 @@ class Job(Model):
             (('raw_data_file', 'jar', 'xml'), True),  # unique constraint
         )
 
-MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState, Queue]
 
-
-@wrapt.decorator
-def requires_database_connection(wrapped, instance, args, kwargs):
-    database.get_conn()
-    return wrapped(*args, **kwargs)
+MODELS = [RawDataFile, DrsFile, Jar, XML, Job, ProcessingState]

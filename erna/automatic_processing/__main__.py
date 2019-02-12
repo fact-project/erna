@@ -28,9 +28,10 @@ def main(config, verbose):
         logging.getLogger('erna').setLevel(logging.DEBUG)
 
     stream_handler = logging.StreamHandler()
-    file_handler = logging.FileHandler(config['submitter']['logfile'])
+    file_handler = logging.FileHandler(config['submitter'].pop('logfile'))
+    file_handler.setLevel(logging.INFO)
     formatter = logging.Formatter(
-        '%(asctime)s|%(levelname)s|%(name)s|%(message)s'
+        '%(asctime)s|%(levelname)s|%(message)s'
     )
 
     for handler in (stream_handler, file_handler):
@@ -44,16 +45,7 @@ def main(config, verbose):
     database.close()
 
     job_monitor = JobMonitor(port=config['submitter']['port'])
-    job_submitter = JobSubmitter(
-        interval=config['submitter']['interval'],
-        max_queued_jobs=config['submitter']['max_queued_jobs'],
-        data_directory=config['submitter']['data_directory'],
-        host=config['submitter']['host'],
-        port=config['submitter']['port'],
-        group=config['submitter']['group'],
-        mail_address=config['submitter']['mail_address'],
-        mail_settings=config['submitter']['mail_settings'],
-    )
+    job_submitter = JobSubmitter(**config['submitter'])
 
     log.info('Starting main loop')
     try:
@@ -68,6 +60,7 @@ def main(config, verbose):
         job_submitter.terminate()
         job_submitter.join()
         log.info('Clean up running jobs')
+
         database.connect()
 
         queued = ProcessingState.get(description='queued')
@@ -75,6 +68,7 @@ def main(config, verbose):
         inserted = ProcessingState.get(description='inserted')
 
         for job in Job.select().where((Job.status == running) | (Job.status == queued)):
-            sp.run(['qdel', 'erna_{}'.format(job.id)])
+            sp.run(['scancel', '--jobname=erna_{}'.format(job.id)])
             job.status = inserted
             job.save()
+        database.close()

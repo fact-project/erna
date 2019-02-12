@@ -1,11 +1,10 @@
 from threading import Thread, Event
 import logging
 import peewee
-import os
 
-from .database import ProcessingState, requires_database_connection
+from .database import ProcessingState, database
 from .database_utils import count_jobs, get_pending_jobs
-from .qsub import submit_job, get_current_jobs
+from .slurm import submit_job, get_current_jobs
 
 log = logging.getLogger(__name__)
 
@@ -13,16 +12,20 @@ log = logging.getLogger(__name__)
 class JobSubmitter(Thread):
 
     def __init__(
-            self,
-            interval,
-            max_queued_jobs,
-            data_directory,
-            host,
-            port,
-            group,
-            mail_address=None,
-            mail_settings='a',
-            ):
+        self,
+        interval,
+        max_queued_jobs,
+        raw_dir,
+        aux_dir,
+        erna_dir,
+        script,
+        host,
+        port,
+        group,
+        mail_address=None,
+        mail_settings='FAIL',
+        queue=None,
+    ):
         '''
         Parametrs
         ----------
@@ -32,8 +35,8 @@ class JobSubmitter(Thread):
             Maximum number of jobs in the queue of the grid engine
             No new jobs are submitted if the number of jobs in the queue is
             higher than this value
-        data_directory: str
-            patch to the basic structure for erna. Logfiles, jars, xmls and
+        erna_directory: str
+            path to the basic structure for erna. Logfiles, jars, xmls and
             analysis output are stored in subdirectories to this directory.
         host: str
             hostname of the submitter node
@@ -48,12 +51,16 @@ class JobSubmitter(Thread):
         self.event = Event()
         self.interval = interval
         self.max_queued_jobs = max_queued_jobs
-        self.data_directory = data_directory
+        self.erna_dir = erna_dir
+        self.aux_dir = aux_dir
+        self.raw_dir = raw_dir
         self.host = host
         self.port = port
         self.group = group
         self.mail_settings = mail_settings
         self.mail_address = mail_address
+        self.script = script
+        self.queue = queue
 
     def run(self):
         while not self.event.is_set():
@@ -61,14 +68,14 @@ class JobSubmitter(Thread):
                 self.process_pending_jobs()
             except peewee.OperationalError:
                 log.warning('Lost database connection')
-            except:
-                log.exception('Error during submission')
+            except Exception as e:
+                log.exception('Error during submission: {}'.format(e))
             self.event.wait(self.interval)
 
     def terminate(self):
         self.event.set()
 
-    @requires_database_connection
+    @database.connection_context()
     def process_pending_jobs(self):
         '''
         Fetches pending runs from the processing database
@@ -92,16 +99,19 @@ class JobSubmitter(Thread):
                 try:
                     submit_job(
                         job,
-                        output_base_dir=os.path.join(self.data_directory, 'fact-tools'),
-                        data_dir=self.data_directory,
+                        script=self.script,
+                        raw_dir=self.raw_dir,
+                        aux_dir=self.aux_dir,
+                        erna_dir=self.erna_dir,
                         mail_address=self.mail_address,
                         mail_settings=self.mail_settings,
                         submitter_host=self.host,
                         submitter_port=self.port,
                         group=self.group,
+                        queue=self.queue,
                     )
                     log.info('New job with id {} queued'.format(job.id))
                 except:
                     log.exception('Could not submit job')
-                    job.status = ProcessingState.get(description='error')
+                    job.status = ProcessingState.get(description='failed')
                     job.save()

@@ -34,12 +34,13 @@ setup(
         'click',
         'drmaa',
         'pyzmq',
-        'peewee',
+        'peewee~=3.0',
         'numexpr',
         'pyyaml',
         'pytest',           # also in  conda
         'xmltodict',
         'wrapt',
+	'retrying',
         # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
         # 'fact_condition', install from https://github.com/fact-project/fact_conditions
     ],

@@ -60,8 +60,8 @@ def main(start, end, config):
     # fill all non drs runs into raw_data_files
     data_runs = runs.query('fDrsStep != 2').drop('fDrsStep', axis=1)
     nan_entries = data_runs.isnull().any(axis=1)
-    if len(data_runs[nan_entries]) != 0:
-        print('Found invalid entries, skipping:')
+    if nan_entries.sum() > 0:
+        print('Found invalid data runs, skipping:')
         print(data_runs[nan_entries])
         data_runs.dropna(inplace=True)
 
@@ -70,8 +70,8 @@ def main(start, end, config):
     # fill all drs runs into drs_files
     drs_runs = runs.query('(fRunTypeKey == 2) & (fDrsStep == 2)')
     nan_entries = drs_runs.isnull().any(axis=1)
-    if len(drs_runs[nan_entries]) != 0:
-        print('Found invalid entries, skipping:')
+    if nan_entries.sum() > 0:
+        print('Found invalid drs runs, skipping:')
         print(drs_runs[nan_entries])
         drs_runs.dropna(inplace=True)
     fill_drs_runs(drs_runs, database=database)
