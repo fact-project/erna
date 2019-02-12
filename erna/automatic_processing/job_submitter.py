@@ -36,7 +36,7 @@ class JobSubmitter(Thread):
             No new jobs are submitted if the number of jobs in the queue is
             higher than this value
         erna_directory: str
-            patch to the basic structure for erna. Logfiles, jars, xmls and
+            path to the basic structure for erna. Logfiles, jars, xmls and
             analysis output are stored in subdirectories to this directory.
         host: str
             hostname of the submitter node
