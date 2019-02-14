@@ -8,7 +8,8 @@ from tqdm import tqdm
 import glob
 from collections import namedtuple
 
-from .. import ensure_output, mc_drs_file
+from ..path import ensure_output
+from .. import mc_drs_file
 from ..io import collect_output
 from ..dask import Cluster
 
@@ -79,28 +80,31 @@ def make_jobs(
 @click.argument('xml', type=click.Path(dir_okay=False, file_okay=True, readable=True))
 @click.argument('out', type=click.Path(exists=False, dir_okay=False, file_okay=True))
 @click.argument('mc_path',  nargs=-1,  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True))
-@click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE', 'SLURM']), default='SLURM', show_default=True)
+@click.option('--engine', help='Name of the grid engine used by the cluster.', type=click.Choice(['PBS', 'SGE', 'SLURM', 'LOCAL']), default='SLURM', show_default=True)
 @click.option('--interface', help='Name of the network interface to use')
 @click.option('--queue', help='Name of the queue you want to send jobs to.', default='short', show_default=True)
 @click.option('--walltime', help='Estimated maximum walltime of your job in format hh:mm:ss.', default='02:00:00', show_default=True)
-@click.option('--n-jobs', help='Number of jobs to start on the cluster.', default='4', type=click.INT, show_default=True)
+@click.option('--n-jobs', help='Number of jobs to start on the cluster.', default=4, type=click.INT, show_default=True)
 @click.option('--vmem', help='Amount of memory to use per node in MB.', default=1000, type=click.INT, show_default=True)
 @click.option('--log-level', type=click.Choice(['INFO', 'DEBUG', 'WARN']), help='Set output verbosity', default='INFO')
 @click.option('--port', help='The port through which to communicate with the JobMonitor', default=12856, type=int)
-@click.option('--local', is_flag=True, help='Flag indicating whether jobs should be executed localy.',show_default=True)
-@click.option('--local-output', default=False, is_flag=True,
-              help='Flag indicating whether jobs write their output localy'
-              + 'to disk without gathering everything in the mother'
-              + 'process. In this case the output file only contains a'
-              + 'summary oth the processed jobs. The data ouput will be'
-              + 'in separate files',
-              show_default=True)
+@click.option(
+    '--local-output', is_flag=True,
+    help=(
+        'Flag indicating whether jobs write their output localy'
+        ' to disk without gathering everything in the mother'
+        ' process. In this case the output file only contains a'
+        ' summary oth the processed jobs. The data ouput will be'
+        ' in separate files'
+    ),
+    show_default=True,
+)
 @click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.option('--mcwildcard', help='Gives the wildcard for searching the folder for files.', type=click.STRING, default='**/*_Events.fit*')
 @click.option('--local_output_extension', default='json', help='Give the file format for the local output funktionality.')
 @click.option('--yes', help='Do not ask for permission', default=False, is_flag=True)
 @click.option('--max-files', help='Maximum number of files to process', type=int)
-def main(jar, xml, out, mc_path, engine, interface, queue, walltime, n_jobs, vmem, log_level, port, local, local_output, mcdrs, mcwildcard, local_output_extension, yes, max_files):
+def main(jar, xml, out, mc_path, engine, interface, queue, walltime, n_jobs, vmem, log_level, port, local_output, mcdrs, mcwildcard, local_output_extension, yes, max_files):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
