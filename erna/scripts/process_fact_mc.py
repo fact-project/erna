@@ -1,78 +1,20 @@
 import logging
 import click
 import numpy as np
-import pandas as pd
 import os
 
 from tqdm import tqdm
 import glob
-from collections import namedtuple
 
 from ..path import ensure_output
 from .. import mc_drs_file
 from ..io import collect_output
 from ..dask import Cluster
-
-
-Job = namedtuple(
-    'Job',
-    ['jar', 'xml', 'run_df', 'outputfile', 'queue', 'walltime', 'mem', 'aux_path']
-)
+from ..logging import setup_logging
+from ..jobs import make_jobs
 
 
 logger = logging.getLogger(__name__)
-
-
-def make_jobs(
-    jar,
-    xml,
-    data_paths,
-    drs_paths,
-    queue,
-    vmem,
-    n_jobs,
-    walltime,
-    outputbase=None,
-    local_output_extension='.fits',
-):
-
-    jobs = []
-
-    data_partitions = np.array_split(data_paths, n_jobs)
-    drs_partitions = np.array_split(drs_paths, n_jobs)
-
-    if outputbase:
-        logger.info('Using stream runner for local output')
-    else:
-        logger.debug('Using std stream runner gathering output from all nodes')
-
-    df_runs = pd.DataFrame()
-    for num, (data, drs) in enumerate(zip(data_partitions, drs_partitions)):
-
-        df = pd.DataFrame({'data_path': data, 'drs_path': drs})
-        df['bunch_index'] = num
-
-        df_runs = df_runs.append(df)
-
-        if outputbase:
-            outputfile = '{}_{}.{}'.format(outputbase, num, local_output_extension)
-        else:
-            outputfile = None
-
-        jobs.append(Job(
-            jar=jar,
-            xml=xml,
-            run_df=df,
-            outputfile=outputfile,
-            queue=queue,
-            walltime=walltime,
-            mem=vmem,
-            aux_path=None,
-        ))
-
-    avg_num_files = np.mean([len(part) for part in data_partitions])
-    logger.info('Created {} jobs with {} files each.'.format(len(jobs), avg_num_files))
-    return jobs, df_runs
 
 
 @click.command()
@@ -99,28 +41,43 @@ def make_jobs(
     ),
     show_default=True,
 )
+@click.option(
+    '--local-output-format',
+    default="{basename}_{num:03d}.json",
+    help=(
+        "Give the file format for the local output funktionality."
+        " %b will replace the out filename and %[1-9]n the given local number."
+        " Default is: '{basename}_{num}.json'.Only works with option --local_output."
+    )
+)
 @click.option('--mcdrs', type=click.Path(exists=True, dir_okay=False, file_okay=True, readable=True))
 @click.option('--mcwildcard', help='Gives the wildcard for searching the folder for files.', type=click.STRING, default='**/*_Events.fit*')
-@click.option('--local_output_extension', default='json', help='Give the file format for the local output funktionality.')
 @click.option('--yes', help='Do not ask for permission', default=False, is_flag=True)
 @click.option('--max-files', help='Maximum number of files to process', type=int)
-def main(jar, xml, out, mc_path, engine, interface, queue, walltime, n_jobs, vmem, log_level, port, local_output, mcdrs, mcwildcard, local_output_extension, yes, max_files):
+def main(
+    jar,
+    xml,
+    out,
+    mc_path,
+    engine,
+    interface,
+    queue,
+    walltime,
+    n_jobs,
+    vmem,
+    log_level,
+    port,
+    local_output,
+    local_output_format,
+    mcdrs,
+    mcwildcard,
+    yes,
+    max_files,
+):
     '''
     Script to execute fact-tools on MonteCarlo files. Use the MC_PATH argument to specifiy the folders containing the MC
     '''
-    level = logging.INFO
-    if log_level == 'DEBUG':
-        level = logging.DEBUG
-    elif log_level == 'WARN':
-        level = logging.WARN
-    elif log_level == 'INFO':
-        level = logging.INFO
-
-    logging.captureWarnings(True)
-    logging.basicConfig(
-        format='%(asctime)s - %(name)s - %(levelname)s - ' + '%(message)s',
-        level=level,
-    )
+    setup_logging(log_level)
 
     if local_output:
         name, _ = os.path.splitext(os.path.basename(out))
@@ -134,6 +91,7 @@ def main(jar, xml, out, mc_path, engine, interface, queue, walltime, n_jobs, vme
     jarpath = os.path.abspath(jar)
     xmlpath = os.path.abspath(xml)
     drspath = mcdrs or mc_drs_file
+
     logger.info('Using drs file at {}'.format(drspath))
 
     # get data files
@@ -171,7 +129,7 @@ def main(jar, xml, out, mc_path, engine, interface, queue, walltime, n_jobs, vme
         n_jobs=n_jobs,
         walltime=walltime,
         outputbase=outputbase,
-        local_output_extension=local_output_extension,
+        local_output_format=local_output_format,
     )
 
     with Cluster(

@@ -23,7 +23,7 @@ setup(
         'matplotlib>=1.4',  # in anaconda
         'python-dateutil',  # in anaconda
         'sqlalchemy',       # in anaconda
-        'PyMySQL',          # in anaconda
+        'pymysql',          # in anaconda
         'pytz',             # in anaconda
         'tables',           # needs to be installed by pip for some reason
         'pyfact>=0.17.0',

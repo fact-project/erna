@@ -4,6 +4,7 @@ import pandas as pd
 import json
 
 from dask.distributed import as_completed
+from traceback import format_tb
 
 from fact.io import to_h5py
 from .hdf_utils import rename_columns
@@ -110,6 +111,7 @@ def collect_output(futures, output_path, **kwargs):
 
             if isinstance(result, tuple):
                 logger.error('Exception running job: {}'.format(result[1]))
+                logger.error(format_tb(tb))
                 continue
 
             if not result['success']:

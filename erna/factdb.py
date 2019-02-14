@@ -1,10 +1,12 @@
 import logging
 import pandas as pd
 
+from datetime import timedelta
+from sqlalchemy import create_engine
+import numpy as np
+
 from . import datacheck_conditions as dcc
 from .path import build_filename, build_path, test_drs_path
-from datetime import timedelta
-import numpy as np
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +47,12 @@ WHERE
     AND {conditions}
 ;
 '''
+
+
+def create_fact_engine(password):
+    return create_engine(
+        'mysql+pymysql://factread:{}@129.194.168.95/factdata'.format(password)
+    )
 
 
 def get_runs(engine, conditions=None, columns=default_columns):

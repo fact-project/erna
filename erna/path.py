@@ -40,16 +40,15 @@ def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
 
 
-def ensure_output(output_path):
+def ensure_output(output_path, confirm=True):
     '''
     Make sure the output file does not exist yet.
     Create directorie to new output file if necessary
     '''
     if os.path.exists(output_path):
         raise FileExistsError('The output file already exists.')
+
     directory = os.path.dirname(output_path)
+
     if directory:
         os.makedirs(directory, exist_ok=True)
-
-
-
