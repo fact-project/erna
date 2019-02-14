@@ -1,4 +1,5 @@
 # Easy RuN Access (ERNA)
+
 A collection of tools to handle FACT data and to execute jobs on a SGE/TORQUE cluster.
 
 ![http://www.itbusiness.ca/wp-content/uploads/2012/10/Old-women-on-laptop.jpg](http://www.itbusiness.ca/wp-content/uploads/2012/10/Old-women-on-laptop.jpg)
@@ -10,35 +11,8 @@ Dates are given in the usual FACT convention: YYYYMMDD.
 
 ## Requirements
   - FACT-Tools
-  - Java 1.8+
-  - Python 3.5+ (srsly. 3.5 please)
-
-Install my fork of pygridmap
-
-    pip install https://github.com/mackaiver/gridmap/archive/master.tar.gz
-
-Then install this via
-
-    pip install https://github.com/fact-project/erna/archive/master.tar.gz
-
-## Config for using gridmap on PhiDo
-
-You need to put this into your `.bashrc`, so erna is configured correctly
-
-```bash
-export ERROR_MAIL_RECIPIENT=<your email address>
-export DRMAA_LIBRARY_PATH="/sl6/sw/projects/fact/pbs-drmaa-1.0.19/pbs_drmaa/libs/libdrmaa.so"
-export DEFAULT_TEMP_DIR="/local/$USER/$PBS_JOBID"
-export USE_MEM_FREE=TRUE
-export SMTP_SERVER="unimail.tu-dortmund.de"
-export ERROR_MAIL_RECIPIENT="your.email@address.com"
-export ERROR_MAIL_SENDER="torque@hpc-main3.phido.physik.tu-dortmund.de"
-export SEND_ERROR_MAIL=TRUE
-```
-
-## How to for using gridmap on LiDo2
-A brief example of how to setup LiDo2 for erna can be found at:
-https://github.com/fact-project/erna/wiki/How-to-setup-Lido2-for-erna
+  - Java 1.8 (module add java on lido3)
+  - Python 3.5+
 
 
 ## execute_data_processing.py
