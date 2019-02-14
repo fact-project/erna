@@ -1,5 +1,4 @@
 from astropy.io import fits
-from IPython import embed
 import pandas as pd
 from sqlalchemy import create_engine
 import glob

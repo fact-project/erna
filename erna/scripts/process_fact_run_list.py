@@ -18,19 +18,19 @@ logger = logging.getLogger(__name__)
 def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, queue,
               vmem, num_jobs, walltime, output_path=None, filename_format="{basename}_{num}.json"):
     jobs = []
-    
+
     if output_path:
         logger.info("Using stream runner for local output")
     else:
         logger.debug("Using std stream runner gathering output from all nodes")
-        
+
     # create job objects
     split_indices = np.array_split(np.arange(len(df_mapping)), num_jobs)
     for num, indices in enumerate(split_indices):
         df = df_mapping[indices.min(): indices.max()]
         df=df.copy()
         df["bunch_index"] = num
-        
+
         if output_path:
             # create the filenames for each single local run
             file_name, _ = path.splitext(path.basename(output_path))
@@ -43,20 +43,19 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
             stream_runner = stream_runner_std
 
         jobs.append(
-            Job(stream_runner.run, 
+            Job(
+                stream_runner.run,
                 run,
-                queue=queue, 
-                walltime=walltime, 
+                queue=queue,
+                walltime=walltime,
                 engine=engine,
                 mem_free='{}mb'.format(vmem)
-                )
             )
-            
+        )
+
     avg_num_files = np.mean([len(part) for part in split_indices])
     logger.info("Created {} jobs with {} files each.".format(len(jobs), avg_num_files))
     return jobs
-
-
 
 
 @click.command()
@@ -88,12 +87,12 @@ def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs
     Specify the path to a .json file as created by the fetch_runs.py script via the FILE_LIST argument.
     num_jobs will be created and executed on the cluster.
     '''
-    level=logging.INFO
-    if log_level is 'DEBUG':
+    level = logging.INFO
+    if log_level == 'DEBUG':
         level = logging.DEBUG
-    elif log_level is 'WARN':
+    elif log_level == 'WARN':
         level = logging.WARN
-    elif log_level is 'INFO':
+    elif log_level == 'INFO':
         level = logging.INFO
 
     logging.captureWarnings(True)
@@ -109,35 +108,52 @@ def main(file_list, jar, xml, aux_source, out, queue, walltime, engine, num_jobs
         df = pd.read_json(file_list)
     elif extension == '.csv':
         logger.info("Reading CSV from {}".format(file_list))
-        df_returned_data.read_csv(file_list)
+        df = pd.read_csv(file_list)
 
     logger.info("Read {} runs".format(len(df)))
 
-    #get data files
+    # get data files
     jarpath = path.abspath(jar)
     xmlpath = path.abspath(xml)
     aux_source_path = path.abspath(aux_source)
     outpath = path.abspath(out)
     output_directory = path.dirname(outpath)
-    #create dir if it doesnt exist
+    # create dir if it doesnt exist
     os.makedirs(output_directory, exist_ok=True)
     logger.info("Writing output and temporary data  to {}".format(output_directory))
 
     if local_output:
-        job_list = make_jobs(jarpath, xmlpath, aux_source_path, 
-                             output_directory, df,  engine, queue, 
-                             vmem, num_jobs, walltime, 
-                             output_path=local_output_dir, 
-                             filename_format=local_output_format
-                             )
+        job_list = make_jobs(
+            jarpath,
+            xmlpath,
+            aux_source_path,
+            output_directory,
+            df,
+            engine,
+            queue,
+            vmem,
+            num_jobs,
+            walltime,
+            output_path=output_directory,
+            filename_format=local_output_format
+        )
     else:
-        job_list = make_jobs(jarpath, xmlpath, aux_source_path, 
-                             output_directory, df,  engine, queue, 
-                             vmem, num_jobs, walltime,
-                             )
-        
+        job_list = make_jobs(
+            jarpath,
+            xmlpath,
+            aux_source_path,
+            output_directory,
+            df,
+            engine,
+            queue,
+            vmem,
+            num_jobs,
+            walltime,
+        )
+
     job_outputs = gridmap.process_jobs(job_list, max_processes=num_jobs, local=local)
     erna.collect_output(job_outputs, out, df)
+
 
 if __name__ == "__main__":
     main()

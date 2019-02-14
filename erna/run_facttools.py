@@ -8,7 +8,7 @@ from .utils import (
     assemble_facttools_call,
     check_environment_on_node
 )
-from . import ft_json_to_df
+from .io import read_facttools_json
 
 
 def run_facttools(job):
@@ -64,4 +64,4 @@ def run_facttools(job):
             return {'success': True, 'outputfile': job.outputfile}
 
         # try to read nans else return empty frame
-        return {'success': True, 'events': ft_json_to_df(tmp_output_path)}
+        return {'success': True, 'events': read_facttools_json(tmp_output_path)}

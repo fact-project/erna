@@ -7,16 +7,11 @@ import os
 
 import time
 import pandas as pd
-import subprocess
 
-import gridmap
-from gridmap import Job
 
 import erna
-import erna.datacheck_conditions as dcc
 import erna.qsub as q
 
-from IPython import embed
 logger = logging.getLogger(__name__)
 
 
@@ -75,12 +70,12 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
          walltime, engine, num_runs, qjobs, vmem, log_level, port, source, conditions,
          max_delta_t, local, yes, password):
 
-    level=logging.INFO
-    if log_level is 'DEBUG':
+    level = logging.INFO
+    if log_level == 'DEBUG':
         level = logging.DEBUG
-    elif log_level is 'WARN':
+    elif log_level == 'WARN':
         level = logging.WARN
-    elif log_level is 'INFO':
+    elif log_level == 'INFO':
         level = logging.INFO
 
     logging.captureWarnings(True)
@@ -98,10 +93,10 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     os.makedirs(output_directory, exist_ok=True)
 
     factdb = sqlalchemy.create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
-    
+
     # create the set of conditions we want to use
     data_conditions = create_condition_set(conditions)
-    
+
     df_loaded = erna.load(earliest_night, latest_night, data_dir, source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
     df_loaded.to_hdf(out+".tmp", "loaded", mode="a")
 
@@ -109,7 +104,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     if not yes:
         click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-    #ensure that the max number of queuable jobs is smaller than the total number of jobs
+    # ensure that the max number of queuable jobs is smaller than the total number of jobs
     if qjobs > len(df_loaded):
         qjobs = len(df_loaded)
 
@@ -122,10 +117,10 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     job_output_paths = []
     df_submitted = pd.DataFrame()
 
-    #copy then dataframe with loaded jobs to submit
+    # copy then dataframe with loaded jobs to submit
     df_runs = df_loaded.copy()
 
-    #operate submission loop, as long as jobs need to be submitted
+    # operate submission loop, as long as jobs need to be submitted
     while(nfinished < nsubmited):
         n_toqueue = qjobs - (len(pending_jobs) + len(running_jobs))
         logger.info("{} jobs to be queued".format(n_toqueue))
@@ -137,22 +132,26 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
             df_submitted = df_submitted.append(df_submitted_last)
 
 
-            #append submitted jobids
+            # append submitted jobids
             jobids = df_submitted["JOBID"].unique()
             df_runs = df_runs.drop(df_to_submit.index)
             nsubmited = len(jobids)
             logger.info("Submitted {} jobs in last bunch".format(len(df_submitted_last)))
             logger.info("Submitted {} jobs in total".format(nsubmited))
 
-
         finished_jobs = q.get_finished_jobs(jobids)
         running_jobs = q.get_running_jobs(jobids)
         pending_jobs = q.get_pending_jobs(jobids)
 
         nfinished = len(finished_jobs)
-        logger.info("Processing Status: running: {}, pending: {}, queued: {}, finished: {}/{}"
-                    .format(len(running_jobs), len(pending_jobs),
-                        nsubmited-nfinished, nfinished, nsubmited))
+        logger.info(
+            "Processing Status: running: {}, pending: {}, queued: {}, finished: {}/{}".format(
+                len(running_jobs),
+                len(pending_jobs),
+                nsubmited - nfinished,
+                nfinished,
+                nsubmited,
+            ))
 
         last_finished = np.setdiff1d(finished_jobs, last_finished)
 
@@ -163,7 +162,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
         last_finished = finished_jobs
         if nfinished < nsubmited:
             logger.info("Checking qstat in 5 min again")
-            time.sleep(5*60)
+            time.sleep(5 * 60)
 
     logger.info("All jobs have been finished, processing done")
 
@@ -172,7 +171,8 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
     # erna.collect_output(job_output_paths, out)
     df_loaded.to_hdf(out, "loaded", mode="a")
     df_submitted.to_hdf(out, "jobinfo", mode="a")
-    os.remove(out+".tmp")
+    os.remove(out + ".tmp")
+
 
 if __name__ == "__main__":
     main()

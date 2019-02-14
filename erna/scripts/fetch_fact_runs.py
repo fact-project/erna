@@ -4,8 +4,7 @@ import numpy as np
 from sqlalchemy import create_engine
 import logging
 import click
-import erna
-import erna.datacheck_conditions as dcc
+from ..factdb import load
 
 
 logger = logging.getLogger(__name__)
@@ -31,16 +30,24 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, pa
 
     logging.basicConfig(level=logging.INFO)
 
-    factdb = create_engine("mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password))
+    factdb = create_engine(
+        "mysql+pymysql://factread:{}@129.194.168.95/factdata".format(password)
+    )
 
     # create the set of conditions we want to use
     data_conditions = create_condition_set(conditions)
-    
-    mapping = erna.load(earliest_night, latest_night, data_dir,  source_name=source, timedelta_in_minutes=max_delta_t, factdb=factdb, data_conditions=data_conditions)
+    mapping = load(
+        earliest_night,
+        latest_night,
+        data_dir,
+        source_name=source,
+        timedelta_in_minutes=max_delta_t,
+        factdb=factdb,
+        data_conditions=data_conditions,
+    )
     if mapping.empty:
         logger.error('No entries matching the conditions could be found in the RunDB')
         return
-
 
     if parts > 1:
         split_indices = np.array_split(np.arange(len(mapping)), parts)

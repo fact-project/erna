@@ -129,7 +129,7 @@ def main(jar, xml, out, mc_path, engine, interface, queue, walltime, n_jobs, vme
 
     jarpath = os.path.abspath(jar)
     xmlpath = os.path.abspath(xml)
-    drspath = mcdrs or mc_drs_file()
+    drspath = mcdrs or mc_drs_file
     logger.info('Using drs file at {}'.format(drspath))
 
     # get data files

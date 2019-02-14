@@ -1,6 +1,5 @@
 import os
 from os.path import isfile
-import socket
 import click
 import logging
 import pandas as pd

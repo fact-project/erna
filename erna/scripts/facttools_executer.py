@@ -2,8 +2,6 @@ import subprocess
 import os
 import logging
 import tempfile
-import json
-import pandas as pd
 from erna import ft_json_to_df
 
 logger = logging.getLogger(__name__)
@@ -67,6 +65,7 @@ def main():
             raise
         except:
             logger.exception("Fact-tools output could not be read.")
+
 
 if __name__ == "__main__":
     main()

@@ -13,8 +13,6 @@ from erna.utils import create_filename_from_format
 from erna import stream_runner as stream_runner_std
 from erna import stream_runner_local_output as stream_runner_local
 
-import erna.datacheck_conditions as dcc
-
 logger = logging.getLogger(__name__)
 
 
@@ -35,10 +33,10 @@ def make_jobs(jar, xml, aux_source_path, output_directory, df_mapping,  engine, 
 
         if output_path:
             # create the filenames for each single local run
-            file_name, _ = path.splitext(path.basename(output_path))
+            file_name, _ = os.path.splitext(os.path.basename(output_path))
             file_name = create_filename_from_format(filename_format, file_name, num)
-            out_path = path.dirname(output_path)
-            run = [jar, xml, df, path.join(out_path, file_name), aux_source_path]
+            out_path = os.path.dirname(output_path)
+            run = [jar, xml, df, os.path.join(out_path, file_name), aux_source_path]
             stream_runner = stream_runner_local
         else:
             run = [jar, xml, df, aux_source_path]
@@ -93,12 +91,12 @@ from fact_conditions import create_condition_set
 @click.password_option(help='password to read from the always awesome RunDB')
 def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queue, walltime, engine, num_runs, vmem, log_level, port, source, conditions, max_delta_t, local, local_output, local_output_format, yes, password):
 
-    level=logging.INFO
-    if log_level is 'DEBUG':
+    level = logging.INFO
+    if log_level == 'DEBUG':
         level = logging.DEBUG
-    elif log_level is 'WARN':
+    elif log_level == 'WARN':
         level = logging.WARN
-    elif log_level is 'INFO':
+    elif log_level == 'INFO':
         level = logging.INFO
 
     logging.captureWarnings(True)
@@ -135,7 +133,7 @@ def main(earliest_night, latest_night, data_dir, jar, xml, aux_source, out, queu
         job_list = make_jobs(jarpath, xmlpath, aux_source_path,
                              output_directory, df_runs, engine, queue,
                              vmem, num_runs,  walltime,
-                             output_path=local_output_dir,
+                             output_path=output_directory,
                              filename_format=local_output_format
                              )
     else:

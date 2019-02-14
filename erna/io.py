@@ -1,14 +1,32 @@
 import logging
 import os
+import pandas as pd
+import json
+
+from dask.distributed import as_completed
 
 from fact.io import to_h5py
-
 from .hdf_utils import rename_columns
 from .features import add_theta_deg_columns
-from dask.distributed import as_completed
 
 
 logger = logging.getLogger(__name__)
+
+
+def read_facttools_json(json_path):
+    with open(json_path, 'r') as text:
+        try:
+            logger.info("Reading fact-tools output.")
+            y = json.loads(text.read())
+            df_out = pd.DataFrame(y)
+            logger.info("Returning data frame with {} entries".format(len(df_out)))
+            return df_out
+        except ValueError:
+            logger.exception("Fact-tools output could not be read.")
+            return "error reading json"
+        except Exception:
+            logger.exception("Fact-tools output could not be gathered.")
+            return "error gathering output"
 
 
 class Writer:

@@ -4,7 +4,6 @@ import h5py
 import dateutil.parser
 import sys
 import os
-import numpy as np
 from fact.io import to_h5py
 
 from ..automatic_processing.database import (
