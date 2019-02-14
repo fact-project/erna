@@ -14,6 +14,12 @@ logger = logging.getLogger(__name__)
 class Writer:
     def __init__(self, outputfile, fmt=None):
 
+        self.outputfile = outputfile
+        self._file = None
+
+        if self.outputfile is None:
+            return
+
         if fmt is None:
             name, ext = os.path.splitext(outputfile)
 
@@ -37,11 +43,12 @@ class Writer:
                 raise ValueError('unsupported format: {}'.format(fmt))
 
         self.fmt = fmt
-        self.outputfile = outputfile
         self.header_written = False
-        self._file = None
 
     def append(self, df):
+        if self.outputfile is None:
+            return
+
         if self.fmt == 'jsonl':
             if self._file is None:
                 self._file = open(self.outputfile, 'w')
@@ -73,10 +80,13 @@ def collect_output(futures, output_path, **kwargs):
     The Dataframe will then be written to a file as specified by the output_path.
     The datatframe df_started_runs is joined with the job outputs to get the real ontime.
     '''
-    logger.info('Concatenating results from each job into {}'.format(output_path))
-    n_success = 0
+    if output_path is not None:
+        logger.info('Concatenating results from each job into {}'.format(output_path))
 
-    result_iterator = as_completed(futures, with_result=True, raise_errors=False)
+    n_success = 0
+    n_total = 0
+
+    result_iterator = as_completed(futures, with_results=True, raise_errors=False)
     with Writer(output_path) as writer:
         for (future, result) in result_iterator:
 
@@ -96,13 +106,21 @@ def collect_output(futures, output_path, **kwargs):
                 logger.info('Job wrote output to local file {}'.format(output))
                 continue
 
-            logger.info('There are {} events in the result'.format(len(events)))
+            n_events = len(events)
+            logger.info('There are {} events in the result'.format(n_events))
 
-            if len(events) == 0:
+            if n_events == 0:
                 continue
+
+            n_total += n_events
 
             events.columns = rename_columns(events.columns)
             add_theta_deg_columns(events)
             writer.append(events)
 
             logger.info('Result written successfully')
+
+    if output_path is not None:
+        logger.info('Wrote a total of {} events from {} succesfull runs to {}'.format(
+            n_total, n_success, output_path
+        ))

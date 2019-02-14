@@ -5,9 +5,9 @@ from tqdm import tqdm
 import sys
 from fact.io import append_to_h5py, initialize_h5py
 from fact.instrument import camera_distance_mm_to_deg
-import re
 from numpy.lib import recfunctions
 import numpy as np
+from .features import rename_columns
 
 log = logging.getLogger(__name__)
 
@@ -21,24 +21,6 @@ theta_columns = tuple(
 theta_deg_columns = tuple(
     ['theta_deg'] + ['theta_deg_off_{}'.format(i) for i in range(1, 6)]
 )
-
-snake_re_1 = re.compile('(.)([A-Z][a-z]+)')
-snake_re_2 = re.compile('([a-z0-9])([A-Z])')
-
-
-renames = {'RUNID': 'run_id', 'COGx': 'cog_x', 'COGy': 'cog_y'}
-
-
-def camel2snake(key):
-    ''' see http://stackoverflow.com/a/1176023/3838691 '''
-    s1 = snake_re_1.sub(r'\1_\2', key)
-    s2 = snake_re_2.sub(r'\1_\2', s1).lower().replace('__', '_')
-    s3 = re.sub('^m_', '', s2)
-    return s3.replace('.f_', '_')
-
-
-def rename_columns(columns):
-    return [camel2snake(renames.get(col, col)) for col in columns]
 
 
 def write_fits_to_hdf5(

@@ -2,28 +2,14 @@ import logging
 import pandas as pd
 import os
 import numpy as np
-import datetime
 import json
 import pkg_resources
 from datetime import timedelta
 
-from fact.io import to_h5py
-from fact.instrument import camera_distance_mm_to_deg
-
 from . import datacheck_conditions as dcc
 from .datacheck import get_runs, get_drs_runs
-from .hdf_utils import rename_columns
 
 logger = logging.getLogger(__name__)
-
-
-def add_theta_deg_columns(df):
-    for i in range(6):
-        incol = 'theta' if i == 0 else 'theta_off_{}'.format(i)
-        outcol = 'theta_deg' if i == 0 else 'theta_deg_off_{}'.format(i)
-        if incol in df.columns:
-            df[outcol] = camera_distance_mm_to_deg(df[incol])
-
 
 
 def build_path(row, path_to_data, extension):
@@ -36,6 +22,7 @@ def build_path(row, path_to_data, extension):
     day = night[6:8]
     res = os.path.join(path_to_data, year, month, day, row.filename + extension)
     return res
+
 
 def test_drs_path(df, key):
     """
@@ -58,6 +45,7 @@ def test_data_path(df, key):
     df.loc[~mask, 'data_file_exists'] = df.loc[~mask, key].apply(os.path.exists)
 
     return df
+
 
 def build_filename(night, run_id):
     return night.astype(str) + '_' + run_id.map('{:03d}'.format)
@@ -85,76 +73,6 @@ def ensure_output(output_path):
         os.makedirs(directory, exist_ok=True)
 
 
-def collect_output(job_outputs, output_path, df_started_runs=None, **kwargs):
-    '''
-    Collects the output from the list of job_outputs and merges them into a dataframe.
-    The Dataframe will then be written to a file as specified by the output_path.
-    The datatframe df_started_runs is joined with the job outputs to get the real ontime.
-    '''
-    logger.info("Concatenating results from each job and writing result to {}".format(output_path))
-    frames = [f for f in job_outputs if isinstance(f, type(pd.DataFrame()))]
-
-    if len(frames) != len(job_outputs):
-        logger.warn("Only {} jobs returned a proper DataFrame.".format(len(frames)))
-
-    if len(frames) == 0:
-        return
-
-    df_returned_data = pd.concat(frames, ignore_index=True)
-    logger.info("There are a total of {} events in the result".format(len(df_returned_data)))
-
-    if len(df_returned_data)==0:
-        logger.info("No events in the result were returned, something must have gone bad, better go fix it.")
-        return
-
-    logger.info("Number of started runs {}".format(len(df_started_runs)))
-
-    if df_started_runs is not None:
-        if (set(['night','run_id']).issubset(df_started_runs.columns) and set(['night','run_id']).issubset(df_returned_data.columns)):
-            df_merged = pd.merge(df_started_runs, df_returned_data, on=['night','run_id'], how='outer', indicator=True)
-        elif (set(['data_path','bunch_index']).issubset(df_started_runs.columns) and set(['data_path','bunch_index']).issubset(df_returned_data.columns)):
-            df_merged = pd.merge(df_started_runs, df_returned_data, on=['data_path','bunch_index'], how='outer', indicator=True)
-        else:
-            df_merged = df_started_runs
-            df_merged["_merge"] = "both"
-
-        df_merged["failed"] = (df_merged["_merge"] != "both")
-        df_merged.drop("_merge", axis=1, inplace=True)
-
-        df_successfull = df_merged.query("failed == False")
-        df_failed = df_merged.query("failed == True")
-
-        if 'ontime' in df_successfull.columns:
-            total_on_time_in_seconds = df_successfull.ontime.sum()
-            logger.info("Effective on time: {}. Thats {} hours.".format(datetime.timedelta(seconds=total_on_time_in_seconds), total_on_time_in_seconds/3600))
-
-            df_returned_data["total_on_time_in_seconds"] = total_on_time_in_seconds
-        
-        logger.info("Number of failed runs: {}".format(len(df_failed)))
-        if len(df_failed) > 0:
-            name, extension = os.path.splitext(output_path)
-            failed_file_list_path = name+"_failed_runs.csv"
-
-            logger.info("Writing list of failed runs to: {}".format(failed_file_list_path))
-            df_failed.to_csv(failed_file_list_path, columns=df_started_runs.columns, **kwargs)
-            
-
-    df_returned_data.columns = rename_columns(df_returned_data.columns)
-    add_theta_deg_columns(df_returned_data)
-
-    name, extension = os.path.splitext(output_path)
-    if extension not in ['.json', '.h5', '.hdf5', '.hdf' , '.csv']:
-        logger.warn("Did not recognize file extension {}. Writing to JSON".format(extension))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
-    elif extension == '.json':
-        logger.info("Writing JSON to {}".format(output_path))
-        df_returned_data.to_json(output_path, orient='records', date_format='epoch', **kwargs )
-    elif extension in ['.h5', '.hdf','.hdf5']:
-        logger.info("Writing HDF5 to {}".format(output_path))
-        to_h5py(df_returned_data, output_path, key='events', mode='w', **kwargs)
-    elif extension == '.csv':
-        logger.info("Writing CSV to {}".format(output_path))
-        df_returned_data.to_csv(output_path, **kwargs)
 
 
 def load(
@@ -291,8 +209,8 @@ def ft_json_to_df(json_path):
     with open(json_path,'r') as text:
         try:
             logger.info("Reading fact-tools output.")
-            y=json.loads(text.read())
-            df_out=pd.DataFrame(y)
+            y = json.loads(text.read())
+            df_out = pd.DataFrame(y)
             logger.info("Returning data frame with {} entries".format(len(df_out)))
             return df_out
         except ValueError:

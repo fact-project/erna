@@ -6,6 +6,7 @@ import grp
 import pwd
 import subprocess
 from datetime import date
+import re
 
 log = logging.getLogger(__name__)
 
@@ -83,8 +84,10 @@ def assemble_facttools_call(jar, xml, input_path, output_path, aux_source_path=N
             xml,
             '-Dinput=file:{}'.format(input_path),
             '-Doutput=file:{}'.format(output_path),
-            '-Daux_source=file:{}'.format(aux_source_path),
     ]
+
+    if aux_source_path is not None:
+        call.append('-Daux_source=file:{}'.format(aux_source_path))
     return call
 
 
@@ -93,8 +96,7 @@ def check_environment_on_node():
     subprocess.check_call(['which', 'java'])
     subprocess.check_call(['free', '-m'])
     subprocess.check_call(['java', '-Xmx512m', '-version'])
-    
-import re
+
 
 def create_filename_from_format(filename_format, basename, num):
     """
