@@ -79,7 +79,7 @@ class JobSubmitter(Thread):
     def process_pending_jobs(self):
         '''
         Fetches pending runs from the processing database
-        and submits them using qsub if not to many jobs are running already.
+        and submits them if not to many jobs are running already.
         '''
         current_jobs = get_current_jobs()
         running_jobs = current_jobs.query('state == "running"')
