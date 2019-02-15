@@ -51,7 +51,6 @@ logger = logging.getLogger(__name__)
     default="{basename}_{num:03d}.json",
     help=(
         "Give the file format for the local output funktionality."
-        " %b will replace the out filename and %[1-9]n the given local number."
         " Default is: '{basename}_{num}.json'.Only works with option --local_output."
     )
 )
@@ -76,7 +75,6 @@ def main(
     source,
     conditions,
     max_delta_t,
-    local,
     local_output,
     local_output_format,
     yes,
@@ -106,7 +104,7 @@ def main(
         earliest_night,
         latest_night,
         data_dir,
-        ource_name=source,
+        source_name=source,
         timedelta_in_minutes=max_delta_t,
         factdb=factdb,
         data_conditions=data_conditions,
