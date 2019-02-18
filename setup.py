@@ -25,14 +25,14 @@ setup(
         'sqlalchemy',       # in anaconda
         'pymysql',          # in anaconda
         'pytz',             # in anaconda
-        'tables',           # needs to be installed by pip for some reason
-        'pyfact>=0.17.0',
+        'tables',
+        'pyfact>=0.22.1',
         'astropy',
         'h5py',
-        # 'hdf5',
+        'dask-jobqueue',
+        'distributed',
         'tqdm',
         'click',
-        'drmaa',
         'pyzmq',
         'peewee~=3.0',
         'numexpr',
@@ -40,8 +40,7 @@ setup(
         'pytest',           # also in  conda
         'xmltodict',
         'wrapt',
-	'retrying',
-        # 'gridmap>=0.13.1', install from https://github.com/mackaiver/gridmap'
+        'retrying',
         # 'fact_condition', install from https://github.com/fact-project/fact_conditions
     ],
     zip_safe=False,

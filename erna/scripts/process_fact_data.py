@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option('--yes', is_flag=True, help="No prompts for anything, always assume 'yes'")
 @click.password_option(help='password to read from the always awesome RunDB')
+@click.option('--max-files', help='Maximum number of files to process', type=int)
 def main(
     earliest_night,
     latest_night,
@@ -79,6 +80,7 @@ def main(
     local_output_format,
     yes,
     password,
+    max_files,
 ):
 
     setup_logging(log_level)
@@ -113,8 +115,12 @@ def main(
     # check for missing data and fix possible wrong file extension (.fz->.gz)
     df = test_data_path(df_runs, "data_path")
 
-    df_runs = df[df['data_file_exists']]
-    df_runs_missing = df[~df['data_file_exists']]
+    mask = df['data_file_exists'].astype(bool)
+    df_runs = df.loc[mask]
+    df_runs_missing = df.loc[~mask]
+
+    if max_files is not None:
+        df_runs = df_runs.iloc[:max_files]
 
     logger.warn("Missing {} dataruns due to missing datafiles".format(
         len(df_runs_missing)
@@ -126,17 +132,17 @@ def main(
     if not yes:
         click.confirm('Do you want to continue processing and start jobs?', abort=True)
 
-    job_list = make_jobs(
+    job_list, df_runs = make_jobs(
         jar=jar,
         xml=xml,
         data_paths=df_runs['data_path'],
         drs_paths=df_runs['drs_path'],
+        queue=queue,
         vmem=vmem,
         aux_path=aux_path,
         n_jobs=n_jobs,
         walltime=walltime,
         outputbase=outputbase,
-        filename_format=local_output_format,
         local_output_format=local_output_format,
     )
 
@@ -145,6 +151,7 @@ def main(
             memory='{:.0f}M'.format(vmem),
             n_jobs=n_jobs,
             interface=interface,
+            queue=queue,
     ) as cluster:
         futures = cluster.process_jobs(job_list)
         collect_output(futures, out)

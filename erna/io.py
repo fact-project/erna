@@ -110,8 +110,9 @@ def collect_output(futures, output_path, **kwargs):
         for (future, result) in result_iterator:
 
             if isinstance(result, tuple):
+                exc_type, exc_valye, tb = result
                 logger.error('Exception running job: {}'.format(result[1]))
-                logger.error(format_tb(tb))
+                logger.error('\n'.join(format_tb(tb)))
                 continue
 
             if not result['success']:

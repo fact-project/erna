@@ -137,6 +137,7 @@ def main(
             memory='{:.0f}M'.format(vmem),
             n_jobs=n_jobs,
             interface=interface,
+            queue=queue,
     ) as cluster:
         futures = cluster.process_jobs(job_list)
         collect_output(futures, out)
