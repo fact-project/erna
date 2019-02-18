@@ -20,7 +20,6 @@ setup(
     install_requires=[
         'pandas',           # in anaconda
         'numpy',            # in anaconda
-        'matplotlib>=1.4',  # in anaconda
         'python-dateutil',  # in anaconda
         'sqlalchemy',       # in anaconda
         'pymysql',          # in anaconda
@@ -38,7 +37,6 @@ setup(
         'numexpr',
         'pyyaml',
         'pytest',           # also in  conda
-        'xmltodict',
         'wrapt',
         'retrying',
         # 'fact_condition', install from https://github.com/fact-project/fact_conditions
@@ -48,10 +46,8 @@ setup(
         'console_scripts': [
             'erna_process_data = erna.scripts.process_fact_data:main',
             'erna_process_mc = erna.scripts.process_fact_mc:main',
-            'process_fact_run_list = erna.scripts.process_fact_run_list:main',
-            'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
-            'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
-            'facttools_executer = erna.scripts.facttools_executer:main',
+            'erna_process_run_list = erna.scripts.process_fact_run_list:main',
+            'erna_fetch_run_list = erna.scripts.fetch_fact_runs:main',
             'erna_fill_database = erna.scripts.fill_database:main',
             'erna_check_availability = erna.scripts.check_availability:main',
             'erna_create_tables = erna.scripts.create_db:main',
