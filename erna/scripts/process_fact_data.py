@@ -137,7 +137,6 @@ def main(
         xml=xml,
         data_paths=df_runs['data_path'],
         drs_paths=df_runs['drs_path'],
-        queue=queue,
         vmem=vmem,
         aux_path=aux_path,
         n_jobs=n_jobs,

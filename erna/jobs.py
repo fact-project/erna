@@ -17,7 +17,6 @@ def make_jobs(
     xml,
     data_paths,
     drs_paths,
-    queue,
     vmem,
     n_jobs,
     walltime,

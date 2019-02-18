@@ -124,7 +124,6 @@ def main(
         xml=xmlpath,
         data_paths=mc_paths_array,
         drs_paths=drs_paths_array,
-        queue=queue,
         vmem=vmem,
         n_jobs=n_jobs,
         walltime=walltime,
