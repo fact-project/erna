@@ -16,18 +16,12 @@ logger = logging.getLogger(__name__)
 
 def read_facttools_json(json_path):
     with open(json_path, 'r') as text:
-        try:
-            logger.info("Reading fact-tools output.")
-            y = json.loads(text.read())
-            df_out = pd.DataFrame(y)
-            logger.info("Returning data frame with {} entries".format(len(df_out)))
-            return df_out
-        except ValueError:
-            logger.exception("Fact-tools output could not be read.")
-            return "error reading json"
-        except Exception:
-            logger.exception("Fact-tools output could not be gathered.")
-            return "error gathering output"
+        logger.info("Reading fact-tools output.")
+        y = json.loads(text.read())
+
+    df_out = pd.DataFrame(y)
+    logger.info("Returning data frame with {} entries".format(len(df_out)))
+    return df_out
 
 
 class Writer:

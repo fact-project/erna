@@ -64,4 +64,11 @@ def run_facttools(job):
             return {'success': True, 'outputfile': job.outputfile}
 
         # try to read nans else return empty frame
-        return {'success': True, 'events': read_facttools_json(tmp_output_path)}
+        try:
+            return {'success': True, 'events': read_facttools_json(tmp_output_path)}
+        except ValueError:
+            logger.exception("Fact-tools output could not be read.")
+            return {'success': False, 'reason': 'error reading json'}
+        except Exception as e:
+            logger.exception("Fact-tools output could not be gathered.")
+            return {'success': False, 'reason': 'error reading json: {}'.format(str(e))}
