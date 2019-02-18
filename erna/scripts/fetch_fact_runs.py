@@ -4,7 +4,7 @@ import numpy as np
 from sqlalchemy import create_engine
 import logging
 import click
-from ..factdb import load
+from ..factdb import get_run_data
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def main(earliest_night, latest_night, data_dir, source,  max_delta_t, parts, pa
 
     # create the set of conditions we want to use
     data_conditions = create_condition_set(conditions)
-    mapping = load(
+    mapping = get_run_data(
         earliest_night,
         latest_night,
         data_dir,

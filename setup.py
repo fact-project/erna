@@ -46,10 +46,10 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'process_fact_data = erna.scripts.process_fact_data:main',
-            'process_fact_mc = erna.scripts.process_fact_mc:main',
-            'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
+            'erna_process_data = erna.scripts.process_fact_data:main',
+            'erna_process_mc = erna.scripts.process_fact_mc:main',
             'process_fact_run_list = erna.scripts.process_fact_run_list:main',
+            'fetch_fact_runs = erna.scripts.fetch_fact_runs:main',
             'read_aux_files_to_sqlite = erna.scripts.read_aux_files_to_sqlite:main',
             'facttools_executer = erna.scripts.facttools_executer:main',
             'erna_fill_database = erna.scripts.fill_database:main',
