@@ -31,7 +31,8 @@ WHERE
 	AND s.fSourceTypeKey = 1
 	AND r.fNight >= 20120810
 	AND r.fNight <= 20180630
-	AND r.fCurrentsMedMean <= 10
+	AND r.fCurrentsMedMean > {}
+	AND r.fCurrentsMedMean <= {}
 	AND r.fRunStart IS NOT NULL
 	AND r.fRunStop IS NOT NULL
 	AND r.fEffectiveON IS NOT NULL
