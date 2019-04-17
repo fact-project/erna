@@ -51,6 +51,20 @@ def main():
     walltime = float(os.environ['WALLTIME'])
     log.info('Walltime = %.0f', walltime)
 
+    fact_tools_options = {}
+    for k, v in os.environ.items():
+        if k.startswith('facttools_'):
+            k = k.replace('facttools_', '', 1)
+            fact_tools_options[k] = v
+
+    for k in ['infile', 'drsfile']:
+        f = fact_tools_options[k].replace('file:', '', 1)
+        if not os.path.isfile(f):
+            socket.send_pyobj({'job_id': job_id, 'status': 'input_file_missing'})
+            socket.recv()
+            log.exception('Missing input file {}'.format(f))
+            sys.exit(1)
+
     job_name = 'fact_erna_job_id_' + str(job_id) + '_'
     with tempfile.TemporaryDirectory(prefix=job_name) as tmp_dir:
         log.debug('Using tmp directory: {}'.format(tmp_dir))
@@ -70,10 +84,8 @@ def main():
             xml,
         ]
 
-        for k, v in os.environ.items():
-            if k.startswith('facttools_'):
-                option = '-D{}={}'.format(k.replace('facttools_', '', 1), v)
-                call.append(option)
+        for k, v in fact_tools_options.items():
+            call.append('-D{}={}'.format(k, v))
 
         try:
             sp.run(['which', java], check=True)

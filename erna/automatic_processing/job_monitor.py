@@ -44,13 +44,18 @@ class JobMonitor(Thread):
     @retry(retry_on_exception=is_operational_error)
     @database.connection_context()
     def update_job(self, status_update):
-        job = Job.get(id=status_update['job_id'])
+        update = {}
         status = status_update['status']
-        job.status = ProcessingState.get(description=status)
+        update['status'] = (
+            ProcessingState.select()
+            .where(ProcessingState.description == status)
+        )
+
         if status == 'success':
-            job.result_file = status_update['output_file']
-            job.md5hash = status_update['md5hash']
-        job.save()
+            update['result_file'] = status_update['output_file']
+            update['md5hash'] = status_update['md5hash']
+
+        Job.update(**update).where(Job.id == status_update['job_id']).execute()
 
     def terminate(self):
         self.event.set()
