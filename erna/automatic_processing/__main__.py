@@ -1,14 +1,16 @@
-from erna.automatic_processing.database import (
-    database, setup_database, ProcessingState, Job
-)
-from ..utils import load_config
-from .job_monitor import JobMonitor
-from .job_submitter import JobSubmitter
-from .slurm import get_current_jobs
 import click
 import logging
 import time
 import subprocess as sp
+
+from .database import (
+    database, setup_database, ProcessingState, Job
+)
+from .database_utils import update_job_status
+from ..utils import load_config
+from .job_monitor import JobMonitor
+from .job_submitter import JobSubmitter
+from .slurm import get_current_jobs
 
 log = logging.getLogger(__name__)
 
@@ -66,8 +68,8 @@ def main(config, verbose):
         job_submitter.terminate()
         job_submitter.join()
 
-        queued = ProcessingState.select().where(ProcessingState.description == 'queued'))
-        running = ProcessingState.select().where(ProcessingState.description = ='running'))
+        queued = ProcessingState.select().where(ProcessingState.description == 'queued')
+        running = ProcessingState.select().where(ProcessingState.description == 'running')
 
         with database.connection_context():
             log.info('Canceling queued jobs')
@@ -79,9 +81,9 @@ def main(config, verbose):
             log.info('Waiting for running jobs to finish')
             try:
                 n_running = (get_current_jobs().status == 'running').sum()
-                    while n_running > 0:
-                        log.info('Waiting for {} jobs to finish'.format(n_running))
-                        time.sleep(10)
+                while n_running > 0:
+                    log.info('Waiting for {} jobs to finish'.format(n_running))
+                    time.sleep(10)
             except (KeyboardInterrupt, SystemExit):
                 log.info('Shutting done')
 
