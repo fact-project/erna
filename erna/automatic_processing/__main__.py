@@ -80,10 +80,11 @@ def main(config, verbose):
         if answer:
             log.info('Waiting for running jobs to finish')
             try:
-                n_running = (get_current_jobs().status == 'running').sum()
+                n_running = (get_current_jobs().state == 'running').sum()
                 while n_running > 0:
                     log.info('Waiting for {} jobs to finish'.format(n_running))
                     time.sleep(10)
+                    n_running = (get_current_jobs().state == 'running').sum()
             except (KeyboardInterrupt, SystemExit):
                 log.info('Shutting done')
 
