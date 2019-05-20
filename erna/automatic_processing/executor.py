@@ -108,13 +108,16 @@ def main():
             sys.exit(1)
 
         try:
-            output_file = next(iglob(os.path.join(facttools_output, '*')))
-            log.info('Copying {} to {}'.format(output_file, output_dir))
-            shutil.copy2(output_file, output_dir)
-            output_file = os.path.join(output_dir, os.path.basename(output_file))
-            log.info('Copy done')
+            tmp_output = next(iglob(os.path.join(facttools_output, '*')))
+            base = os.path.basename(tmp_output)
+            output_file = os.path.join(output_dir, base + '.gz')
+            log.info('Gzipping {} to {}'.format(tmp_output, output_file))
+            with open(output_file, 'wb') as f:
+                sp.run(['gzip', '-c', tmp_output], stdout=f)
+
+            log.info('gzipping done')
         except:
-            log.exception('Error copying outputfile')
+            log.exception('Error gzipping outputfile')
             socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
             socket.recv()
             sys.exit(1)
