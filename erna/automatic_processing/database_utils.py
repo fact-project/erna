@@ -15,8 +15,14 @@ log = logging.getLogger(__name__)
 __all__ = [
     'fill_data_runs', 'fill_drs_runs', 'find_drs_file',
     'count_jobs', 'insert_new_job', 'insert_new_jobs',
-    'resubmit_walltime_exceeded'
+    'resubmit_walltime_exceeded', 'update_job_status',
 ]
+
+
+@database.connection_context()
+def update_job_status(job, description):
+    status = ProcessingState.select().where(ProcessingState.description == description)
+    return Job.update(status=status).where(Job.id == job.id).execute()
 
 
 @database.connection_context()

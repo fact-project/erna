@@ -9,7 +9,6 @@ from .utils import parse_path
 from .custom_fields import NightField, LongBlobField
 
 
-
 __all__ = [
     'RawDataFile', 'DrsFile',
     'Jar', 'XML', 'Job',
@@ -27,6 +26,7 @@ PROCESSING_STATES = [
     'success',
     'failed',
     'walltime_exceeded',
+    'input_file_missing',
 ]
 
 

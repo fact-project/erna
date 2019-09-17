@@ -144,17 +144,17 @@ def main(xml_name, ft_version, outputfile, config, start, end, source, datacheck
     successful = len(successful_jobs)
 
     if runlist is not None:
-        if len(wanted_runs) != successful:
+        if len(wanted_runs) != len(jobs):
             click.confirm(
                 'Only {} of {} runs available, continue?:'.format(
-                    total, len(wanted_runs)
+                    total, len(jobs)
                 ),
                 abort=True,
             )
 
     if total != successful:
         click.confirm(
-            'Only {} of {} jobs finished, continue?'.format(successful, total),
+            'Only {} of {} jobs successful, continue?'.format(successful, total),
             abort=True,
         )
 

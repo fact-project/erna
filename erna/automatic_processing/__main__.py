@@ -1,15 +1,24 @@
-from erna.automatic_processing.database import (
-    database, setup_database, ProcessingState, Job
-)
-from ..utils import load_config
-from .job_monitor import JobMonitor
-from .job_submitter import JobSubmitter
 import click
 import logging
 import time
 import subprocess as sp
 
+from .database import (
+    database, setup_database, ProcessingState, Job
+)
+from .database_utils import update_job_status
+from ..utils import load_config
+from .job_monitor import JobMonitor
+from .job_submitter import JobSubmitter
+from .slurm import get_current_jobs
+
 log = logging.getLogger(__name__)
+
+
+def cancel_job(job):
+    log.debug('Canceling job {}'.format(job.id))
+    sp.run(['scancel', '--jobname=erna_{}'.format(job.id)])
+    update_job_status(job, 'inserted')
 
 
 @click.command()
@@ -56,19 +65,34 @@ def main(config, verbose):
 
     except (KeyboardInterrupt, SystemExit):
         log.info('Shutting done')
-        job_monitor.terminate()
         job_submitter.terminate()
         job_submitter.join()
-        log.info('Clean up running jobs')
 
-        database.connect()
+        queued = ProcessingState.select().where(ProcessingState.description == 'queued')
+        running = ProcessingState.select().where(ProcessingState.description == 'running')
 
-        queued = ProcessingState.get(description='queued')
-        running = ProcessingState.get(description='running')
-        inserted = ProcessingState.get(description='inserted')
+        with database.connection_context():
+            log.info('Canceling queued jobs')
+            for job in Job.select(Job.id).where(Job.status == queued):
+                cancel_job(job)
 
-        for job in Job.select().where((Job.status == running) | (Job.status == queued)):
-            sp.run(['scancel', '--jobname=erna_{}'.format(job.id)])
-            job.status = inserted
-            job.save()
-        database.close()
+        answer = click.confirm('Wait for running jobs? ')
+        if answer:
+            log.info('Waiting for running jobs to finish')
+            try:
+                n_running = (get_current_jobs().state == 'running').sum()
+                while n_running > 0:
+                    log.info('Waiting for {} jobs to finish'.format(n_running))
+                    time.sleep(10)
+                    n_running = (get_current_jobs().state == 'running').sum()
+            except (KeyboardInterrupt, SystemExit):
+                log.info('Shutting done')
+
+                for job in Job.select(Job.id).where(Job.status == running):
+                    cancel_job(job)
+        else:
+            for job in Job.select(Job.id).where(Job.status == running):
+                cancel_job(job)
+
+        job_monitor.terminate()
+        job_monitor.join()
