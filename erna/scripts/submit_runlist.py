@@ -10,7 +10,6 @@ from ..automatic_processing.database import (
     RawDataFile,
     Jar,
     XML,
-    Job,
 )
 
 

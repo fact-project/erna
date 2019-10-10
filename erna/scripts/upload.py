@@ -3,7 +3,6 @@ from prompt_toolkit import prompt
 import subprocess as sp
 import logging
 import sys
-import re
 
 from ..automatic_processing.database import (
     database, setup_database, Jar, XML
