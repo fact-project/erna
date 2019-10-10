@@ -3,7 +3,7 @@ import logging
 import peewee
 
 from .database import ProcessingState, database
-from .database_utils import count_jobs, get_pending_jobs
+from .database_utils import count_jobs, get_pending_jobs, update_job_status
 from .slurm import submit_job, get_current_jobs
 
 log = logging.getLogger(__name__)
@@ -113,5 +113,4 @@ class JobSubmitter(Thread):
                     log.info('New job with id {} queued'.format(job.id))
                 except:
                     log.exception('Could not submit job')
-                    job.status = ProcessingState.get(description='failed')
-                    job.save()
+                    update_job_status(job, 'failed')

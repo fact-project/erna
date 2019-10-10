@@ -51,6 +51,20 @@ def main():
     walltime = float(os.environ['WALLTIME'])
     log.info('Walltime = %.0f', walltime)
 
+    fact_tools_options = {}
+    for k, v in os.environ.items():
+        if k.startswith('facttools_'):
+            k = k.replace('facttools_', '', 1)
+            fact_tools_options[k] = v
+
+    for k in ['infile', 'drsfile']:
+        f = fact_tools_options[k].replace('file:', '', 1)
+        if not os.path.isfile(f):
+            socket.send_pyobj({'job_id': job_id, 'status': 'input_file_missing'})
+            socket.recv()
+            log.exception('Missing input file {}'.format(f))
+            sys.exit(1)
+
     job_name = 'fact_erna_job_id_' + str(job_id) + '_'
     with tempfile.TemporaryDirectory(prefix=job_name) as tmp_dir:
         log.debug('Using tmp directory: {}'.format(tmp_dir))
@@ -70,10 +84,8 @@ def main():
             xml,
         ]
 
-        for k, v in os.environ.items():
-            if k.startswith('facttools_'):
-                option = '-D{}={}'.format(k.replace('facttools_', '', 1), v)
-                call.append(option)
+        for k, v in fact_tools_options.items():
+            call.append('-D{}={}'.format(k, v))
 
         try:
             sp.run(['which', java], check=True)
@@ -96,13 +108,16 @@ def main():
             sys.exit(1)
 
         try:
-            output_file = next(iglob(os.path.join(facttools_output, '*')))
-            log.info('Copying {} to {}'.format(output_file, output_dir))
-            shutil.copy2(output_file, output_dir)
-            output_file = os.path.join(output_dir, os.path.basename(output_file))
-            log.info('Copy done')
+            tmp_output = next(iglob(os.path.join(facttools_output, '*')))
+            base = os.path.basename(tmp_output)
+            output_file = os.path.join(output_dir, base + '.gz')
+            log.info('Gzipping {} to {}'.format(tmp_output, output_file))
+            with open(output_file, 'wb') as f:
+                sp.run(['gzip', '-c', tmp_output], stdout=f)
+
+            log.info('gzipping done')
         except:
-            log.exception('Error copying outputfile')
+            log.exception('Error gzipping outputfile')
             socket.send_pyobj({'job_id': job_id, 'status': 'failed'})
             socket.recv()
             sys.exit(1)
