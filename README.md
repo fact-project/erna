@@ -37,7 +37,7 @@ This is useful if you don't have internet access on the machine where you submit
 # Automatic processing with erna at isdc
 
 The erna job submitter should be running as `fact_tools` user on
-isdc-in04.
+`lesta02`.
 
 To run it, start the screen session with the screenrc coming in this repo:
 ```
