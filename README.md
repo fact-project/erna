@@ -1,6 +1,6 @@
 # Easy RuN Access (ERNA)
 
-A collection of tools to handle FACT data and to execute jobs on a SGE/TORQUE cluster.
+A collection of tools to handle FACT data and to execute jobs on SLURM/SGE/TORQUE clusters.
 
 ![http://www.itbusiness.ca/wp-content/uploads/2012/10/Old-women-on-laptop.jpg](http://www.itbusiness.ca/wp-content/uploads/2012/10/Old-women-on-laptop.jpg)
 
